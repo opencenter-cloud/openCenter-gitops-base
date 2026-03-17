@@ -1,3 +1,13 @@
+---
+id: adr-001-kustomize-components
+title: "ADR-001: Use Kustomize Components for Community/Enterprise Pattern"
+sidebar_label: ADR-001 Kustomize
+description: Architecture decision record for adopting Kustomize Components to replace duplicated community/enterprise directory structures.
+doc_type: explanation
+audience: "architects, platform engineers"
+tags: [adr, kustomize, enterprise, architecture]
+---
+
 # ADR-001: Use Kustomize Components for Community/Enterprise Pattern
 
 > **Status**: Proposed  

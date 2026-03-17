@@ -1,3 +1,13 @@
+---
+id: cert-manager-config-guide
+title: "Cert-manager Configuration Guide"
+sidebar_label: Cert-manager
+description: Configuration choices and rationale for deploying cert-manager TLS certificate automation on Kubernetes.
+doc_type: reference
+audience: "platform engineers, operators"
+tags: [cert-manager, tls, certificates, kubernetes]
+---
+
 # Cert-manager Configuration Guide
 
 ## Overview

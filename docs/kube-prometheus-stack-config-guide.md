@@ -1,3 +1,13 @@
+---
+id: kube-prometheus-stack-config-guide
+title: "Kube-Prometheus-Stack Configuration Guide"
+sidebar_label: Prometheus Stack
+description: Configuration choices and rationale for deploying the kube-prometheus-stack monitoring solution on Kubernetes.
+doc_type: reference
+audience: "platform engineers, operators"
+tags: [prometheus, grafana, monitoring, observability, kubernetes]
+---
+
 # Kube-Prometheus-Stack Configuration Guide
 
 ## Overview

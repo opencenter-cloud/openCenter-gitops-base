@@ -1,3 +1,13 @@
+---
+id: flux-resources
+title: "FluxCD Resources Reference"
+sidebar_label: Flux Resources
+description: Complete reference for FluxCD resources used in openCenter-gitops-base.
+doc_type: reference
+audience: "platform engineers"
+tags: [fluxcd, gitops, kubernetes, resources]
+---
+
 # FluxCD Resources Reference
 
 **Type:** Reference  

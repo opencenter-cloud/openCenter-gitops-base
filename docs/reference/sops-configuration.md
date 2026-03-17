@@ -1,3 +1,13 @@
+---
+id: sops-configuration
+title: "SOPS Configuration Reference"
+sidebar_label: SOPS Configuration
+description: SOPS secrets encryption configuration and usage in openCenter-gitops-base.
+doc_type: reference
+audience: "platform engineers"
+tags: [sops, encryption, secrets, age, kubernetes]
+---
+
 # SOPS Configuration Reference
 
 **Type:** Reference  

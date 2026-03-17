@@ -1,3 +1,13 @@
+---
+id: opentelemetry-kube-stack-config-guide
+title: "OpenTelemetry Kube Stack Configuration Guide"
+sidebar_label: OpenTelemetry Stack
+description: Configuration choices and rationale for deploying the OpenTelemetry Kube Stack observability framework on Kubernetes.
+doc_type: reference
+audience: "platform engineers, operators"
+tags: [opentelemetry, observability, telemetry, kubernetes]
+---
+
 # OpenTelemetry Kube Stack Configuration Guide
 
 ## Overview

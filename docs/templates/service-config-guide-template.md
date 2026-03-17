@@ -1,3 +1,13 @@
+---
+id: service-config-guide-template
+title: "Service Configuration Guide Template"
+sidebar_label: Config Guide Template
+description: Template for creating standardized configuration guides for platform services.
+doc_type: reference
+audience: "platform engineers"
+tags: [template, configuration, services, documentation]
+---
+
 # [Service Name] Configuration Guide
 
 ## Overview

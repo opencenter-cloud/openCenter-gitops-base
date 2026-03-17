@@ -1,3 +1,13 @@
+---
+id: onboarding-service-overlay
+title: "Service Onboarding Workflow for openCenter Clusters"
+sidebar_label: Service Onboarding
+description: Step-by-step process for onboarding services into openCenter clusters using Flux overlays.
+doc_type: how-to
+audience: "platform engineers, operators"
+tags: [onboarding, flux, overlays, gitops, services]
+---
+
 # Service Onboarding Workflow for openCenter Clusters
 
 This guide provides a **step-by-step process** for onboarding services into **openCenter clusters** using **Flux overlays**.  

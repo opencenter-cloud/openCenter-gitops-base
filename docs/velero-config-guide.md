@@ -1,3 +1,13 @@
+---
+id: velero-config-guide
+title: "Velero Configuration Guide"
+sidebar_label: Velero
+description: Configuration choices and rationale for deploying Velero backup and disaster recovery on Kubernetes.
+doc_type: reference
+audience: "platform engineers, operators"
+tags: [velero, backup, disaster-recovery, kubernetes]
+---
+
 # Velero Configuration Guide
 
 ## Overview

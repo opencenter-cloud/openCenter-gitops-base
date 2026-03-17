@@ -1,3 +1,13 @@
+---
+id: kube-vip-config-guide
+title: "Kube-VIP Configuration Guide"
+sidebar_label: Kube-VIP
+description: Configuration choices and rationale for deploying Kube-VIP for highly available Kubernetes API endpoints.
+doc_type: reference
+audience: "platform engineers, operators"
+tags: [kube-vip, high-availability, networking, kubernetes]
+---
+
 # Kube-VIP Configuration Guide
 
 ## Overview

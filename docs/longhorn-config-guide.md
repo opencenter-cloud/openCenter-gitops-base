@@ -1,3 +1,13 @@
+---
+id: longhorn-config-guide
+title: "Longhorn Configuration Guide"
+sidebar_label: Longhorn
+description: Configuration choices and rationale for deploying Longhorn distributed block storage on Kubernetes.
+doc_type: reference
+audience: "platform engineers, operators"
+tags: [longhorn, storage, kubernetes, backup]
+---
+
 # Longhorn Configuration Guide
 
 ## Overview

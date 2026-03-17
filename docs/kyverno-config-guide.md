@@ -1,3 +1,13 @@
+---
+id: kyverno-config-guide
+title: "Kyverno Configuration Guide"
+sidebar_label: Kyverno
+description: Configuration choices and rationale for deploying Kyverno policy engine on Kubernetes.
+doc_type: reference
+audience: "platform engineers, operators"
+tags: [kyverno, policy, security, kubernetes]
+---
+
 # Kyverno Configuration Guide
 
 ## Overview

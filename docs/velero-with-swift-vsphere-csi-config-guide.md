@@ -1,3 +1,13 @@
+---
+id: velero-swift-vsphere-csi-config-guide
+title: "Velero Backup with Swift and vSphere CSI"
+sidebar_label: Velero Swift/vSphere
+description: Configuration for Velero backup using OpenStack Swift storage and vSphere CSI volume snapshots.
+doc_type: reference
+audience: "platform engineers, operators"
+tags: [velero, backup, swift, vsphere, csi, openstack]
+---
+
 # Velero Backup Configuration
 
 ## Overview

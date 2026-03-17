@@ -1,3 +1,13 @@
+---
+id: directory-structure
+title: "Directory Structure Reference"
+sidebar_label: Directory Structure
+description: Complete directory structure of the openCenter-gitops-base repository with descriptions of each component.
+doc_type: reference
+audience: "platform engineers, operators, architects"
+tags: [directory, structure, repository, reference]
+---
+
 # Directory Structure Reference
 
 **Type:** Reference  

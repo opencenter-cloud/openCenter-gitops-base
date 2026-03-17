@@ -1,3 +1,13 @@
+---
+id: resize-controlplane-nodes
+title: "Resize Control Plane Nodes in OpenStack Flex"
+sidebar_label: Resize Control Plane
+description: Resize Kubernetes control plane node instances using OpenStack Flex and Infrastructure as Code.
+doc_type: how-to
+audience: "platform engineers, operators"
+tags: [kubernetes, openstack, resize, control-plane, iac]
+---
+
 # KB00002 - Resize the control-plane nodes in Openstack Fex using IaC
 
 ---

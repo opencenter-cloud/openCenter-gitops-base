@@ -1,3 +1,13 @@
+---
+id: tempo-config-guide
+title: "Tempo Configuration Guide"
+sidebar_label: Tempo
+description: Configuration choices and rationale for deploying Tempo distributed tracing backend on Kubernetes.
+doc_type: reference
+audience: "platform engineers, operators"
+tags: [tempo, tracing, observability, kubernetes]
+---
+
 # Tempo Configuration Guide
 
 ## Overview

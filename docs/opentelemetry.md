@@ -1,3 +1,13 @@
+---
+id: opentelemetry-architecture
+title: "OpenTelemetry Architecture Diagram"
+sidebar_label: OTel Architecture
+description: Visual architecture diagram showing the OpenTelemetry observability pipeline for Kubernetes workloads.
+doc_type: explanation
+audience: "platform engineers, operators"
+tags: [opentelemetry, observability, architecture, telemetry]
+---
+
 ┌─────────────────────────────────────────────────────────────┐
 │                     Application Layer                       │
 │  ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐  │

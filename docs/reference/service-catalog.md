@@ -1,3 +1,13 @@
+---
+id: service-catalog
+title: "Service Catalog Reference"
+sidebar_label: Service Catalog
+description: Complete list of platform services available in openCenter-gitops-base with configurations, versions, and dependencies.
+doc_type: reference
+audience: "platform engineers, operators, architects"
+tags: [services, catalog, kubernetes, platform]
+---
+
 # Service Catalog Reference
 
 **Type:** Reference  

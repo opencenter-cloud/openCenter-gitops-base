@@ -1,3 +1,13 @@
+---
+id: helm-values-schema
+title: "Helm Values Schema Reference"
+sidebar_label: Helm Values Schema
+description: Three-tier Helm values pattern and schema conventions used in openCenter-gitops-base.
+doc_type: reference
+audience: "platform engineers"
+tags: [helm, values, schema, kubernetes, configuration]
+---
+
 # Helm Values Schema Reference
 
 **Type:** Reference  

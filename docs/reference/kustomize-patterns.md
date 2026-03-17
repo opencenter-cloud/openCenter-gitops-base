@@ -1,3 +1,13 @@
+---
+id: kustomize-patterns
+title: "Kustomize Patterns Reference"
+sidebar_label: Kustomize Patterns
+description: Kustomize patterns and conventions used in openCenter-gitops-base for service configuration.
+doc_type: reference
+audience: "platform engineers"
+tags: [kustomize, patterns, kubernetes, gitops]
+---
+
 # Kustomize Patterns Reference
 
 **Type:** Reference  

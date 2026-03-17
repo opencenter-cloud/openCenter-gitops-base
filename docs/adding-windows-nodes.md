@@ -1,3 +1,13 @@
+---
+id: adding-windows-nodes
+title: "Adding Windows Worker Nodes to an openCenter Kubernetes Cluster"
+sidebar_label: Windows Nodes
+description: Configure and add Windows Server worker nodes to an existing openCenter Kubernetes cluster.
+doc_type: how-to
+audience: "platform engineers, operators"
+tags: [windows, kubernetes, worker-nodes, openstack, ansible]
+---
+
 # Adding Windows Worker nodes to an openCenter Kubernetes cluster
 
 ## Requirements

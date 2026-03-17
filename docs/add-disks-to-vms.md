@@ -1,3 +1,13 @@
+---
+id: add-disks-to-vms
+title: "Add Disks to Virtual Machines"
+sidebar_label: Add Disks
+description: Steps to add additional disks to Kubernetes worker node VMs using OpenTofu and Kubespray.
+doc_type: how-to
+audience: "platform engineers, operators"
+tags: [storage, vms, openstack, disks, maintenance]
+---
+
 Maintenance objective:
 Add a 100GB disk to each of the worker nodes.
 

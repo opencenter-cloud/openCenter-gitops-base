@@ -1,3 +1,13 @@
+---
+id: harbor-config-guide
+title: "Harbor Configuration Guide"
+sidebar_label: Harbor
+description: Configuration choices and rationale for deploying Harbor container registry on Kubernetes.
+doc_type: reference
+audience: "platform engineers, operators"
+tags: [harbor, registry, containers, kubernetes]
+---
+
 # Harbor Configuration Guide
 
 ## Overview

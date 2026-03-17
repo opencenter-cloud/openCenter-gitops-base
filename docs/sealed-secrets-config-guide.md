@@ -1,3 +1,13 @@
+---
+id: sealed-secrets-config-guide
+title: "Sealed Secrets Configuration Guide"
+sidebar_label: Sealed Secrets
+description: Configuration choices and rationale for deploying Sealed Secrets to encrypt Kubernetes secrets in Git.
+doc_type: reference
+audience: "platform engineers, operators"
+tags: [sealed-secrets, encryption, secrets, kubernetes]
+---
+
 # Sealed Secrets Configuration Guide
 
 ## Overview

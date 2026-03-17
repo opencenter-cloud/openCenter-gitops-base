@@ -1,3 +1,13 @@
+---
+id: docs-readme
+title: "openCenter-gitops-base Documentation"
+sidebar_label: Documentation Home
+description: Overview of the openCenter-gitops-base GitOps-managed Kubernetes platform and its documentation.
+doc_type: reference
+audience: "platform engineers, operators, architects"
+tags: [opencenter, gitops, kubernetes, overview]
+---
+
 # openCenter-gitops-base Documentation
 
 **Version:** 1.0  

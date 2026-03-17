@@ -1,3 +1,13 @@
+---
+id: adding-new-service
+title: "Adding a New Service to openCenter GitOps Base"
+sidebar_label: Add New Service
+description: How to add a new service to the openCenter GitOps base repository using standardized Flux CD and Kustomize patterns.
+doc_type: how-to
+audience: "platform engineers"
+tags: [services, fluxcd, kustomize, helm, gitops]
+---
+
 # Adding a New Service to openCenter GitOps Base
 
 This guide explains how to add a new service to the openCenter GitOps base repository using the standardized Flux CD patterns following ADR-001 Kustomize Components pattern. We'll use **cert-manager** as a reference example to illustrate the complete process.

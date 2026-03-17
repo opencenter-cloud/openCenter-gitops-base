@@ -1,3 +1,13 @@
+---
+id: service-readme-template
+title: "Service README Template"
+sidebar_label: README Template
+description: Template for creating standardized README files for base service configurations.
+doc_type: reference
+audience: "platform engineers"
+tags: [template, readme, services, documentation]
+---
+
 # [Service Name] – Base Configuration
 
 This directory contains the **base manifests** for deploying [Service Name](https://[service-url]), [brief description of what the service does].  

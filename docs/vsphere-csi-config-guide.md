@@ -1,3 +1,13 @@
+---
+id: vsphere-csi-config-guide
+title: "vSphere CSI Driver Configuration"
+sidebar_label: vSphere CSI
+description: Configuration choices and rationale for deploying the vSphere CSI driver for persistent storage and snapshots on Kubernetes.
+doc_type: reference
+audience: "platform engineers, operators"
+tags: [vsphere, csi, storage, snapshots, kubernetes]
+---
+
 # vSphere CSI Driver Configuration
 
 ## Overview

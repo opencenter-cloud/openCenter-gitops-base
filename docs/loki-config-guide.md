@@ -1,3 +1,13 @@
+---
+id: loki-config-guide
+title: "Loki Configuration Guide"
+sidebar_label: Loki
+description: Configuration choices and rationale for deploying Loki log aggregation on Kubernetes.
+doc_type: reference
+audience: "platform engineers, operators"
+tags: [loki, logging, observability, kubernetes]
+---
+
 # Loki Configuration Guide
 
 ## Overview

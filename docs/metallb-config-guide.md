@@ -1,3 +1,13 @@
+---
+id: metallb-config-guide
+title: "MetalLB Configuration Guide"
+sidebar_label: MetalLB
+description: Configuration choices and rationale for deploying MetalLB load balancer on bare-metal Kubernetes clusters.
+doc_type: reference
+audience: "platform engineers, operators"
+tags: [metallb, load-balancer, networking, kubernetes]
+---
+
 # MetalLB Configuration Guide
 
 ## Overview

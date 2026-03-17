@@ -1,3 +1,13 @@
+---
+id: replacing-controlplane-node
+title: "Replace a Failed Control Plane Node"
+sidebar_label: Replace Control Plane
+description: Replace a failed or rebuilt control plane node in a Kubespray-managed Kubernetes cluster.
+doc_type: how-to
+audience: "platform engineers, operators"
+tags: [kubernetes, control-plane, etcd, kubespray, cluster-recovery]
+---
+
 **Article ID:** KB00003 
 **Last Modified:** 2025-09-29  
 **Author:** Platform Engineering Team  

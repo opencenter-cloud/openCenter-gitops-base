@@ -1,3 +1,13 @@
+---
+id: keycloak-config-guide
+title: "Keycloak Configuration Guide"
+sidebar_label: Keycloak
+description: Configuration choices and rationale for deploying Keycloak identity and access management on Kubernetes.
+doc_type: reference
+audience: "platform engineers, operators"
+tags: [keycloak, authentication, iam, kubernetes]
+---
+
 # Keycloak Configuration Guide
 
 ## Overview

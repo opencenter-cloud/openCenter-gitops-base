@@ -1,3 +1,13 @@
+---
+id: architecture-explanation
+title: "Architecture Explanation"
+sidebar_label: Architecture
+description: Architectural design, decisions, and rationale behind the openCenter-gitops-base platform.
+doc_type: explanation
+audience: "architects, platform engineers"
+tags: [architecture, gitops, fluxcd, design]
+---
+
 # Architecture Explanation
 
 **Type:** Explanation  
