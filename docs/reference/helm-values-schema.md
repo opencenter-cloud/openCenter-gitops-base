@@ -2,7 +2,7 @@
 id: helm-values-schema
 title: "Helm Values Schema Reference"
 sidebar_label: Helm Values Schema
-description: Three-tier Helm values pattern and schema conventions used in openCenter-gitops-base.
+description: Helm values patterns and schema conventions used in openCenter-gitops-base and its consuming overlays.
 doc_type: reference
 audience: "platform engineers"
 tags: [helm, values, schema, kubernetes, configuration]
@@ -12,35 +12,43 @@ tags: [helm, values, schema, kubernetes, configuration]
 
 **Type:** Reference  
 **Audience:** Platform engineers  
-**Last Updated:** 2026-02-14
+**Last Updated:** 2026-03-24
 
-This document describes the three-tier Helm values pattern used in openCenter-gitops-base.
+This document describes the Helm values patterns used in `openCenter-gitops-base`.
+
+This base repository primarily carries:
+
+1. **Base values** checked into the service directory
+2. **Optional override secret references** that can be supplied by a consuming cluster repository
+
+Enterprise-specific values may exist in the private enterprise repository, but they are not part of the standard per-service layout in this base repo.
 
 ---
 
-## Three-Tier Values Architecture
+## Values Architecture
 
-openCenter uses a three-tier Helm values hierarchy to separate concerns and enable flexible configuration:
+In the base repo, the common pattern is:
 
 1. **Base values** - Core service configuration (required)
 2. **Override values** - Cluster-specific customization (optional)
-3. **Enterprise values** - Enterprise edition features (optional)
+
+Some deployments may add a third layer from an external repository:
+
+3. **Enterprise values** - Enterprise-only values supplied by the private enterprise repo (optional)
 
 ---
 
 ## Values File Naming Convention
 
-```
+```text
 applications/base/services/<service-name>/helm-values/
-├── base-values-<chart-version>.yaml
-├── override-values-<chart-version>.yaml
-└── enterprise-values-<chart-version>.yaml
+└── values-<chart-version>.yaml
 ```
 
 **Examples:**
-- `base-values-v1.18.2.yaml`
-- `override-values-v1.18.2.yaml`
-- `enterprise-values-v1.18.2.yaml`
+- `values-v<chart-version>.yaml`
+
+Override and enterprise values are generally not stored as versioned files in the base repo. They are expected to come from consuming overlays when needed.
 
 ---
 
@@ -55,7 +63,7 @@ applications/base/services/<service-name>/helm-values/
 - Standard labels and annotations
 - Common integrations (monitoring, logging)
 
-**Example:** `cert-manager/helm-values/base-values-v1.18.2.yaml`
+**Example:** `<service>/helm-values/values-v<chart-version>.yaml`
 
 ```yaml
 # Resource limits
@@ -103,7 +111,7 @@ commonLabels:
 - Ingress hostnames
 - External endpoints
 
-**Example:** `cert-manager/helm-values/override-values-v1.18.2.yaml`
+**Typical source:** a Secret generated or managed by a consuming cluster overlay
 
 ```yaml
 # Cluster-specific replicas
@@ -131,9 +139,9 @@ externalDNS:
 
 ---
 
-## Tier 3: Enterprise Values
+## Optional Tier 3: Enterprise Values
 
-**Purpose:** Enterprise edition features and hardening
+**Purpose:** Enterprise edition features and hardening supplied by the private enterprise repo
 
 **Characteristics:**
 - Optional (only for enterprise deployments)
@@ -142,7 +150,7 @@ externalDNS:
 - Enterprise integrations
 - Compliance requirements
 
-**Example:** `cert-manager/helm-values/enterprise-values-v1.18.2.yaml`
+**Typical source:** the private enterprise repository, not `openCenter-gitops-base`
 
 ```yaml
 # High availability
@@ -189,7 +197,7 @@ spec:
   chart:
     spec:
       chart: cert-manager
-      version: v1.18.2
+      version: v<chart-version>
   valuesFrom:
     # Tier 1: Base (required)
     - kind: Secret
@@ -202,11 +210,7 @@ spec:
       valuesKey: override.yaml
       optional: true
     
-    # Tier 3: Enterprise (optional)
-    - kind: Secret
-      name: cert-manager-values-enterprise
-      valuesKey: hardened-enterprise.yaml
-      optional: true
+    # Optional enterprise tier may be added by an external enterprise overlay
 ```
 
 ---
@@ -222,21 +226,15 @@ kind: Kustomization
 
 secretGenerator:
   - name: cert-manager-values-base
+    namespace: cert-manager
+    type: Opaque
     files:
-      - values.yaml=helm-values/base-values-v1.18.2.yaml
-  
-  - name: cert-manager-values-override
-    files:
-      - override.yaml=helm-values/override-values-v1.18.2.yaml
-    options:
-      disableNameSuffixHash: true
-  
-  - name: cert-manager-values-enterprise
-    files:
-      - hardened-enterprise.yaml=helm-values/enterprise-values-v1.18.2.yaml
+      - values.yaml=helm-values/values-v<chart-version>.yaml
     options:
       disableNameSuffixHash: true
 ```
+
+In this base repo, the optional `*-values-override` Secret is usually referenced by `HelmRelease.valuesFrom`, but is expected to be created by the consuming repository rather than generated here.
 
 ---
 
@@ -247,7 +245,7 @@ Helm merges values in order, with later values overriding earlier ones:
 1. Chart default values
 2. Base values (Tier 1)
 3. Override values (Tier 2)
-4. Enterprise values (Tier 3)
+4. Enterprise values (optional external Tier 3)
 
 **Example merge:**
 
@@ -431,16 +429,16 @@ persistence:
 secretGenerator:
   - name: cert-manager-values-base
     files:
-      - values.yaml=helm-values/base-values-v1.18.2.yaml
+      - values.yaml=helm-values/values-v<chart-version>.yaml
 
 # During upgrade (both versions present)
 secretGenerator:
   - name: cert-manager-values-base
     files:
-      - values.yaml=helm-values/base-values-v1.19.0.yaml
+      - values.yaml=helm-values/values-v<new-chart-version>.yaml
 
 # After upgrade (old version removed)
-# Delete helm-values/base-values-v1.18.2.yaml
+# Delete helm-values/values-v<old-chart-version>.yaml
 ```
 
 ---
@@ -464,10 +462,10 @@ secretGenerator:
 
 ### Enterprise Values
 
-- Document enterprise features
-- Include compliance requirements
-- Set higher resource limits
-- Enable advanced security features
+- Keep them in the private enterprise repository
+- Keep them aligned with the chart version consumed from the base repo
+- Use them only for enterprise-only behavior or private artifact rewrites
+- Avoid documenting them as if they are stored under `applications/base/services/*/helm-values/` in this repo
 
 ### General
 
@@ -487,9 +485,8 @@ Render templates locally to validate values:
 
 ```bash
 helm template my-release chart-name \
-  -f base-values-v1.18.2.yaml \
-  -f override-values-v1.18.2.yaml \
-  -f enterprise-values-v1.18.2.yaml
+  -f values-v<chart-version>.yaml \
+  -f override.yaml
 ```
 
 ### Kustomize Build
@@ -540,7 +537,7 @@ helm get values my-release -n cert-manager
 
 Validate YAML syntax:
 ```bash
-yamllint helm-values/base-values-v1.18.2.yaml
+yamllint helm-values/values-v<chart-version>.yaml
 ```
 
 ---
@@ -548,9 +545,9 @@ yamllint helm-values/base-values-v1.18.2.yaml
 ## Evidence
 
 **Source Files:**
-- `applications/base/services/cert-manager/helmrelease.yaml` (valuesFrom pattern)
-- `applications/base/services/cert-manager/kustomization.yaml` (secretGenerator)
-- `applications/base/services/cert-manager/helm-values/` (values files)
-- `docs/service-standards-and-lifecycle.md` (service standards)
-- `docs/analysis/S1-APP-RUNTIME-APIS.md` (three-tier values analysis)
-- `llms.txt` lines 95-125 (HelmRelease patterns)
+- [applications/base/services/cert-manager/helmrelease.yaml](../../applications/base/services/cert-manager/helmrelease.yaml) (valuesFrom pattern)
+- [applications/base/services/cert-manager/kustomization.yaml](../../applications/base/services/cert-manager/kustomization.yaml) (secretGenerator)
+- [applications/base/services/cert-manager/helm-values/](../../applications/base/services/cert-manager/helm-values/) (values files)
+- [docs/service-standards-and-lifecycle.md](../service-standards-and-lifecycle.md) (service standards)
+- [docs/explanation/enterprise-components.md](../explanation/enterprise-components.md) (enterprise repo composition model)
+- [llms.txt](../../llms.txt) lines 95-125 (HelmRelease patterns)

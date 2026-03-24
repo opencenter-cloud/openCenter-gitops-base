@@ -1,7 +1,9 @@
 # Velero – Base Configuration
 
 This directory contains the **base manifests** for deploying [Velero](https://velero.io/), an open-source tool for **backup, restore, and disaster recovery** of Kubernetes clusters and persistent volumes.  
-It is designed to be **consumed by cluster repositories** as a remote base, allowing each cluster to apply **custom overrides** as needed.
+It can be consumed directly by cluster repositories or imported by the private enterprise repository for enterprise-specific overrides.
+
+For service overview, use cases, examples, and upstream references, see the [service reference](../../../../docs/reference/services/velero.md).
 
 **About Velero:**
 

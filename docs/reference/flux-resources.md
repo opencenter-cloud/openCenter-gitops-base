@@ -42,11 +42,9 @@ metadata:
   namespace: flux-system
 spec:
   interval: 15m
-  url: ssh://git@github.com/rackerlabs/openCenter-gitops-base.git
+  url: https://github.com/opencenter-cloud/openCenter-gitops-base
   ref:
-    tag: v1.0.0
-  secretRef:
-    name: opencenter-base
+    tag: <release-tag>
 ```
 
 ### Fields
@@ -65,7 +63,7 @@ spec:
 **Tag-based (recommended for stability):**
 ```yaml
 ref:
-  tag: v1.0.0
+  tag: <release-tag>
 ```
 
 **Branch-based (for development):**
@@ -170,11 +168,11 @@ spec:
 
 ### Values Hierarchy
 
-openCenter uses a three-tier values pattern:
+openCenter commonly uses a layered values pattern:
 
-1. **Base values** (required): Core configuration
-2. **Override values** (optional): Cluster-specific overrides
-3. **Enterprise values** (optional): Enterprise edition configuration
+1. **Base values** (required): Core configuration from this repo
+2. **Override values** (optional): Cluster-specific overrides from the consuming repo
+3. **Enterprise values** (optional): Additional private-repo configuration when enterprise composition is used
 
 ```yaml
 valuesFrom:
@@ -184,10 +182,6 @@ valuesFrom:
   - kind: Secret
     name: service-values-override
     valuesKey: override.yaml
-    optional: true
-  - kind: Secret
-    name: service-values-enterprise
-    valuesKey: hardened-enterprise.yaml
     optional: true
 ```
 
@@ -499,12 +493,11 @@ kubectl logs -n flux-system deploy/kustomize-controller
 
 ---
 
-## Evidence
+## Source Material
 
 **Source Files:**
-- `llms.txt` lines 19-262 (Flux patterns and bootstrap)
-- `docs/service-standards-and-lifecycle.md` lines 82-174 (GitOps architecture)
-- `applications/base/services/cert-manager/helmrelease.yaml` (HelmRelease example)
-- `applications/base/services/cert-manager/kustomization.yaml` (Kustomization example)
-- `docs/onboarding-service-overlay.md` (Service onboarding workflow)
-- `docs/analysis/S4-FLUXCD-GITOPS.md` (FluxCD analysis)
+- [docs/how-to/service-onboarding.md](../how-to/service-onboarding.md)
+- [docs/how-to/troubleshoot-flux.md](../how-to/troubleshoot-flux.md)
+- [docs/service-standards-and-lifecycle.md](../service-standards-and-lifecycle.md)
+- [applications/base/services/cert-manager/helmrelease.yaml](../../applications/base/services/cert-manager/helmrelease.yaml)
+- [applications/base/services/cert-manager/kustomization.yaml](../../applications/base/services/cert-manager/kustomization.yaml)

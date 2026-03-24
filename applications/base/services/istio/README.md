@@ -1,7 +1,9 @@
 # Istio – Base Configuration
 
 This directory contains the **base manifests** for deploying [Istio](https://istio.io/), a service mesh for securing, connecting, and observing microservices.  
-It is designed to be **consumed by cluster repositories** as a remote base, allowing each cluster to apply **custom overrides** as needed.
+It can be consumed directly by cluster repositories or imported by the private enterprise repository for enterprise-specific overrides.
+
+For service overview, use cases, examples, and upstream references, see the [service reference](../../../../docs/reference/services/istio.md).
 
 **About Istio:**
 

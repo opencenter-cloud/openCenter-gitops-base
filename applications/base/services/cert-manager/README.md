@@ -1,11 +1,13 @@
 # Cert-manager – Base Configuration
 
-This directory contains the **base manifests** for deploying [Cert-manager](https://cert-manager.io/). It is intended to be consumed by **cluster repositories** as a remote base, with the option to provide cluster-specific overrides.
+This directory contains the **base manifests** for deploying [Cert-manager](https://cert-manager.io/). It can be consumed directly by cluster repositories or imported by the private enterprise repository for enterprise-specific overrides.
+
+For service overview, use cases, examples, and upstream references, see the [service reference](../../../../docs/reference/services/cert-manager.md).
 
 ## Public Repository Scope
 
-- This public repository contains the **community/base** cert-manager deployment only.
-- Enterprise-specific values, chart source changes, and enterprise-only resources must be delivered from a **private enterprise repository** as an overlay/component on top of this base.
+- This public repository contains the **base** cert-manager deployment backed by upstream public artifacts.
+- If private chart sources, private registries, or enterprise-only changes are required, they should be applied from the **private enterprise repository** that consumes this base.
 
 ## Cert-Manager
 

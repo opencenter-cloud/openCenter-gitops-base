@@ -5,6 +5,8 @@ It defines clear access boundaries for different teams (admins, observability, p
 
 By using **namespace labels** and centralized **OIDC groups**, the configuration enables **multi-team, least-privilege access management** that is both **GitOps-friendly and self-maintaining**.
 
+For the parent service overview, use cases, examples, and upstream references, see the [Keycloak service reference](../../../../../docs/reference/services/keycloak.md).
+
 ---
 
 ## Prerequisites

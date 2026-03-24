@@ -1,7 +1,11 @@
 ---
+id: troubleshoot-flux
+sidebar_label: Troubleshoot Flux
+description: Troubleshooting guide for FluxCD reconciliation issues in openCenter clusters.
 doc_type: how-to
 title: "Troubleshoot FluxCD Reconciliation"
 audience: "platform engineers"
+tags: [fluxcd, troubleshooting, gitops, reconciliation]
 ---
 
 # Troubleshoot FluxCD Reconciliation
@@ -57,7 +61,7 @@ flux get kustomizations
 ```bash
 flux get sources git
 NAME                    READY   MESSAGE
-opencenter-base         False   authentication required
+opencenter-base         False   fetch failed
 ```
 
 **Diagnosis:**
@@ -68,35 +72,25 @@ kubectl describe gitrepository opencenter-base -n flux-system
 
 Look for:
 ```
-Message: unable to clone: authentication required
+Message: failed to checkout and determine revision
 ```
 
 **Solution:**
 
-Verify SSH key secret exists:
+Use HTTPS in the base-repo `GitRepository` and do not attach a `secretRef`.
 
-```bash
-kubectl get secret opencenter-base -n flux-system
+```yaml
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: opencenter-base
+  namespace: flux-system
+spec:
+  interval: 15m
+  url: https://github.com/opencenter-cloud/openCenter-gitops-base
+  ref:
+    branch: main
 ```
-
-If missing, recreate:
-
-```bash
-flux create secret git opencenter-base \
-  --url=ssh://git@github.com/rackerlabs/openCenter-gitops-base.git \
-  --ssh-key-algorithm=ed25519 \
-  --namespace=flux-system
-```
-
-Add public key to GitHub repository as deploy key.
-
-Verify SSH key format:
-
-```bash
-kubectl get secret opencenter-base -n flux-system -o jsonpath='{.data.identity}' | base64 -d | head -1
-```
-
-Should start with `-----BEGIN OPENSSH PRIVATE KEY-----`.
 
 Force reconciliation:
 
@@ -632,7 +626,7 @@ flux resume kustomization my-service
 ## Evidence
 
 **Sources:**
-- `llms.txt` lines 19-262 - Flux bootstrap and patterns
-- `docs/service-standards-and-lifecycle.md` lines 82-174 - GitOps architecture
+- [llms.txt](../../llms.txt) lines 19-262 - Flux bootstrap and patterns
+- [docs/service-standards-and-lifecycle.md](../service-standards-and-lifecycle.md) lines 82-174 - GitOps architecture
 - S4-FLUXCD-GITOPS.md - FluxCD configuration and patterns
 - S1-APP-RUNTIME-APIS.md - HelmRelease patterns

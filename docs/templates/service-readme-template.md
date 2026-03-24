@@ -11,7 +11,7 @@ tags: [template, readme, services, documentation]
 # [Service Name] – Base Configuration
 
 This directory contains the **base manifests** for deploying [Service Name](https://[service-url]), [brief description of what the service does].  
-It is designed to be **consumed by cluster repositories** as a remote base, allowing each cluster to apply **custom overrides** as needed.
+It can be consumed directly by cluster repositories or imported by the private enterprise repository for enterprise-specific overrides.
 
 **About [Service Name]:**
 

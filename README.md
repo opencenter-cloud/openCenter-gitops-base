@@ -1,19 +1,18 @@
-# Applications Directory
+# openCenter GitOps Base
 
-This directory contains GitOps application manifests that are deployed as part of the openCenter cluster provisioning workflow. All applications are managed using Flux CD and follow GitOps principles for declarative, version-controlled deployments.
+`openCenter-gitops-base` is the shared foundation for building and operating openCenter clusters.
 
-## Recent Changes
+It covers two parts of the platform lifecycle:
 
-**ADR-001 Migration Complete (2026-02-20):** All services have been migrated to Kustomize Components pattern. The old `community/` and `enterprise/` directory structure has been replaced with a cleaner component-based approach.
+- `iac/` provisions the underlying infrastructure, renders Kubespray inventory and variables, and initiates Kubernetes cluster deployment through Kubespray
+- `applications/` provides the reusable GitOps base for platform services deployed into Kubernetes clusters
 
-- **Breaking Change:** Customer overlays must be updated. See [Customer Overlay Migration Guide](docs/customer-overlay-migration-guide.md)
-- **New Structure:** Services now use `components/enterprise/` for enterprise features
-- **Benefits:** 60% file reduction, simplified version upgrades, zero duplication
+The service base in this repository is intended to be consumed in two ways:
 
-For details, see:
-- [ADR-001: Kustomize Components Pattern](../ADRS/ADR-001-kustomize-components-for-enterprise-pattern.md)
-- [Service Structure Reference](docs/service-structure.md)
-- [Customer Overlay Migration Guide](docs/customer-overlay-migration-guide.md)
+- directly by cluster repositories that apply cluster-specific overrides
+- indirectly by the private enterprise repository, which imports this base and applies private source, image, and values rewrites
+
+The `applications/` tree is managed with Flux CD and follows declarative, version-controlled GitOps patterns.
 
 ## Directory Structure
 
@@ -33,36 +32,37 @@ applications/
 
 ### Core Services
 
-| Service | Namespace | Purpose | Documentation |
-|---------|-----------|---------|---------------|
-| **[cert-manager](applications/base/services/cert-manager/)** | `cert-manager` | Automated TLS certificate management | [README](applications/base/services/cert-manager/README.md) |
-| **[external-snapshotter](applications/base/services/external-snapshotter/)** | `kube-system` | Volume snapshot management | [README](applications/base/services/external-snapshotter/README.md) |
-| **[gateway-api](applications/base/services/gateway-api/)** | `gateway-system` | Next-generation ingress API | [README](applications/base/services/gateway-api/README.md) |
-| **[harbor](applications/base/services/harbor/)** | `harbor` | Container registry with security scanning | [README](applications/base/services/harbor/README.md) |
-| **[headlamp](applications/base/services/headlamp/)** | `headlamp` | Modern Kubernetes dashboard | [README](applications/base/services/headlamp/README.md) |
-| **[keycloak](applications/base/services/keycloak/)** | `keycloak` | Identity and access management | [README](applications/base/services/keycloak/README.md) |
-| **[kyverno](applications/base/services/kyverno/)** | `kyverno` | Kubernetes-native policy engine | [README](applications/base/services/kyverno/README.md) |
-| **[longhorn](applications/base/services/longhorn/)** | `longhorn-system` | Distributed block storage | [README](applications/base/services/longhorn/README.md) |
-| **[metallb](applications/base/services/metallb/)** | `metallb-system` | Load balancer for bare-metal clusters | [README](applications/base/services/metallb/README.md) |
-| **[olm](applications/base/services/olm/)** | `olm` | Operator Lifecycle Manager | [README](applications/base/services/olm/README.md) |
-| **[openstack-ccm](applications/base/services/openstack-ccm/)** | `kube-system` | OpenStack Cloud Controller Manager | [README](applications/base/services/openstack-ccm/README.md) |
-| **[openstack-csi](applications/base/services/openstack-csi/)** | `kube-system` | OpenStack Cinder CSI driver | [README](applications/base/services/openstack-csi/README.md) |
-| **[postgres-operator](applications/base/services/postgres-operator/)** | `postgres-operator` | PostgreSQL cluster management | [README](applications/base/services/postgres-operator/README.md) |
-| **[rbac-manager](applications/base/services/rbac-manager/)** | `rbac-manager` | RBAC management automation | [README](applications/base/services/rbac-manager/README.md) |
-| **[sealed-secrets](applications/base/services/sealed-secrets/)** | `kube-system` | GitOps-friendly secret management | [README](applications/base/services/sealed-secrets/README.md) |
-| **[velero](applications/base/services/velero/)** | `velero` | Backup and disaster recovery | [README](applications/base/services/velero/README.md) |
-| **[vsphere-csi](applications/base/services/vsphere-csi/)** | `vmware-system-csi` | vSphere storage integration | [README](applications/base/services/vsphere-csi/README.md) |
-| **[weave-gitops](applications/base/services/weave-gitops/)** | `flux-system` | GitOps dashboard for Flux | [README](applications/base/services/weave-gitops/README.md) |
+| Service | Namespace | Version | Purpose | Documentation |
+|---------|-----------|---------|---------|---------------|
+| **[cert-manager](applications/base/services/cert-manager/)** | `cert-manager` | `v1.18.2` | Automated TLS certificate management | [README](applications/base/services/cert-manager/README.md) |
+| **[external-snapshotter](applications/base/services/external-snapshotter/)** | `external-snapshotter` | `v8.2.1` | Volume snapshot management | [README](applications/base/services/external-snapshotter/README.md) |
+| **[gateway-api](applications/base/services/gateway-api/)** | `envoy-gateway-system` | `v0.0.0-latest` | Next-generation ingress API | [README](applications/base/services/gateway-api/README.md) |
+| **[harbor](applications/base/services/harbor/)** | `harbor` | `1.17.2` | Container registry with security scanning | [README](applications/base/services/harbor/README.md) |
+| **[headlamp](applications/base/services/headlamp/)** | `headlamp` | `0.35.0` | Modern Kubernetes dashboard | [README](applications/base/services/headlamp/README.md) |
+| **[istio](applications/base/services/istio/)** | `istio-system` | `1.28.3` | Service mesh for traffic management, security, and observability | [README](applications/base/services/istio/README.md) |
+| **[keycloak](applications/base/services/keycloak/)** | `keycloak` | `26.4.2` | Identity and access management | [README](applications/base/services/keycloak/README.md) |
+| **[kyverno](applications/base/services/kyverno/)** | `kyverno` | `3.6.0` | Kubernetes-native policy engine | [README](applications/base/services/kyverno/README.md) |
+| **[longhorn](applications/base/services/longhorn/)** | `longhorn-system` | `1.11.0` | Distributed block storage | [README](applications/base/services/longhorn/README.md) |
+| **[metallb](applications/base/services/metallb/)** | `metallb-system` | `0.15.2` | Load balancer for bare-metal clusters | [README](applications/base/services/metallb/README.md) |
+| **[olm](applications/base/services/olm/)** | `olm` | `v0.34.0` | Operator Lifecycle Manager | [README](applications/base/services/olm/README.md) |
+| **[openstack-ccm](applications/base/services/openstack-ccm/)** | `openstack-ccm` | `2.33.1` | OpenStack Cloud Controller Manager | [README](applications/base/services/openstack-ccm/README.md) |
+| **[openstack-csi](applications/base/services/openstack-csi/)** | `openstack-csi` | `2.33.1` | OpenStack Cinder CSI driver | [README](applications/base/services/openstack-csi/README.md) |
+| **[postgres-operator](applications/base/services/postgres-operator/)** | `postgres-operator` | `1.14.0` | PostgreSQL cluster management | [README](applications/base/services/postgres-operator/README.md) |
+| **[rbac-manager](applications/base/services/rbac-manager/)** | `rbac-manager` | `1.21.1` | RBAC management automation | [README](applications/base/services/rbac-manager/README.md) |
+| **[sealed-secrets](applications/base/services/sealed-secrets/)** | `sealed-secrets` | `2.17.3` | GitOps-friendly secret management | [README](applications/base/services/sealed-secrets/README.md) |
+| **[strimzi-kafka-operator](applications/base/services/strimzi-kafka-operator/)** | `kafka-system` | `0.50.0` | Kubernetes operator for Apache Kafka | [README](applications/base/services/strimzi-kafka-operator/README.md) |
+| **[velero](applications/base/services/velero/)** | `velero` | `10.1.1` | Backup and disaster recovery | [README](applications/base/services/velero/README.md) |
+| **[vsphere-csi](applications/base/services/vsphere-csi/)** | `vmware-system-csi` | `3.8.1` | vSphere storage integration | [README](applications/base/services/vsphere-csi/README.md) |
 
 ### Observability Stack
 
-| Component | Namespace | Purpose | Documentation |
-|-----------|-----------|---------|---------------|
-| **[observability](applications/base/services/observability/)** | `observability` | Complete observability stack | [README](applications/base/services/observability/README.md) |
-| **[kube-prometheus-stack](applications/base/services/observability/kube-prometheus-stack/)** | `observability` | Prometheus, Grafana, Alertmanager | [README](applications/base/services/observability/kube-prometheus-stack/README.md) |
-| **[loki](applications/base/services/observability/loki/)** | `observability` | Log aggregation and storage | [README](applications/base/services/observability/loki/README.md) |
-| **[tempo](applications/base/services/observability/tempo/)** | `observability` | Distributed tracing backend | [README](applications/base/services/observability/tempo/README.md) |
-| **[opentelemetry-kube-stack](applications/base/services/observability/opentelemetry-kube-stack/)** | `observability` | OpenTelemetry collection framework | [README](applications/base/services/observability/opentelemetry-kube-stack/README.md) |
+| Component | Namespace | Version | Purpose | Documentation |
+|-----------|-----------|---------|---------|---------------|
+| **[kube-prometheus-stack](applications/base/services/observability/kube-prometheus-stack/)** | `observability` | `77.6.0` | Prometheus, Grafana, Alertmanager | [README](applications/base/services/observability/kube-prometheus-stack/README.md) |
+| **[loki](applications/base/services/observability/loki/)** | `observability` | `6.45.2` | Log aggregation and storage | [README](applications/base/services/observability/loki/README.md) |
+| **[mimir](applications/base/services/observability/mimir/)** | `observability` | `6.0.3` | Horizontally scalable long-term metrics storage | [README](applications/base/services/observability/mimir/README.md) |
+| **[tempo](applications/base/services/observability/tempo/)** | `observability` | `1.55.0` | Distributed tracing backend | [README](applications/base/services/observability/tempo/README.md) |
+| **[opentelemetry-kube-stack](applications/base/services/observability/opentelemetry-kube-stack/)** | `observability` | `0.11.1` | OpenTelemetry collection framework | [README](applications/base/services/observability/opentelemetry-kube-stack/README.md) |
 
 ### Managed Services
 
@@ -78,134 +78,20 @@ applications/
 | **[pod-security-policies](applications/policies/pod-security-policies/)** | Various | Pod security standards enforcement |
 | **[rbac](applications/policies/rbac/)** | Various | Role-based access control |
 
-## Deployment Architecture
-
-All applications follow these patterns:
-
-### Flux CD Integration
-- **HelmRepository**: Defines Helm chart sources
-- **HelmRelease**: Manages application deployments
-- **Kustomization**: Handles plain Kubernetes manifests
-- **GitRepository**: References external Git sources
-
-### Common Configuration
-- **Interval**: 5-minute reconciliation cycles
-- **Timeout**: 10-minute installation/upgrade timeouts
-- **Drift Detection**: Enabled for configuration consistency
-- **Remediation**: 3-retry policy with last-failure remediation
-
-### Namespace Organization
-- `cert-manager`: TLS certificate management
-- `gateway-system`: Gateway API controllers
-- `harbor`: Container registry and security scanning
-- `headlamp`: Kubernetes dashboard
-- `keycloak`: Identity and access management
-- `kyverno`: Policy engine and governance
-- `longhorn-system`: Distributed storage
-- `metallb-system`: Load balancing for bare-metal
-- `observability`: Complete monitoring, logging, and tracing stack
-- `olm`: Operator lifecycle management
-- `postgres-operator`: PostgreSQL database management
-- `rbac-manager`: RBAC automation
-- `velero`: Backup and disaster recovery
-- `vmware-system-csi`: vSphere storage integration
-- `flux-system`: GitOps controllers and dashboards
-- `rackspace`: Managed services
-
-## Usage
-
-Applications are automatically deployed during cluster provisioning via the openCenter workflow:
-
-1. **Cluster Bootstrap**: Infrastructure provisioning
-2. **Flux Installation**: GitOps controller setup
-3. **Application Deployment**: Flux processes application manifests
-4. **Configuration Sync**: Continuous reconciliation with Git state
-
-### Manual Application Management
-
-```bash
-# Check application status
-kubectl get helmreleases -A
-
-# View application logs
-kubectl logs -n flux-system deploy/helm-controller
-
-# Force reconciliation
-flux reconcile helmrelease <app-name> -n <namespace>
-```
-
-### Customization
-
-Applications can be customized through:
-
-1. **Helm Values**: Override default chart values
-2. **Kustomizations**: Patch base configurations
-3. **Overlays**: Environment-specific modifications
-4. **ConfigMaps/Secrets**: Runtime configuration
-
-## Security Considerations
-
-- All Helm repositories use HTTPS
-- Applications follow least-privilege access patterns
-- Network policies enforce traffic segmentation
-- Pod security standards prevent privilege escalation
-- Secrets are encrypted using sealed-secrets or SOPS
-
-## Monitoring and Observability
-
-The observability stack provides comprehensive monitoring, logging, and tracing:
-
-### Metrics and Monitoring
-- **[Kube-Prometheus-Stack](applications/base/services/observability/kube-prometheus-stack/)**: Prometheus, Grafana, and Alertmanager
-- **Metrics Collection**: Application and infrastructure metrics
-- **Dashboards**: Pre-configured Grafana dashboards for Kubernetes and applications
-- **Alerting**: Production-ready alerting rules with notification routing
-
-### Logging
-- **[Loki](applications/base/services/observability/loki/)**: Cost-effective log aggregation and storage
-- **Log Collection**: Kubernetes and application logs via OpenTelemetry
-- **Log Querying**: LogQL for powerful log filtering and analysis
-- **Retention**: Configurable log retention policies
-
-### Tracing
-- **[Tempo](applications/base/services/observability/tempo/)**: Distributed tracing backend
-- **Trace Collection**: OpenTelemetry-based trace ingestion
-- **Trace Analysis**: TraceQL for trace querying and analysis
-- **Integration**: Unified view with metrics and logs in Grafana
-
-### Data Collection
-- **[OpenTelemetry](applications/base/services/observability/opentelemetry-kube-stack/)**: Unified observability framework
-- **Auto-instrumentation**: Automatic telemetry collection for applications
-- **Data Processing**: Transformation, filtering, and enrichment pipelines
-- **Multi-backend Export**: Support for multiple observability backends
-
-## Support and Maintenance
-
-- **Updates**: Managed through GitOps workflow with Flux CD
-- **Backup**: [Velero](applications/base/services/velero/) provides application and persistent volume backup/restore
-- **Security**: Regular security updates via Flux automation and [Kyverno](applications/base/services/kyverno/) policies
-- **Monitoring**: Health checks via [Prometheus/Grafana](applications/base/services/observability/)
-- **Storage**: [Longhorn](applications/base/services/longhorn/) for distributed block storage or [vSphere CSI](applications/base/services/vsphere-csi/)/[OpenStack CSI](applications/base/services/openstack-csi/) for cloud storage
-- **Secrets Management**: [Sealed Secrets](applications/base/services/sealed-secrets/) for GitOps-friendly secret encryption
-- **Identity Management**: [Keycloak](applications/base/services/keycloak/) for OIDC authentication and authorization
-
 ## Documentation
 
-For detailed configuration and troubleshooting information, see the individual service documentation:
+Use the documentation set under `docs/` together with the service README files for architecture, onboarding, configuration, and troubleshooting.
 
-- **Service Templates**: [docs/templates/](docs/templates/) - Templates for creating new service documentation
-- **Configuration Guides**: Each service directory contains comprehensive README files with:
-  - Configuration options and examples
-  - Cluster-specific override guidance
-  - Verification and troubleshooting steps
-  - References to upstream documentation
+### Start Here
 
-## Getting Started
+- [Infrastructure as Code](iac/README.md) - Cluster provisioning, Kubespray inventory generation, and Kubernetes bootstrap flow
+- [Documentation Index](docs/index.md) - Main entry point for tutorials, how-to guides, references, and explanations
+- [Getting Started Tutorial](docs/tutorials/getting-started.md) - Deploy a first service end to end
+- [Cluster Overlay Guidance](docs/how-to/cluster-overlay-guidance.md) - How cluster repos consume this base
+- [Service Catalog](docs/reference/service-catalog.md) - Service inventory, dependencies, and configuration surfaces
 
-1. **Review Service Documentation**: Check individual service README files for configuration requirements
-2. **Customize Overrides**: Create cluster-specific configuration overrides as needed
-3. **Deploy via GitOps**: Commit changes to trigger Flux reconciliation
-4. **Monitor Deployment**: Use [Weave GitOps](applications/base/services/weave-gitops/) or [Headlamp](applications/base/services/headlamp/) dashboards to monitor deployment status
-5. **Verify Services**: Follow verification steps in each service's documentation
+### Service Docs
 
-For application-specific documentation, see individual application directories and their respective upstream documentation.
+- Service directories under `applications/base/services/` and `applications/base/managed-services/` contain repo-local deployment context and links to supporting docs
+- [Service Reference Library](docs/reference/services/index.md) - Per-service overviews, integration points, examples, and upstream references
+- [Service Configuration Guides](docs/how-to/services/index.md) - Practical override patterns, validation steps, and troubleshooting guidance for selected services

@@ -303,7 +303,7 @@ sops:
 ### Before Encryption
 
 ```yaml
-# helm-values/override-values-v1.18.2.yaml
+# helm-values/override-values-v<chart-version>.yaml
 replicaCount: 3
 
 database:
@@ -511,11 +511,10 @@ openCenter also supports Bitnami Sealed Secrets as an alternative to SOPS.
 
 ---
 
-## Evidence
+## Source Material
 
 **Source Files:**
-- `customers/*/infrastructure/clusters/*/.sops.yaml` (configuration examples)
-- `customers/*/applications/overlays/*/.sops.yaml` (overlay configurations)
-- `docs/analysis/S4-FLUXCD-GITOPS.md` (SOPS workflow analysis)
-- `docs/analysis/S7-SECURITY-GOVERNANCE.md` (secret management analysis)
-- `llms.txt` lines 209-262 (SOPS workflow)
+- [Manage Secrets with SOPS](../how-to/manage-secrets.md)
+- [Service Onboarding Workflow](../how-to/service-onboarding.md)
+- [Security Model](../explanation/security-model.md)
+- [FluxCD Resources Reference](flux-resources.md)

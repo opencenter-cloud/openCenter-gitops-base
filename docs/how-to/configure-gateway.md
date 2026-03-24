@@ -1,7 +1,11 @@
 ---
+id: configure-gateway
+sidebar_label: Configure Gateway
+description: Step-by-step guide for configuring Gateway API routing, TLS, and HTTPRoute resources.
 doc_type: how-to
 title: "Configure Gateway API Routing"
 audience: "platform engineers"
+tags: [gateway-api, routing, ingress, tls]
 ---
 
 # Configure Gateway API Routing
@@ -514,8 +518,8 @@ curl -k https://my-service.example.com/health
 ## Evidence
 
 **Sources:**
-- `applications/base/services/gateway-api/README.md` - Gateway API overview
-- `applications/base/services/gateway-api/helmrelease.yaml` - Envoy Gateway deployment
-- `docs/cert-manager-config-guide.md` - TLS certificate automation
+- [applications/base/services/gateway-api/README.md](../../applications/base/services/gateway-api/README.md) - Gateway API overview
+- [applications/base/services/gateway-api/helmrelease.yaml](../../applications/base/services/gateway-api/helmrelease.yaml) - Envoy Gateway deployment
+- [docs/how-to/services/cert-manager.md](services/cert-manager.md) - TLS certificate automation
 - S5-ENVOY-GATEWAY-TRAFFIC.md - Gateway API implementation
 - S1-APP-RUNTIME-APIS.md - API exposure patterns

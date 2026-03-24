@@ -1,7 +1,11 @@
 ---
+id: gitops-workflow
+sidebar_label: GitOps Workflow
+description: Explains the FluxCD GitOps workflow used by openCenter from GitRepository through Kustomization and HelmRelease reconciliation.
 doc_type: explanation
 title: "GitOps Workflow in openCenter"
 audience: "platform engineers, architects"
+tags: [gitops, fluxcd, reconciliation, workflow]
 ---
 
 # GitOps Workflow in openCenter
@@ -30,7 +34,7 @@ These controllers run independently but coordinate through Kubernetes resources.
 
 The typical deployment flow in openCenter follows this pattern:
 
-1. **GitRepository** defines the source repository. For openCenter-gitops-base services, customer clusters create GitRepository resources pointing to specific tags:
+1. **GitRepository** defines the source repository. For `openCenter-gitops-base` services, cluster repositories create `GitRepository` resources pointing to specific tags:
 
 ```yaml
 apiVersion: source.toolkit.fluxcd.io/v1
@@ -40,14 +44,12 @@ metadata:
   namespace: flux-system
 spec:
   interval: 15m
-  url: ssh://git@github.com/rackerlabs/openCenter-gitops-base.git
+  url: https://github.com/opencenter-cloud/openCenter-gitops-base
   ref:
-    tag: v1.0.0
-  secretRef:
-    name: opencenter-base
+    tag: <release-tag>
 ```
 
-The source controller clones this repository every 15 minutes and checks if the tag has changed. Using tags instead of branches provides stability - services only update when you explicitly change the tag reference.
+The source controller fetches this repository every 15 minutes and checks if the tag has changed. Using tags instead of branches provides stability - services only update when you explicitly change the tag reference.
 
 2. **Kustomization** applies manifests from the GitRepository. It specifies a path within the repository and can depend on other Kustomizations:
 
@@ -167,13 +169,12 @@ GitOps works well for declarative configuration but has limitations:
 
 For these cases, openCenter uses a hybrid approach: GitOps for configuration, imperative tools for operations.
 
-## Evidence
+## Source Material
 
-This explanation is based on the following repository analysis:
+This explanation is based on the following repository sources:
 
-- FluxCD bootstrap and reconciliation patterns: `llms.txt` lines 19-262
-- GitRepository configuration: `applications/base/services/cert-manager/kustomization.yaml`
-- HelmRelease drift detection: `applications/base/services/cert-manager/helmrelease.yaml`
-- GitOps architecture and promotion workflow: `docs/service-standards-and-lifecycle.md` lines 82-174
-- Reconciliation intervals and remediation policies: `docs/analysis/S4-FLUXCD-GITOPS.md`
-- Dependency management patterns: `docs/analysis/S4-FLUXCD-GITOPS.md` lines 130-165
+- FluxCD bootstrap and reconciliation patterns: [docs/how-to/service-onboarding.md](../how-to/service-onboarding.md)
+- GitRepository configuration: [docs/reference/flux-resources.md](../reference/flux-resources.md)
+- HelmRelease drift detection: [applications/base/services/cert-manager/helmrelease.yaml](../../applications/base/services/cert-manager/helmrelease.yaml)
+- GitOps architecture and promotion workflow: [docs/service-standards-and-lifecycle.md](../service-standards-and-lifecycle.md)
+- Cluster-repo consumption model: [docs/how-to/cluster-overlay-guidance.md](../how-to/cluster-overlay-guidance.md)

@@ -1,7 +1,9 @@
 # Loki – Base Configuration
 
 This directory contains the **base manifests** for deploying [Grafana Loki](https://grafana.com/oss/loki/), a horizontally-scalable, highly-available log aggregation system designed for cloud-native environments.
-It is designed to be **consumed by cluster repositories** as a remote base, allowing each cluster to apply **custom overrides** as needed.
+It can be consumed directly by cluster repositories or imported by the private enterprise repository for enterprise-specific overrides.
+
+For service overview, use cases, examples, and upstream references, see the [service reference](../../../../../docs/reference/services/loki.md).
 
 **About Grafana Loki:**
 

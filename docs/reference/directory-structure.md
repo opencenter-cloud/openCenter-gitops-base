@@ -2,7 +2,7 @@
 id: directory-structure
 title: "Directory Structure Reference"
 sidebar_label: Directory Structure
-description: Complete directory structure of the openCenter-gitops-base repository with descriptions of each component.
+description: Directory structure of the openCenter-gitops-base repository and what each area is responsible for.
 doc_type: reference
 audience: "platform engineers, operators, architects"
 tags: [directory, structure, repository, reference]
@@ -12,222 +12,233 @@ tags: [directory, structure, repository, reference]
 
 **Type:** Reference  
 **Audience:** All users  
-**Last Updated:** 2026-02-14
+**Last Updated:** 2026-03-24
 
-This document describes the complete directory structure of the openCenter-gitops-base repository.
+This document describes the directory structure of `openCenter-gitops-base`.
 
----
+This repository contains the **base service library**. It does not contain per-service enterprise components or private artifact overlays; those belong in the private enterprise repository.
 
 ## Repository Root
 
-```
+```text
 openCenter-gitops-base/
-├── .github/                    # GitHub Actions workflows and templates
-├── .mise/                      # Mise task runner configuration
-├── applications/               # Kubernetes application manifests
-├── docs/                       # Documentation
-├── iac/                        # Infrastructure as Code (OpenTofu/Terraform)
-├── scripts/                    # Utility scripts
-├── templates/                  # Template files for scaffolding
-├── tools/                      # Development and migration tools
-├── .gitignore                  # Git ignore patterns
-├── .pre-commit-config.yaml     # Pre-commit hooks configuration
-├── .yamllint                   # YAML linting rules
-├── llms.txt                    # LLM-friendly repository documentation
-├── mise.toml                   # Mise task definitions
-└── README.md                   # Repository overview
+├── .github/
+├── applications/
+├── docs/
+├── iac/
+├── playbooks/
+├── README.md
+└── ...
 ```
-
----
 
 ## Applications Directory
 
-The `applications/` directory contains all Kubernetes service manifests organized by deployment layer.
+`applications/` contains the Kubernetes manifests that make up the base platform.
 
-```
+```text
 applications/
-├── base/                       # Base service definitions
-│   ├── services/               # Platform services
-│   │   ├── calico/             # Calico CNI networking
-│   │   ├── cert-manager/       # Certificate management
-│   │   ├── envoy-gateway/      # Envoy Gateway API implementation
-│   │   ├── gateway/            # Gateway API resources
-│   │   ├── harbor/             # Container registry
-│   │   ├── headlamp/           # Kubernetes UI
-│   │   ├── keycloak/           # Identity and access management
-│   │   ├── kube-prometheus-stack/  # Prometheus monitoring
-│   │   ├── kube-vip/           # Virtual IP for control plane
-│   │   ├── kyverno/            # Policy engine
-│   │   ├── loki/               # Log aggregation
-│   │   ├── longhorn/           # Distributed storage
-│   │   ├── metallb/            # Load balancer
-│   │   ├── opentelemetry-kube-stack/  # OpenTelemetry collector
-│   │   ├── sealed-secrets/     # Encrypted secrets
-│   │   ├── tempo/              # Distributed tracing
-│   │   ├── velero/             # Backup and disaster recovery
-│   │   └── vsphere-csi/        # vSphere storage driver
-│   └── kustomization.yaml      # Base kustomization
-├── community/                  # Community edition wrappers
-│   └── services/               # Service wrappers for community
-└── enterprise/                 # Enterprise edition wrappers
-    └── services/               # Service wrappers for enterprise
+├── base/
+│   ├── managed-services/
+│   └── services/
+└── policies/
 ```
 
-### Service Directory Structure
+### `applications/base/services/`
 
-Each service follows a standardized structure:
+This is the main service catalog for the base repo.
 
-```
+Examples currently present include:
+
+- `cert-manager/`
+- `external-snapshotter/`
+- `gateway-api/`
+- `harbor/`
+- `headlamp/`
+- `istio/`
+- `keycloak/`
+- `kyverno/`
+- `longhorn/`
+- `metallb/`
+- `observability/`
+- `olm/`
+- `openstack-ccm/`
+- `openstack-csi/`
+- `postgres-operator/`
+- `rbac-manager/`
+- `sealed-secrets/`
+- `strimzi-kafka-operator/`
+- `velero/`
+- `vsphere-csi/`
+
+### Common Service Shapes
+
+#### Standard Helm-Based Service
+
+```text
 applications/base/services/<service-name>/
-├── components/                 # Kustomize components (optional)
-│   └── enterprise/             # Enterprise-specific resources
-│       ├── kustomization.yaml
-│       └── <resource-files>
-├── helm-values/                # Helm chart values
-│   ├── base-values-<version>.yaml
-│   ├── override-values-<version>.yaml
-│   └── enterprise-values-<version>.yaml
-├── namespace.yaml              # Namespace definition
-├── source.yaml                 # HelmRepository or GitRepository
-├── helmrelease.yaml            # HelmRelease resource
-└── kustomization.yaml          # Kustomization manifest
+├── kustomization.yaml
+├── namespace.yaml
+├── source.yaml
+├── helmrelease.yaml
+└── helm-values/
+    └── values-<version>.yaml
 ```
 
----
+#### Helm Service with Extra Resources
 
-## Infrastructure as Code (iac/)
-
-Contains OpenTofu/Terraform configurations for cluster provisioning.
-
-```
-iac/
-├── modules/                    # Reusable Terraform modules
-│   ├── openstack/              # OpenStack provider modules
-│   ├── vmware/                 # VMware vSphere modules
-│   └── kind/                   # Kind (local) modules
-├── examples/                   # Example configurations
-└── README.md                   # IaC documentation
+```text
+applications/base/services/<service-name>/
+├── kustomization.yaml
+├── namespace.yaml
+├── source.yaml
+├── helmrelease.yaml
+├── helm-values/
+└── extra manifests...
 ```
 
----
+Examples:
 
-## Documentation (docs/)
+- `longhorn/`
+- `vsphere-csi/`
 
+#### Manifest-Only Service
+
+```text
+applications/base/services/<service-name>/
+├── kustomization.yaml
+├── namespace.yaml
+└── local or remote manifests
 ```
+
+Examples:
+
+- `external-snapshotter/`
+- `olm/`
+
+#### Multi-Stage Service
+
+```text
+applications/base/services/<service-name>/
+├── 00-<stage>/
+├── 10-<stage>/
+├── 20-<stage>/
+└── 30-<stage>/
+```
+
+Examples:
+
+- `keycloak/`
+- `istio/`
+
+### Grouping Directories
+
+Some directories group related services or shared resources and are not themselves a single deployable service.
+
+Examples:
+
+- `applications/base/services/observability/`
+- `applications/base/services/global/`
+
+For example, `observability/` contains components such as:
+
+- `kube-prometheus-stack/`
+- `loki/`
+- `mimir/`
+- `opentelemetry-kube-stack/`
+- `tempo/`
+- `namespace/`
+- `sources/`
+
+## Managed Services
+
+`applications/base/managed-services/` contains services managed separately from the core platform service catalog.
+
+Example:
+
+- `alert-proxy/`
+
+## Policies
+
+`applications/policies/` contains policy resources such as:
+
+- network policies
+- RBAC-related policy resources
+- pod security or governance resources
+
+## Docs
+
+`docs/` contains repository documentation organized by Diataxis-style intent:
+
+```text
 docs/
-├── analysis/                   # Architecture analysis documents
-│   ├── 00-INTAKE-EVIDENCE-INDEX.md
-│   ├── S1-APP-RUNTIME-APIS.md
-│   ├── S2-BUILD-DEV-TOOLING.md
-│   ├── S3-KUBERNETES-WORKLOADS.md
-│   ├── S4-FLUXCD-GITOPS.md
-│   ├── S5-ENVOY-GATEWAY-TRAFFIC.md
-│   ├── S6-OBSERVABILITY.md
-│   ├── S7-SECURITY-GOVERNANCE.md
-│   ├── S8-CICD-RELEASE.md
-│   ├── A-CODE-REVIEW.md
-│   └── B-DOCUMENTATION-PLAN.md
-├── reference/                  # Reference documentation
-│   └── directory-structure.md  # This file
-├── templates/                  # Documentation templates
-├── service-standards-and-lifecycle.md  # Service standards
-├── adding-new-service.md       # How to add services
-├── onboarding-service-overlay.md  # Service overlay guide
-└── <service>-config-guide.md   # Service-specific guides
+├── explanation/
+├── how-to/
+├── reference/
+├── templates/
+├── tutorials/
+└── *.md
 ```
 
----
+Important references:
 
-## Tools Directory
+- `docs/reference/services/` for per-service reference pages
+- `docs/explanation/enterprise-components.md` for the base-vs-enterprise repo relationship
+- `docs/reference/kustomize-patterns.md` for current base service layout patterns
 
-Development and migration utilities.
+## IaC
 
-```
-tools/
-├── kustomize-migration/        # Kustomize component migration tool
-│   ├── cmd/                    # CLI commands
-│   ├── internal/               # Internal packages
-│   ├── go.mod                  # Go module definition
-│   └── README.md               # Tool documentation
-└── <other-tools>/              # Additional tooling
-```
+`iac/` contains the Infrastructure as Code used to create Kubernetes clusters.
 
----
+This area is responsible for:
 
-## Scripts Directory
+- collecting cluster inputs from Terraform or OpenTofu configuration
+- provisioning the underlying infrastructure
+- generating Kubespray inventory and Ansible variable files
+- triggering Kubespray from Terraform or OpenTofu local provisioners to deploy the Kubernetes cluster
 
-Utility scripts for operations and automation.
+This is separate from `applications/`, which focuses on in-cluster platform services after the cluster exists.
 
-```
-scripts/
-├── bootstrap/                  # Cluster bootstrap scripts
-├── validation/                 # Validation and testing scripts
-└── utilities/                  # General utility scripts
-```
+Important paths:
 
----
+- `iac/README.md`
+- `iac/provider/kubespray/main.tf`
+- `iac/provider/kubespray/hosts.tpl`
 
-## GitHub Workflows (.github/)
+## Service-Level File Responsibilities
 
-```
-.github/
-├── workflows/                  # GitHub Actions workflows
-│   ├── ci.yaml                 # Continuous integration
-│   ├── lint.yaml               # Linting checks
-│   └── release.yaml            # Release automation
-└── ISSUE_TEMPLATE/             # Issue templates
-```
+Typical files inside a Helm-based service directory:
 
----
+- `namespace.yaml`: namespace definition
+- `source.yaml`: upstream chart source such as `HelmRepository`
+- `helmrelease.yaml`: Flux `HelmRelease`
+- `kustomization.yaml`: base composition and `secretGenerator`
+- `helm-values/values-v<version>.yaml`: base values file
+- `README.md`: service-local documentation when present
 
-## Key Files
+## What Is Not In This Repo
 
-### Root Level
+This repo does **not** define per-service enterprise component directories or private enterprise values inside the base service paths.
 
-- **llms.txt**: LLM-friendly documentation containing repository overview, installation guides, and core concepts
-- **mise.toml**: Task runner configuration defining common development tasks
-- **.pre-commit-config.yaml**: Pre-commit hooks for code quality (yamllint, conventional commits, formatting)
-- **.yamllint**: YAML linting rules enforcing consistent formatting
-- **README.md**: Repository overview and quick start guide
+It also does not carry private enterprise install overlays or private chart source rewrites for each service.
 
-### Service Level
+Those belong in the private enterprise repository, which imports the base service paths from this repository.
 
-- **namespace.yaml**: Kubernetes namespace definition with required labels
-- **source.yaml**: FluxCD source (HelmRepository or GitRepository)
-- **helmrelease.yaml**: FluxCD HelmRelease with installation/upgrade configuration
-- **kustomization.yaml**: Kustomize manifest listing resources and components
-- **helm-values/*.yaml**: Three-tier Helm values (base, override, enterprise)
+## Naming Conventions
 
----
-
-## Directory Naming Conventions
-
-- **Directories**: kebab-case (e.g., `kube-prometheus-stack`)
-- **Files**: kebab-case with descriptive suffixes (e.g., `base-values-v1.2.3.yaml`)
-- **Components**: Located in `components/<variant>/` subdirectory
-- **Helm values**: Versioned with chart version (e.g., `base-values-v1.2.3.yaml`)
-
----
+- directories: kebab-case
+- versioned values files: `values-v<chart-version>.yaml`
+- Secret names: `<service>-values-base`, `<service>-values-override`
+- Flux resource names: aligned with the service or chart name where practical
 
 ## File Organization Principles
 
-1. **Base-first**: Base manifests in `applications/base/services/`
-2. **Edition wrappers**: Community and enterprise wrappers reference base
-3. **Components for variants**: Use Kustomize components for edition-specific resources
-4. **Versioned values**: Helm values files include chart version in filename
-5. **Self-contained services**: Each service directory is independently deployable
+1. Keep the base repo upstream-backed and reusable.
+2. Keep service directories independently renderable where practical.
+3. Split multi-stage services when deployment order matters.
+4. Keep cluster-specific and enterprise-specific deltas outside this repo.
 
----
+## References
 
-## Evidence
-
-**Source Files:**
-- `applications/base/services/*/` (all service directories)
-- `applications/community/services/*/kustomization.yaml` (community wrappers)
-- `applications/enterprise/services/*/kustomization.yaml` (enterprise wrappers)
-- `iac/` (infrastructure code)
-- `docs/` (documentation)
-- `tools/kustomize-migration/` (migration tooling)
-- `.github/workflows/` (CI/CD pipelines)
-- `llms.txt` (repository overview)
-- `mise.toml` (task definitions)
+- [Kustomize Patterns Reference](kustomize-patterns.md)
+- [Service Reference Library](services/index.md)
+- [Enterprise Components Pattern](../explanation/enterprise-components.md)

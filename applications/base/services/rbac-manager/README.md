@@ -1,7 +1,9 @@
 # RBAC Manager – Base Configuration
 
 This directory contains the **base manifests** for deploying [RBAC Manager](https://github.com/FairwindsOps/rbac-manager), a Kubernetes operator that simplifies the management of RoleBindings and ClusterRoleBindings.  
-It is designed to be **consumed by cluster repositories** as a remote base, allowing each cluster to apply **custom overrides** as needed.
+It can be consumed directly by cluster repositories or imported by the private enterprise repository for enterprise-specific overrides.
+
+For service overview, use cases, examples, and upstream references, see the [service reference](../../../../docs/reference/services/rbac-manager.md).
 
 **About RBAC Manager:**
 

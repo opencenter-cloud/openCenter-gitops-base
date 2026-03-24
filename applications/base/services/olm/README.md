@@ -2,10 +2,12 @@
 
 This directory contains the **base manifests** for deploying the [Operator Lifecycle Manager (OLM)](https://olm.operatorframework.io/), a Kubernetes component that manages installation, upgrade, and lifecycle of Operators.
 
+For service overview, use cases, examples, and upstream references, see the [service reference](../../../../docs/reference/services/olm.md).
+
 ## Public Repository Scope
 
-- This public repository contains the **community/base** OLM deployment only.
-- Enterprise-specific manifest patches, private registry rewrites, and enterprise-only resources must be delivered from a **private enterprise repository** as an overlay/component on top of this base.
+- This public repository contains the **base** OLM deployment backed by upstream public artifacts.
+- If private manifest patches, private registry rewrites, or enterprise-only changes are required, they should be applied from the **private enterprise repository** that consumes this base.
 
 ## OLM
 

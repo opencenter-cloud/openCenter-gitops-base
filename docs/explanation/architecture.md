@@ -12,7 +12,7 @@ tags: [architecture, gitops, fluxcd, design]
 
 **Type:** Explanation  
 **Audience:** Architects, platform engineers  
-**Last Updated:** 2026-02-14
+**Last Updated:** 2026-03-24
 
 This document explains the architectural design, decisions, and rationale behind openCenter-gitops-base.
 
@@ -29,7 +29,7 @@ openCenter-gitops-base is a **GitOps-managed Kubernetes platform** that provides
 3. **Automated Reconciliation** - FluxCD continuously syncs desired state
 4. **Security by Default** - SOPS encryption, hardened Helm values, policy enforcement
 5. **Multi-Cloud** - Provider-agnostic with OpenStack and vSphere support
-6. **Dual Edition** - Community and Enterprise editions from single codebase
+6. **Composable Base** - Shared base services consumed by cluster and enterprise overlays
 
 ---
 
@@ -46,8 +46,8 @@ openCenter-gitops-base is a **GitOps-managed Kubernetes platform** that provides
 │  │  Base Services (applications/base/services/)             │   │
 │  │  - HelmRelease definitions                               │   │
 │  │  - Kustomize manifests                                   │   │
-│  │  - Helm values (base, override, enterprise)             │   │
-│  │  - Components (enterprise features)                      │   │
+│  │  - Base values files                                     │   │
+│  │  - Upstream public chart sources                         │   │
 │  └──────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────┘
                               │
@@ -154,7 +154,7 @@ The platform is organized into distinct layers with clear responsibilities:
 **Rationale:**
 - **Standardization:** Consistent deployment pattern across all services
 - **Helm ecosystem:** Leverage existing Helm charts
-- **Values management:** Three-tier values hierarchy (base, override, enterprise)
+- **Values management:** Base values in this repo, optional override values from consuming overlays
 - **Drift detection:** Automatic correction of manual changes
 - **Rollback:** Built-in rollback capabilities
 
@@ -182,53 +182,52 @@ spec:
 - Complex values merging
 - Debugging requires FluxCD knowledge
 
-### ADR-003: Three-Tier Helm Values
+### ADR-003: Base Plus Overlay Values
 
-**Decision:** Use three-tier values hierarchy (base, override, enterprise)
+**Decision:** Keep required base values in `openCenter-gitops-base` and allow consuming repositories to supply optional override values
 
 **Rationale:**
-- **Separation of concerns:** Base (required), override (cluster-specific), enterprise (edition-specific)
-- **No base modification:** Cluster customization without touching base
-- **Edition support:** Single codebase for community and enterprise
-- **Maintainability:** Version upgrades only touch base values
+- **Separation of concerns:** Base repo owns reusable defaults, consuming repos own environment-specific customization
+- **No base modification:** Cluster-specific changes happen outside the base repo
+- **Reuse:** The same base service can be consumed by public cluster overlays or by private enterprise overlays
+- **Maintainability:** Base chart and values upgrades stay localized to the base repo
 
-**Hierarchy:**
-1. Chart defaults (from Helm chart)
-2. Base values (security-hardened, required)
-3. Override values (cluster-specific, optional)
-4. Enterprise values (enterprise features, optional)
+**Hierarchy in practice:**
+1. Chart defaults (from upstream chart)
+2. Base values from this repo
+3. Optional override values supplied by a consuming repo or cluster overlay
+
+**Additional enterprise values, when used, are supplied by the private enterprise repository rather than stored in this repo.**
 
 **Trade-offs:**
-- More complex than single values file
-- Requires understanding of merge order
-- Debugging merged values can be challenging
+- Requires consumers to understand where override values are sourced
+- Final rendered values may span multiple repositories
+- Debugging merged values requires checking the consuming overlay as well as the base
 
-### ADR-004: Kustomize Components for Enterprise
+### ADR-004: Enterprise Composition in the Private Repo
 
-**Decision:** Use Kustomize components for enterprise edition differences
+**Decision:** Keep enterprise Kustomize components in the private enterprise repository, not in `openCenter-gitops-base`
 
 **Rationale:**
-- **Eliminates duplication:** 60% file reduction vs parallel directories
-- **Prevents errors:** No copy-paste mistakes
-- **Backward compatible:** Existing customer overlays continue working
-- **Composable:** Components can be mixed and matched
-- **Maintainable:** Single source of truth for base configuration
+- **Public base stays clean:** No private registry or enterprise-only source wiring in this repo
+- **Enterprise stays additive:** The private repo imports the base path and patches it
+- **Separation of ownership:** Base repo owns shared service definitions; enterprise repo owns private artifacts and hardened enterprise deltas
+- **Reusability:** Public consumers can use the base directly without carrying enterprise-specific structure
 
 **Pattern:**
-```
-service/
-├── kustomization.yaml              # Base (community)
-├── helmrelease.yaml
-└── components/
-    └── enterprise/
-        ├── kustomization.yaml      # Component
-        └── helm-values/
+```text
+openCenter-gitops-base
+  -> applications/base/services/<service>
+
+openCenter-gitops-enterprise
+  -> overlays/install/kustomization.yaml imports the base path
+  -> private enterprise patches or components adjust sourceRef, images, and enterprise values
 ```
 
 **Trade-offs:**
-- Kustomize v5.0+ required
-- Component API is v1alpha1 (stable since 2023)
-- Less widely known pattern
+- Understanding the full enterprise deployment requires reading two repositories
+- Version alignment between base and enterprise overlays must be maintained deliberately
+- Troubleshooting enterprise deployments requires checking both the base and enterprise layers
 
 ### ADR-005: SOPS for Secret Management
 
@@ -709,13 +708,13 @@ external traffic
 
 ---
 
-## Evidence
+## Source Material
 
 **Source Files:**
-- `docs/analysis/A-CODE-REVIEW.md` (architecture analysis)
-- `docs/analysis/S1-APP-RUNTIME-APIS.md` (service patterns)
-- `docs/analysis/S4-FLUXCD-GITOPS.md` (GitOps architecture)
-- `docs/service-standards-and-lifecycle.md` (service standards)
-- `docs/ADR-001-kustomize-components-for-enterprise-pattern.md` (component pattern)
-- `applications/base/services/` (service implementations)
-- `llms.txt` (repository overview)
+- [README.md](../../README.md)
+- [docs/service-standards-and-lifecycle.md](../service-standards-and-lifecycle.md)
+- [docs/explanation/enterprise-components.md](enterprise-components.md)
+- [docs/reference/directory-structure.md](../reference/directory-structure.md)
+- [applications/base/services/](../../applications/base/services/)
+- [applications/base/managed-services/](../../applications/base/managed-services/)
+- [iac/](../../iac/)

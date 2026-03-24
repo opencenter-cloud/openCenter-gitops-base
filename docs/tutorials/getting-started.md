@@ -1,7 +1,11 @@
 ---
+id: getting-started
+sidebar_label: Getting Started
+description: End-to-end tutorial for deploying a first service with openCenter-gitops-base and FluxCD.
 doc_type: tutorial
 title: "Getting Started with openCenter-gitops-base"
 audience: "Platform engineers new to openCenter"
+tags: [tutorial, fluxcd, cert-manager, onboarding]
 ---
 
 # Getting Started with openCenter-gitops-base
@@ -25,7 +29,7 @@ Before starting, ensure you have:
 - **Kubernetes cluster** (v1.28+) with kubectl access
 - **FluxCD** (v2.7.0+) installed and bootstrapped on your cluster
 - **Git** installed locally
-- **SSH access** to GitHub (deploy key configured)
+- **Git access** to your cluster repository using the authentication method your organization supports
 - **Basic knowledge** of:
   - Kubernetes concepts (pods, deployments, namespaces)
   - Git workflows (clone, commit, push)
@@ -57,14 +61,14 @@ cd applications/base/services/cert-manager/
 ls -la
 ```
 
-You'll see:
+You'll usually see:
 - `namespace.yaml` - Creates the cert-manager namespace
-- `community/source.yaml` - Defines the Helm chart source
+- `source.yaml` - Defines the Helm chart source
 - `helmrelease.yaml` - Configures the deployment
 - `helm-values/` - Contains Helm values files
 - `kustomization.yaml` - Ties everything together
 
-**Key insight:** Every service in openCenter follows this structure. Once you understand cert-manager, you understand them all.
+**Key insight:** Many services in openCenter follow this base pattern, even though some services add extra stages or supporting manifests.
 
 ## Step 2: Examine the HelmRelease Configuration
 
@@ -87,7 +91,7 @@ spec:
   chart:
     spec:
       chart: cert-manager
-      version: v1.18.2            # Pinned version
+      version: v<chart-version>   # Pinned version
       sourceRef:
         kind: HelmRepository
         name: jetstack
@@ -112,27 +116,27 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
     - namespace.yaml
-    - community/source.yaml
+    - source.yaml
     - helmrelease.yaml
 secretGenerator:
     - name: cert-manager-values-base
       namespace: cert-manager
       files:
-        - values.yaml=helm-values/values-v1.18.2.yaml
+        - values.yaml=helm-values/values-v<version>.yaml
 ```
 
 **What this does:**
 - Applies namespace, source, and helmrelease in order
-- Generates a Secret from `helm-values/values-v1.18.2.yaml`
+- Generates a Secret from `helm-values/values-v<version>.yaml`
 - The Secret is named `cert-manager-values-base` (referenced in HelmRelease)
 
 **Key insight:** Helm values are stored as files in Git, then converted to Secrets by Kustomize. This keeps configuration version-controlled.
 
 ## Step 4: Create a GitRepository Source
 
-FluxCD needs to know where to find the openCenter-gitops-base repository. Create a GitRepository resource in your cluster overlay.
+FluxCD needs to know where to find the openCenter service source you want to consume. Create a GitRepository resource in your cluster repo.
 
-**In your customer cluster repository** (e.g., `customers/1861184-Metro-Bank-PLC/applications/overlays/k8s-sandbox/services/sources/`):
+**In your cluster repository** (for example `applications/overlays/<cluster>/services/sources/`):
 
 Create `opencenter-cert-manager.yaml`:
 
@@ -144,11 +148,9 @@ metadata:
   namespace: flux-system
 spec:
   interval: 15m
-  url: ssh://git@github.com/rackerlabs/openCenter-gitops-base.git
+  url: https://github.com/opencenter-cloud/openCenter-gitops-base
   ref:
-    tag: v1.0.0
-  secretRef:
-    name: opencenter-base
+    tag: <release-tag>
 ```
 
 **Commit and push:**
@@ -162,7 +164,7 @@ git push
 **Wait for Flux to reconcile:**
 
 ```bash
-flux reconcile source git flux-system
+flux reconcile source git opencenter-cert-manager -n flux-system
 ```
 
 **Verify the source:**
@@ -211,7 +213,7 @@ git push
 **Trigger reconciliation:**
 
 ```bash
-flux reconcile kustomization flux-system
+flux reconcile kustomization cert-manager -n flux-system
 ```
 
 ## Step 6: Watch the Deployment
@@ -327,9 +329,10 @@ Congratulations! You've deployed cert-manager using the openCenter GitOps patter
 - Changes are made via Git commits, not kubectl commands
 - Drift detection prevents manual changes from persisting
 
-**Three-Tier Architecture:**
+**Repository Model:**
 - **Base repository** (openCenter-gitops-base): Hardened service configurations
-- **Customer overlay**: Cluster-specific customizations
+- **Cluster repository**: Cluster-specific Flux wiring, overrides, and local manifests
+- **Private enterprise repository**: Optional private source, image, and values rewrites layered on top of base
 - **FluxCD**: Automated deployment and reconciliation
 
 **Declarative Management:**
@@ -387,14 +390,14 @@ Now that you've deployed your first service, explore these topics:
 
 **Understand the Architecture:**
 - [GitOps Workflow](../explanation/gitops-workflow.md) - How FluxCD manages deployments
-- [Three-Tier Values](../explanation/three-tier-values.md) - Why we use this pattern
+- [Base, Override, and Enterprise Values](../explanation/three-tier-values.md) - Why we use this layering model
 - [Architecture Overview](../explanation/architecture.md) - System design decisions
 
-## Evidence
+## Source Material
 
 This tutorial is based on:
-- `applications/base/services/cert-manager/helmrelease.yaml` - HelmRelease configuration
-- `applications/base/services/cert-manager/kustomization.yaml` - Kustomize pattern
-- `docs/analysis/S4-FLUXCD-GITOPS.md` - FluxCD workflow analysis
-- `docs/analysis/S1-APP-RUNTIME-APIS.md` - Service deployment patterns
-- `docs/analysis/B-DOCUMENTATION-PLAN.md` - Tutorial structure guidance
+- [`applications/base/services/cert-manager/helmrelease.yaml`](../../applications/base/services/cert-manager/helmrelease.yaml)
+- [`applications/base/services/cert-manager/kustomization.yaml`](../../applications/base/services/cert-manager/kustomization.yaml)
+- [`applications/base/services/cert-manager/source.yaml`](../../applications/base/services/cert-manager/source.yaml)
+- [GitOps Workflow](../explanation/gitops-workflow.md)
+- [Cluster Overlay Guidance](../how-to/cluster-overlay-guidance.md)
