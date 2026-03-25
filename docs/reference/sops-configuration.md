@@ -106,7 +106,7 @@ Encrypt entire Helm values files:
 
 ```yaml
 creation_rules:
-  - path_regex: '^managed-services/.*/helm-values/.*\.ya?ml$'
+  - path_regex: '^services/.*/helm-values/.*\.ya?ml$'
     age: age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p
 ```
 
@@ -118,10 +118,6 @@ Different encryption rules for different directories:
 
 ```yaml
 creation_rules:
-  # Managed services helm values - fully encrypted
-  - path_regex: '^managed-services/.*/helm-values/.*\.ya?ml$'
-    age: age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p
-  
   # Services helm values - fully encrypted
   - path_regex: '^services/.*/helm-values/.*\.ya?ml$'
     age: age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p

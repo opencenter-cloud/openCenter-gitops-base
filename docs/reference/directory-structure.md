@@ -38,7 +38,6 @@ openCenter-gitops-base/
 ```text
 applications/
 ├── base/
-│   ├── managed-services/
 │   └── services/
 └── policies/
 ```
@@ -161,11 +160,7 @@ For example, `observability/` contains components such as:
 
 ## Managed Services
 
-`applications/base/managed-services/` contains services managed separately from the core platform service catalog.
-
-Example:
-
-- `alert-proxy/`
+Managed services are not part of the public base repository layout. They belong in the private enterprise repository when they are required for a deployment.
 
 ## Policies
 
