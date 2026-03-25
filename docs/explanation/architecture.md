@@ -716,5 +716,4 @@ external traffic
 - [docs/explanation/enterprise-components.md](enterprise-components.md)
 - [docs/reference/directory-structure.md](../reference/directory-structure.md)
 - [applications/base/services/](../../applications/base/services/)
-- [applications/base/managed-services/](../../applications/base/managed-services/)
 - [iac/](../../iac/)

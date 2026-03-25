@@ -177,7 +177,7 @@ The starting point is to copy the init directory into the new clusters directory
 ```
 # cd /etc/openCenter
 # cp -r infrastructure/init infrastructure/clusters/demo-cluster
-# mkdir -p applications/overlays/demo-cluster/managed-services/calico/helm-values
+# mkdir -p applications/overlays/demo-cluster/services/calico/helm-values
 # cd infrastructure/clusters/demo-cluster
 ```
 

@@ -153,9 +153,7 @@ You'll now set up the folder structure for your cluster's overlay.
    stage-cluster --> <cluster-name>
    ```
 
-4. Maintain consistent folder hierarchy under both:
-   - `managed-services/`
-   - `services/`
+4. Maintain a consistent folder hierarchy under `services/`.
 5. Update existing services or add new service overlays as required for the target cluster.
 6. Validate rendering before adding new services:
 
@@ -338,11 +336,6 @@ You'll use **SOPS** and **age** to encrypt sensitive YAML files before committin
        age: <publickey>
        encrypted_regex: "^(data|stringData)$"
      - path_regex: '^services/.*/helm-values/.*\.ya?ml$'
-       age: <publickey>
-     - path_regex: '^managed-services/.*/.*\.ya?ml$'
-       age: <publickey>
-       encrypted_regex: "^(data|stringData)$"
-     - path_regex: '^managed-services/.*/helm-values/.*\.ya?ml$'
        age: <publickey>
    ```
 

@@ -58,12 +58,6 @@ For the complete directory layout, see [Directory Structure](docs/reference/dire
 | **[tempo](applications/base/services/observability/tempo/)** | `observability` | `1.55.0` | Distributed tracing backend | [README](applications/base/services/observability/tempo/README.md) |
 | **[opentelemetry-kube-stack](applications/base/services/observability/opentelemetry-kube-stack/)** | `observability` | `0.11.1` | OpenTelemetry collection framework | [README](applications/base/services/observability/opentelemetry-kube-stack/README.md) |
 
-### Managed Services
-
-| Service | Namespace | Purpose | Documentation |
-|---------|-----------|---------|---------------|
-| **[alert-proxy](applications/base/managed-services/alert-proxy/)** | `rackspace` | Rackspace alert aggregation | [README](applications/base/managed-services/alert-proxy/README.md) |
-
 ### Security Policies
 
 | Policy | Scope | Purpose |
@@ -86,6 +80,6 @@ Use the documentation set under `docs/` together with the service README files f
 
 ### Service Docs
 
-- Service directories under `applications/base/services/` and `applications/base/managed-services/` contain repo-local deployment context and links to supporting docs
+- Service directories under `applications/base/services/` contain repo-local deployment context and links to supporting docs
 - [Service Reference Library](docs/reference/services/index.md) - Per-service overviews, integration points, examples, and upstream references
 - [Service Configuration Guides](docs/how-to/services/index.md) - Practical override patterns, validation steps, and troubleshooting guidance for selected services

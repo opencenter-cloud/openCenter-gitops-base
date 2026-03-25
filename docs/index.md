@@ -235,7 +235,6 @@ To contribute to this repository:
 **Key directories:**
 - `applications/base/services/` - Core platform services
 - `applications/base/services/observability/` - Monitoring, logging, tracing
-- `applications/base/managed-services/` - Rackspace-managed services
 - `applications/policies/` - Security and network policies
 - `iac/` - Infrastructure provisioning plus Kubespray inventory generation and cluster bootstrap
 - `docs/` - Documentation (you are here)
@@ -257,7 +256,6 @@ To contribute to this repository:
 This documentation is maintained from the live repository structure and manifests, including:
 - [README.md](../README.md)
 - [applications/base/services/](../applications/base/services/)
-- [applications/base/managed-services/](../applications/base/managed-services/)
 - [applications/policies/](../applications/policies/)
 - [iac/](../iac/)
 - [docs/explanation/architecture.md](explanation/architecture.md)
