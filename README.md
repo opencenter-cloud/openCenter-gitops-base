@@ -14,19 +14,13 @@ The service base in this repository is intended to be consumed in two ways:
 
 The `applications/` tree is managed with Flux CD and follows declarative, version-controlled GitOps patterns.
 
-## Directory Structure
+## Repository Layout
 
-```
-applications/
-├── base/                   # Base application configurations
-│   ├── managed-services/   # Rackspace-managed services
-│   └── services/           # Core cluster services
-│       └── observability/  # Observability stack components
-└── policies/               # Security and network policies
-    ├── network-policies/   # Kubernetes network policies
-    ├── pod-security-policies/ # Pod security standards
-    └── rbac/              # Role-based access controls
-```
+- `iac/` provisions infrastructure, renders Kubespray inputs, and initiates cluster bootstrap
+- `applications/` contains the reusable base service definitions, managed services, and policy resources
+- `docs/` contains tutorials, how-to guides, references, and architecture documentation
+
+For the complete directory layout, see [Directory Structure](docs/reference/directory-structure.md).
 
 ## Available Applications
 
