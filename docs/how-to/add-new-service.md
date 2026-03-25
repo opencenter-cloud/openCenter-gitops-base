@@ -1,7 +1,11 @@
 ---
+id: add-new-service
+sidebar_label: Add New Service
+description: Step-by-step guide for adding a new platform service to openCenter-gitops-base.
 doc_type: how-to
 title: "Add a New Platform Service"
 audience: "platform engineers"
+tags: [services, helmrelease, kustomize, onboarding]
 ---
 
 # Add a New Platform Service
@@ -80,10 +84,10 @@ spec:
 
 ### 4. Create base Helm values
 
-Create `my-service/helm-values/values-v1.0.0.yaml`:
+Create `my-service/helm-values/values-v<chart-version>.yaml`:
 
 ```yaml
-# Base configuration for my-service v1.0.0
+# Base configuration for my-service
 replicaCount: 2
 
 image:
@@ -161,10 +165,6 @@ spec:
       name: my-service-values-override
       valuesKey: override.yaml
       optional: true
-    - kind: Secret
-      name: my-service-values-enterprise
-      valuesKey: hardened-enterprise.yaml
-      optional: true
 ```
 
 ### 6. Configure Kustomization
@@ -185,7 +185,7 @@ resources:
 secretGenerator:
   - name: my-service-values-base
     files:
-      - values.yaml=helm-values/values-v1.0.0.yaml
+      - values.yaml=helm-values/values-v<chart-version>.yaml
     options:
       disableNameSuffixHash: true
 
@@ -217,11 +217,11 @@ Brief description of what this service does.
 
 ### Base Values
 
-Located in `helm-values/values-v1.0.0.yaml`.
+Located in `helm-values/values-v<chart-version>.yaml`.
 
 ### Override Values
 
-Create in customer overlay: `applications/overlays/<cluster>/services/my-service/override-values.yaml`
+Create in cluster repo: `applications/overlays/<cluster>/services/my-service/override-values.yaml`
 
 ## Resources
 
@@ -287,7 +287,7 @@ kubectl get helmrelease my-service -n my-service -o jsonpath='{.status.condition
 
 ```bash
 git add applications/base/services/my-service/
-git commit -m "feat(services): add my-service v1.0.0"
+git commit -m "feat(services): add my-service"
 git push origin main
 ```
 
@@ -344,13 +344,13 @@ Should return "enabled".
 
 - Configure observability (see [setup-observability.md](setup-observability.md))
 - Add Gateway API routing (see [configure-gateway.md](configure-gateway.md))
-- Create customer overlay for cluster-specific configuration
+- Create cluster overlay content for cluster-specific configuration
 
 ## Evidence
 
 **Sources:**
-- `applications/base/services/cert-manager/` - Reference service structure
-- `applications/base/services/keycloak/` - Multi-component pattern
-- `docs/service-standards-and-lifecycle.md` - Service standards
+- [applications/base/services/cert-manager/](../../applications/base/services/cert-manager/) - Reference service structure
+- [applications/base/services/keycloak/](../../applications/base/services/keycloak/) - Multi-component pattern
+- [docs/service-standards-and-lifecycle.md](../service-standards-and-lifecycle.md) - Service standards
 - S1-APP-RUNTIME-APIS.md - HelmRelease patterns
 - S4-FLUXCD-GITOPS.md - FluxCD configuration

@@ -1,12 +1,14 @@
 # Envoy Gateway API – Base Configuration
 
 This directory contains the **base manifests** for deploying the [Envoy Gateway](https://gateway.envoyproxy.io/) as a managed service.
-It is intended to be consumed by **cluster repositories** as a remote base, with the option to provide cluster-specific overrides.
+It can be consumed directly by cluster repositories or imported by the private enterprise repository for enterprise-specific overrides.
+
+For service overview, use cases, examples, and upstream references, see the [service reference](../../../../docs/reference/services/gateway-api.md).
 
 ## Public Repository Scope
 
-- This public repository contains the **community/base** gateway-api deployment only.
-- Enterprise-specific values, chart source changes, and enterprise-only resources must be delivered from a **private enterprise repository** as an overlay/component on top of this base.
+- This public repository contains the **base** gateway-api deployment backed by upstream public artifacts.
+- If private chart sources, private registries, or enterprise-only changes are required, they should be applied from the **private enterprise repository** that consumes this base.
 
 **About Envoy Gateway:**
 

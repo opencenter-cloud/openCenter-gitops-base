@@ -227,4 +227,4 @@ rm -f cluster.rkestate kube_config_cluster.yml cluster.yml
 ```
 
 # Contributions
-Please see our [Contributing Guidelines](./CONTRIBUTING.md)
+Follow the repository's standard review and contribution workflow when updating this module.

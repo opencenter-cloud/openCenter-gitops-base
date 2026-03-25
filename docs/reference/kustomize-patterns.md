@@ -2,7 +2,7 @@
 id: kustomize-patterns
 title: "Kustomize Patterns Reference"
 sidebar_label: Kustomize Patterns
-description: Kustomize patterns and conventions used in openCenter-gitops-base for service configuration.
+description: Kustomize patterns and conventions used in openCenter-gitops-base for base service configuration.
 doc_type: reference
 audience: "platform engineers"
 tags: [kustomize, patterns, kubernetes, gitops]
@@ -12,40 +12,123 @@ tags: [kustomize, patterns, kubernetes, gitops]
 
 **Type:** Reference  
 **Audience:** Platform engineers  
-**Last Updated:** 2026-02-14
+**Last Updated:** 2026-03-24
 
-This document describes Kustomize patterns and conventions used in openCenter-gitops-base.
+This document describes the Kustomize patterns used in `openCenter-gitops-base`.
+
+This repository contains the **base service definitions only**. Those base definitions install charts and images from **upstream public sources**. Customer-specific or enterprise-specific repositories may reference this base and layer on overrides, such as:
+
+- replacing `HelmRepository` sources with private registries or OCI repos
+- overriding image registries, repositories, or tags
+- adding cluster-specific secrets, patches, or extra resources
+
+This repository does **not** model the enterprise overlay structure for each service. It provides the reusable base that external overlays build on.
 
 ---
 
 ## Kustomize Version
 
 **Version:** v5.2+  
-**API Version:** `kustomize.config.k8s.io/v1beta1` (standard resources)  
-**Component API:** `kustomize.config.k8s.io/v1alpha1` (components)
+**API Version:** `kustomize.config.k8s.io/v1beta1`
 
 ---
 
-## Base Service Pattern
+## Base Service Patterns
 
-Every service follows a standardized base structure:
+There is no single directory shape for every service, but most services in this repository follow one of these patterns.
+
+### Pattern 1: Helm-Based Single Service
+
+This is the most common pattern.
 
 ```
 applications/base/services/<service-name>/
-├── kustomization.yaml              # Base kustomization
-├── namespace.yaml                  # Namespace definition
-├── source.yaml                     # HelmRepository or GitRepository
-├── helmrelease.yaml                # HelmRelease resource
-├── helm-values/                    # Helm chart values
-│   └── values-<version>.yaml
-└── components/                     # Optional components
-    └── enterprise/                 # Enterprise edition component
-        ├── kustomization.yaml
-        └── helm-values/
-            └── hardened-values-<version>.yaml
+├── kustomization.yaml
+├── namespace.yaml
+├── source.yaml
+├── helmrelease.yaml
+└── helm-values/
+    └── values-<version>.yaml
 ```
 
-### Base Kustomization
+Examples:
+
+- `cert-manager`
+- `gateway-api`
+- `headlamp`
+- `metallb`
+- `postgres-operator`
+
+### Pattern 2: Helm-Based Service with Extra Base Resources
+
+Some services add storage classes, CRDs, or other manifests alongside the Helm release.
+
+```
+applications/base/services/<service-name>/
+├── kustomization.yaml
+├── namespace.yaml
+├── source.yaml
+├── helmrelease.yaml
+├── helm-values/
+│   └── values-<version>.yaml
+└── extra manifests...
+```
+
+Examples:
+
+- `longhorn` adds storage class manifests
+- `vsphere-csi` includes optional CRD files
+
+### Pattern 3: Manifest-Only Service
+
+Some services are installed directly from upstream manifests or local YAML resources and do not use a HelmRelease.
+
+```
+applications/base/services/<service-name>/
+├── kustomization.yaml
+├── namespace.yaml
+└── resources from local files or remote URLs
+```
+
+Examples:
+
+- `external-snapshotter`
+- `olm`
+
+### Pattern 4: Multi-Stage Service
+
+Some services are intentionally split into numbered directories so that cluster repositories can apply them as separate Flux Kustomizations with explicit ordering.
+
+```
+applications/base/services/<service-name>/
+├── 00-<stage>/
+├── 10-<stage>/
+├── 20-<stage>/
+└── 30-<stage>/
+```
+
+Examples:
+
+- `keycloak`
+- `istio`
+- parts of `kyverno`
+
+### Pattern 5: Shared Grouping Directory
+
+Some top-level directories group related services rather than representing a single deployable unit.
+
+Examples:
+
+- `applications/base/services/observability/`
+- `applications/base/services/global/`
+
+These grouping directories may contain shared sources or namespace manifests, but they are not automatically a single “service” in the same way `cert-manager` or `harbor` are.
+
+---
+
+## Standard Helm Service Layout
+
+For most base services, the kustomization follows a consistent structure:
 
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
@@ -57,22 +140,114 @@ resources:
   - helmrelease.yaml
 
 secretGenerator:
-  - name: <service>-values-base
-    namespace: <service-namespace>
+  - name: cert-manager-values-base
+    namespace: cert-manager
     type: Opaque
     files:
-      - values.yaml=helm-values/values-v1.18.2.yaml
+      - values.yaml=helm-values/values-v<chart-version>.yaml
     options:
       disableNameSuffixHash: true
 ```
+
+This pattern does three things:
+
+1. creates the namespace
+2. defines the upstream chart source
+3. installs the chart through Flux with a generated Secret holding the base values
+
+---
+
+## Source Pattern
+
+Base services in this repo point to **upstream sources**.
+
+### Helm Repository Example
+
+```yaml
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: jetstack
+spec:
+  url: https://charts.jetstack.io
+  interval: 1h
+```
+
+### OCI Helm Repository Example
+
+```yaml
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: envoyproxy
+spec:
+  url: oci://docker.io/envoyproxy
+  interval: 1h
+  type: oci
+```
+
+### What External Overlays Change
+
+An enterprise or customer-specific repository can keep the same base service path and patch the source to use a private repository instead.
+
+Typical overlay changes include:
+
+- replacing `spec.url`
+- changing `sourceRef.name`
+- adding `secretRef` for OCI auth
+- rewriting image registries inside Helm values
+
+This repo does not carry those per-customer or enterprise patches.
+
+---
+
+## HelmRelease Pattern
+
+Most Helm-based services follow this Flux pattern:
+
+```yaml
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cert-manager
+  namespace: cert-manager
+spec:
+  interval: 5m
+  timeout: 10m
+  chart:
+    spec:
+      chart: cert-manager
+      version: v<chart-version>
+      sourceRef:
+        kind: HelmRepository
+        name: jetstack
+        namespace: cert-manager
+  valuesFrom:
+    - kind: Secret
+      name: cert-manager-values-base
+      valuesKey: values.yaml
+    - kind: Secret
+      name: cert-manager-values-override
+      valuesKey: override.yaml
+      optional: true
+```
+
+### Values Tiers Used in This Base Repo
+
+The base repo generally uses:
+
+- `*-values-base`: generated from checked-in base values
+- `*-values-override`: optional secret expected to be supplied by an overlay or cluster repo
+
+The important detail is that the **base repo ships the required baseline**, while overlays provide optional environment-specific changes.
 
 ---
 
 ## Secret Generator Pattern
 
-Helm values are converted to Kubernetes Secrets using `secretGenerator`.
+Helm values are commonly turned into Secrets via `secretGenerator` so Flux can consume them through `valuesFrom`.
 
-### Basic Secret Generator
+### Basic Example
 
 ```yaml
 secretGenerator:
@@ -80,404 +255,203 @@ secretGenerator:
     namespace: cert-manager
     type: Opaque
     files:
-      - values.yaml=helm-values/values-v1.18.2.yaml
+      - values.yaml=helm-values/values-v<chart-version>.yaml
     options:
       disableNameSuffixHash: true
 ```
 
-### Fields
+### Why `disableNameSuffixHash` Is Used
+
+Flux `HelmRelease.valuesFrom` references a stable Secret name. If Kustomize appended a content hash, the secret name would change and the HelmRelease reference would no longer match without additional wiring.
+
+### Common Fields
 
 | Field | Description |
 |-------|-------------|
-| `name` | Secret name (referenced in HelmRelease) |
-| `namespace` | Target namespace |
-| `type` | Secret type (typically `Opaque`) |
-| `files` | Map of key=file pairs |
-| `options.disableNameSuffixHash` | Disable automatic name suffix (required for HelmRelease) |
-
-### Multiple Values Files
-
-```yaml
-secretGenerator:
-  - name: service-values-base
-    namespace: service
-    files:
-      - values.yaml=helm-values/base-values-v1.2.3.yaml
-  
-  - name: service-values-override
-    namespace: service
-    files:
-      - override.yaml=helm-values/override-values-v1.2.3.yaml
-    options:
-      disableNameSuffixHash: true
-  
-  - name: service-values-enterprise
-    namespace: service
-    files:
-      - hardened-enterprise.yaml=helm-values/enterprise-values-v1.2.3.yaml
-    options:
-      disableNameSuffixHash: true
-```
+| `name` | Secret name referenced by the HelmRelease |
+| `namespace` | Namespace where Flux expects the Secret |
+| `type` | Usually `Opaque` |
+| `files` | Key-to-file mapping inside the generated Secret |
+| `options.disableNameSuffixHash` | Keeps the Secret name stable |
 
 ---
 
-## Kustomize Components
+## Multi-Stage Service Pattern
 
-Components are reusable, composable configuration units that can be included in multiple kustomizations.
+Some services are not represented by a single top-level `kustomization.yaml`. Instead, they are split into deployment stages.
 
-### Component Structure
-
-```
-components/
-└── enterprise/
-    ├── kustomization.yaml          # Component definition
-    ├── helm-values/
-    │   └── hardened-values-v1.18.2.yaml
-    └── patches/                    # Optional patches
-        └── helmrelease-source.yaml
-```
-
-### Component Kustomization
-
-```yaml
-apiVersion: kustomize.config.k8s.io/v1alpha1
-kind: Component
-
-resources:
-  - ../../../global/enterprise/source.yaml
-
-patches:
-  # Remove community HelmRepository
-  - target:
-      kind: HelmRepository
-      name: jetstack
-    patch: |
-      $patch: delete
-      apiVersion: source.toolkit.fluxcd.io/v1
-      kind: HelmRepository
-      metadata:
-        name: jetstack
-  
-  # Patch HelmRelease to use enterprise source
-  - target:
-      group: helm.toolkit.fluxcd.io
-      version: v2
-      kind: HelmRelease
-      name: cert-manager
-    patch: |
-      - op: replace
-        path: /spec/chart/spec/sourceRef/name
-        value: opencenter-cloud
-
-secretGenerator:
-  - name: cert-manager-values-enterprise
-    namespace: cert-manager
-    type: Opaque
-    files:
-      - hardened-enterprise.yaml=helm-values/hardened-values-v1.18.2.yaml
-    options:
-      disableNameSuffixHash: true
-```
-
-### Including Components
-
-```yaml
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-
-resources:
-  - ../../base/services/cert-manager
-
-components:
-  - ../../base/services/cert-manager/components/enterprise
-```
-
----
-
-## Patch Patterns
-
-### Strategic Merge Patch
-
-```yaml
-patches:
-  - target:
-      kind: Deployment
-      name: my-app
-    patch: |
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: my-app
-      spec:
-        replicas: 3
-```
-
-### JSON Patch (RFC 6902)
-
-```yaml
-patches:
-  - target:
-      kind: HelmRelease
-      name: cert-manager
-    patch: |
-      - op: replace
-        path: /spec/chart/spec/version
-        value: v1.19.0
-      - op: add
-        path: /spec/values/replicaCount
-        value: 3
-```
-
-### Delete Patch
-
-```yaml
-patches:
-  - target:
-      kind: HelmRepository
-      name: jetstack
-    patch: |
-      $patch: delete
-      apiVersion: source.toolkit.fluxcd.io/v1
-      kind: HelmRepository
-      metadata:
-        name: jetstack
-```
-
-### Inline Patch
-
-```yaml
-patches:
-  - patch: |
-      apiVersion: v1
-      kind: Namespace
-      metadata:
-        name: cert-manager
-        labels:
-          pod-security.kubernetes.io/enforce: restricted
-```
-
----
-
-## Multi-Component Services
-
-Services with multiple sub-components use numbered directories for deployment order.
-
-### Structure
+### Keycloak Example
 
 ```
 keycloak/
 ├── 00-postgres/
 │   ├── kustomization.yaml
 │   ├── namespace.yaml
-│   ├── source.yaml
-│   └── helmrelease.yaml
+│   └── postgres-cluster.yaml
 ├── 10-operator/
 │   ├── kustomization.yaml
-│   ├── namespace.yaml
-│   ├── source.yaml
-│   └── helmrelease.yaml
+│   ├── operatorgroup.yaml
+│   └── subscription.yaml
 ├── 20-keycloak/
 │   ├── kustomization.yaml
-│   ├── helmrelease.yaml
-│   └── helm-values/
+│   └── keycloak-cr.yaml
 └── 30-oidc-rbac/
     ├── kustomization.yaml
-    └── rbac.yaml
+    └── default-rbac.yaml
 ```
 
-### Parent Kustomization
+### Istio Example
 
-```yaml
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-
-resources:
-  - 00-postgres
-  - 10-operator
-  - 20-keycloak
-  - 30-oidc-rbac
+```
+istio/
+├── namespace/
+├── sources/
+├── base/
+├── istiod/
+└── gateway/
 ```
 
-### Deployment Order
+### Why This Pattern Exists
 
-Components deploy in numerical order:
-1. `00-postgres` - Database
-2. `10-operator` - Operator
-3. `20-keycloak` - Application
-4. `30-oidc-rbac` - Configuration
-
-FluxCD Kustomization dependencies enforce order:
-
-```yaml
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: keycloak-postgres
-spec:
-  path: ./keycloak/00-postgres
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: keycloak-operator
-spec:
-  dependsOn:
-    - name: keycloak-postgres
-  path: ./keycloak/10-operator
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: keycloak-instance
-spec:
-  dependsOn:
-    - name: keycloak-operator
-  path: ./keycloak/20-keycloak
-```
+- different stages have different dependencies
+- cluster overlays may want separate Flux `dependsOn` chains
+- not all sub-parts are always applied in the same way
 
 ---
 
 ## Namespace Pattern
 
-Every service defines its namespace with required labels.
+Most services define their own namespace explicitly.
+
+### Simple Namespace
 
 ```yaml
 apiVersion: v1
 kind: Namespace
 metadata:
   name: cert-manager
-  labels:
-    app.kubernetes.io/name: cert-manager
-    app.kubernetes.io/part-of: opencenter
-    opencenter.io/tier: platform
-    pod-security.kubernetes.io/enforce: restricted
-    pod-security.kubernetes.io/audit: restricted
-    pod-security.kubernetes.io/warn: restricted
 ```
 
-### Required Labels
+### Namespace with Security Labels
 
-| Label | Description |
-|-------|-------------|
-| `app.kubernetes.io/name` | Service name |
-| `app.kubernetes.io/part-of` | Platform identifier |
-| `opencenter.io/tier` | Service tier (platform/shared/tenant) |
-| `pod-security.kubernetes.io/*` | Pod Security Standards |
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: longhorn-system
+  labels:
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/warn: privileged
+```
+
+The exact labels vary by service. Storage, networking, and infrastructure services often require more permissive namespace labels than application-facing services.
 
 ---
 
 ## Resource Ordering
 
-Resources are listed in dependency order:
-
-```yaml
-resources:
-  - namespace.yaml          # 1. Namespace first
-  - source.yaml             # 2. Source (HelmRepository/GitRepository)
-  - helmrelease.yaml        # 3. HelmRelease (depends on source)
-  - additional-resources/   # 4. Additional resources
-```
-
----
-
-## Common Kustomization Fields
-
-### Resources
+Within a service kustomization, resources are usually listed in dependency order:
 
 ```yaml
 resources:
   - namespace.yaml
   - source.yaml
   - helmrelease.yaml
-  - ../common/rbac.yaml
 ```
 
-### Components
+When additional local manifests exist, they are typically placed before or alongside the Helm release depending on what the chart expects.
+
+Examples:
+
+- storage classes alongside `longhorn`
+- source definitions before the Flux consumer object
+- namespace first when namespaced resources are created
+
+---
+
+## Common Kustomization Fields Used Here
+
+### `resources`
 
 ```yaml
-components:
-  - components/enterprise
-  - ../common/monitoring
+resources:
+  - namespace.yaml
+  - source.yaml
+  - helmrelease.yaml
 ```
 
-### Patches
-
-```yaml
-patches:
-  - path: patches/replicas.yaml
-  - target:
-      kind: Deployment
-    patch: |
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: not-used
-      spec:
-        replicas: 3
-```
-
-### Secret Generator
+### `secretGenerator`
 
 ```yaml
 secretGenerator:
-  - name: app-config
+  - name: app-values-base
     namespace: app
     files:
-      - config.yaml
+      - values.yaml=helm-values/values-v<chart-version>.yaml
     options:
       disableNameSuffixHash: true
 ```
 
-### Config Map Generator
+### `namespace`
+
+Some kustomizations set a default namespace directly:
 
 ```yaml
-configMapGenerator:
-  - name: app-config
-    namespace: app
-    literals:
-      - KEY=value
-      - ANOTHER_KEY=another-value
+namespace: harbor
 ```
 
-### Namespace
+This is used in some services instead of putting `namespace` on every resource.
+
+---
+
+## Overlay Expectations
+
+This repository is intended to be consumed by other repositories.
+
+### Typical Cluster Overlay Usage
+
+A cluster repo usually points Flux at one of these base service paths:
 
 ```yaml
-namespace: cert-manager
+spec:
+  path: ./applications/base/services/cert-manager
 ```
 
-Sets default namespace for all resources without explicit namespace.
+Then the cluster repo can add:
 
-### Common Labels
+- override Secrets such as `cert-manager-values-override`
+- ingress, DNS, or issuer resources
+- environment-specific patches
+- Flux dependency ordering across services
 
-```yaml
-commonLabels:
-  app.kubernetes.io/managed-by: fluxcd
-  opencenter.io/tier: platform
-```
+### Typical Enterprise Overlay Usage
 
-Adds labels to all resources.
+An enterprise repo can reference the same base service path and layer on patches that switch installations from public upstream artifacts to private ones.
 
-### Common Annotations
+Typical enterprise overlay changes:
 
-```yaml
-commonAnnotations:
-  managed-by: opencenter
-```
+- replace upstream `HelmRepository` with private OCI or Helm repository
+- rewrite image registry and repository settings
+- add registry authentication secrets
+- patch `HelmRelease.spec.chart.spec.sourceRef`
 
-Adds annotations to all resources.
+The key point is:
+
+- **this repo owns the base deployment shape**
+- **the enterprise repo owns private source and image overrides**
 
 ---
 
 ## Validation Commands
 
-### Build Kustomization
+### Build a Base Service
 
 ```bash
 kubectl kustomize applications/base/services/cert-manager
 ```
 
-### Dry-Run Against Cluster
+### Dry-Run Against a Cluster
 
 ```bash
 kubectl kustomize applications/base/services/cert-manager | kubectl apply --dry-run=server -f -
@@ -489,10 +463,10 @@ kubectl kustomize applications/base/services/cert-manager | kubectl apply --dry-
 kubectl kustomize applications/base/services/cert-manager | kubeconform -strict -
 ```
 
-### Diff Against Cluster
+### Build a Multi-Stage Service Part
 
 ```bash
-kubectl diff -k applications/base/services/cert-manager
+kubectl kustomize applications/base/services/keycloak/10-operator
 ```
 
 ---
@@ -501,37 +475,23 @@ kubectl diff -k applications/base/services/cert-manager
 
 ### File Organization
 
-1. **Namespace first** - Always list namespace.yaml first in resources
-2. **Sources before consumers** - HelmRepository before HelmRelease
-3. **Dependencies explicit** - Use FluxCD Kustomization dependencies for ordering
-4. **Components for variants** - Use components for optional features
+1. Put the namespace first when the service owns one.
+2. Define the source before the `HelmRelease` that consumes it.
+3. Keep versioned base values under `helm-values/`.
+4. Split complex services into numbered or named stages when ordering matters.
 
 ### Naming Conventions
 
-1. **Directories** - kebab-case (e.g., `cert-manager`)
-2. **Files** - kebab-case with descriptive suffixes (e.g., `base-values-v1.18.2.yaml`)
-3. **Secrets** - `<service>-values-<tier>` (e.g., `cert-manager-values-base`)
-4. **Components** - Descriptive names (e.g., `enterprise`, `monitoring`)
+1. Use kebab-case for service directories.
+2. Use versioned values filenames such as `values-v<chart-version>.yaml`.
+3. Use stable Secret names such as `<service>-values-base`.
+4. Keep filenames descriptive and aligned with the Flux object they support.
 
-### Secret Generator
+### Base vs Overlay Responsibility
 
-1. **Disable name suffix** - Always use `disableNameSuffixHash: true` for HelmRelease values
-2. **Version in filename** - Include chart version in values filename
-3. **Namespace explicit** - Always specify namespace in secretGenerator
-
-### Components
-
-1. **Self-contained** - Components should be independently usable
-2. **Minimal patches** - Only patch what's necessary
-3. **Clear purpose** - Component name should indicate purpose
-4. **Documented** - Include README.md in component directory
-
-### Patches
-
-1. **Prefer strategic merge** - Easier to read and maintain
-2. **Use JSON patch for precision** - When strategic merge insufficient
-3. **Target specific resources** - Use target selectors
-4. **Test patches** - Validate output with `kubectl kustomize`
+1. Keep upstream/public defaults in this repo.
+2. Keep private registry, private chart source, and tenant-specific changes outside this repo.
+3. Do not encode customer-specific deployment assumptions into the base service paths.
 
 ---
 
@@ -540,99 +500,53 @@ kubectl diff -k applications/base/services/cert-manager
 ### Kustomization Build Fails
 
 ```bash
-# Check syntax
 kubectl kustomize applications/base/services/cert-manager
-
-# Common issues:
-# - Missing resources
-# - Invalid YAML syntax
-# - Incorrect file paths
-# - Missing namespace in secretGenerator
 ```
+
+Common issues:
+
+- invalid YAML
+- missing local files
+- wrong relative paths
+- bad remote manifest references
 
 ### Secret Not Generated
 
 ```bash
-# Verify secretGenerator configuration
 kubectl kustomize applications/base/services/cert-manager | grep -A 10 "kind: Secret"
-
-# Common issues:
-# - File path incorrect
-# - disableNameSuffixHash not set
-# - Namespace missing
 ```
 
-### Component Not Applied
+Common issues:
 
-```bash
-# Verify component is included
-kubectl kustomize applications/base/services/cert-manager | grep -i enterprise
+- incorrect `files:` path
+- missing `namespace`
+- missing `disableNameSuffixHash`
 
-# Common issues:
-# - Component path incorrect
-# - Component kustomization.yaml missing
-# - Component API version wrong (must be v1alpha1)
-```
+### HelmRelease Does Not Resolve the Source
 
-### Patch Not Applied
+Check that:
 
-```bash
-# View final output
-kubectl kustomize applications/base/services/cert-manager
+- `source.yaml` exists in the rendered output
+- `sourceRef.name` matches the generated source object
+- the source namespace matches what the HelmRelease expects
 
-# Common issues:
-# - Target selector doesn't match
-# - Patch syntax incorrect
-# - Strategic merge conflicts
-```
+### Overlay Does Not Replace the Upstream Source
+
+If an external repo is patching the base:
+
+- verify the patch target matches the rendered object name
+- verify the overlay is applied after the base
+- verify the patched `sourceRef` name matches the private source object
 
 ---
 
-## Migration from Community/Enterprise Directories
+## Summary
 
-The repository is migrating from parallel `community/` and `enterprise/` directories to Kustomize components.
+`openCenter-gitops-base` uses Kustomize to define reusable, upstream-backed base services. The dominant pattern is a service kustomization with:
 
-### Old Pattern
+- namespace
+- source
+- HelmRelease or raw manifests
+- generated base values Secret
 
-```
-cert-manager/
-├── community/
-│   ├── kustomization.yaml
-│   └── source.yaml
-└── enterprise/
-    ├── kustomization.yaml
-    ├── patch-helmrelease-source.yaml
-    └── helm-values/
-```
-
-### New Pattern
-
-```
-cert-manager/
-├── kustomization.yaml              # Base (community)
-├── source.yaml
-├── helmrelease.yaml
-└── components/
-    └── enterprise/
-        ├── kustomization.yaml      # Component
-        └── helm-values/
-```
-
-### Benefits
-
-- Eliminates duplication (60% file reduction)
-- Prevents copy-paste errors
-- Simplifies version upgrades
-- Maintains backward compatibility
-
----
-
-## Evidence
-
-**Source Files:**
-- `applications/base/services/cert-manager/kustomization.yaml` (base pattern)
-- `applications/base/services/keycloak/` (multi-component pattern)
-- `docs/ADR-001-kustomize-components-for-enterprise-pattern.md` (component pattern)
-- `docs/service-standards-and-lifecycle.md` (service standards)
-- `docs/analysis/S1-APP-RUNTIME-APIS.md` (service patterns)
-- `.kiro/specs/kustomize-components-migration/` (migration specification)
+More advanced deployment behavior such as private registries, private chart sources, and enterprise-specific artifact rewrites belongs in external overlays that consume this base rather than in the base repository itself.

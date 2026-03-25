@@ -1,74 +1,87 @@
 ---
+id: configure-helm-values
+sidebar_label: Configure Helm Values
+description: Shows how to combine base Helm values from this repo with cluster-specific override values from consuming repositories.
 doc_type: how-to
 title: "Configure Helm Values"
 audience: "platform engineers"
+tags: [helm, values, overrides, configuration]
 ---
 
 # Configure Helm Values
 
-**Purpose:** For platform engineers, shows how to customize service configuration using the three-tier Helm values pattern, covering base, override, and enterprise values.
+**Purpose:** For platform engineers, shows how to customize Helm-based services by combining base values from this repository with optional override values supplied by the consuming repository.
 
 ## Prerequisites
 
-- Service already added to openCenter-gitops-base
-- Understanding of Helm values hierarchy
-- Access to customer overlay repository
+- Service already exists in `openCenter-gitops-base`
+- Access to the repository that deploys the service to a cluster
+- Familiarity with Flux `HelmRelease.valuesFrom`
 
-## Three-Tier Values Pattern
+## Base Repo Model
 
-Values are applied in order (later values override earlier):
+For Helm-based services in this repo, the normal pattern is:
 
-1. **Base values** (required) - Default configuration in openCenter-gitops-base
-2. **Override values** (optional) - Cluster-specific customization
-3. **Enterprise values** (optional) - Enterprise edition features
+1. **Base values** in `applications/base/services/<service>/helm-values/values-<version>.yaml`
+2. **Base Secret generation** in the service `kustomization.yaml`
+3. **Optional override Secret reference** in the service `helmrelease.yaml`
 
-## Steps
+The base repo owns the baseline. The consuming cluster repo owns cluster-specific overrides.
 
-### 1. Identify value to change
+If a private enterprise repo is used, that repo can add an additional enterprise-specific values source or patch the upstream chart/image source, but that behavior is outside this base repo.
 
-Check current base values:
+## Step 1: Inspect the Base Values
+
+Check the values currently shipped by the base service:
 
 ```bash
-cat applications/base/services/cert-manager/helm-values/values-v1.18.2.yaml
+sed -n '1,200p' applications/base/services/<service>/helm-values/values-v<chart-version>.yaml
 ```
 
-Example: Change resource limits for cert-manager.
+Also check how the service consumes them:
 
-### 2. Choose appropriate tier
+```bash
+sed -n '1,200p' applications/base/services/cert-manager/kustomization.yaml
+sed -n '1,220p' applications/base/services/cert-manager/helmrelease.yaml
+```
 
-**Use base values when:**
-- Setting defaults for all clusters
-- Configuring security hardening
-- Defining resource baselines
+You should typically see:
 
-**Use override values when:**
-- Customizing for specific cluster
-- Environment-specific settings (dev vs prod)
-- Infrastructure-specific configuration (cloud provider)
+- a generated `cert-manager-values-base` Secret
+- an optional `cert-manager-values-override` entry in `valuesFrom`
 
-**Use enterprise values when:**
-- Enabling enterprise features
-- Compliance-specific settings
-- Advanced security controls
+## Step 2: Decide Whether the Change Belongs in Base or Override
 
-### 3. Update base values (openCenter-gitops-base)
+Use **base values** when the setting should apply to all consumers of this repo:
 
-Edit `applications/base/services/cert-manager/helm-values/values-v1.18.2.yaml`:
+- hardened defaults
+- common resource baselines
+- common monitoring settings
+- chart-wide safe defaults
+
+Use **override values** when the setting varies by cluster or environment:
+
+- domain names
+- storage classes
+- replica counts
+- node selectors and tolerations
+- ingress hosts
+- external endpoints or environment-specific integration values
+
+## Step 3: Update Base Values When the Default Should Change
+
+Edit the versioned base values file:
 
 ```yaml
-# Existing configuration
-replicaCount: 1
-
-# Add or modify values
+# applications/base/services/<service>/helm-values/values-v<chart-version>.yaml
 resources:
   limits:
-    cpu: 200m      # Changed from 100m
-    memory: 256Mi  # Changed from 128Mi
+    cpu: 200m
+    memory: 256Mi
   requests:
     cpu: 50m
     memory: 64Mi
 
-# Add new configuration
 prometheus:
   enabled: true
   servicemonitor:
@@ -76,311 +89,130 @@ prometheus:
     interval: 30s
 ```
 
-Commit changes:
+This is the right place for settings that should travel with the base service everywhere it is consumed.
 
-```bash
-git add applications/base/services/cert-manager/helm-values/
-git commit -m "feat(cert-manager): increase resource limits"
-git push origin main
-```
+## Step 4: Create Cluster-Specific Override Values
 
-Tag for customer consumption:
-
-```bash
-git tag v1.0.1
-git push origin v1.0.1
-```
-
-### 4. Create override values (customer overlay)
-
-Navigate to customer overlay:
-
-```bash
-cd customers/1861184-Metro-Bank-PLC/applications/overlays/k8s-sandbox/services/cert-manager/
-```
-
-Create `override-values.yaml`:
+In the consuming cluster repo, create an override file such as:
 
 ```yaml
-# Cluster-specific overrides for k8s-sandbox
-
-# Increase replicas for production
+# override-values.yaml
 replicaCount: 3
 
-# Use cluster-specific DNS servers
 extraArgs:
   - --dns01-recursive-nameservers=192.168.1.1:53
   - --dns01-recursive-nameservers-only
 
-# Configure cluster issuer for this environment
-clusterIssuer:
-  name: letsencrypt-prod
-  email: ops@metrobank.example.com
-  server: https://acme-v02.api.letsencrypt.org/directory
+ingress:
+  host: cert-manager.cluster.example.com
 ```
 
-Create `kustomization.yaml`:
+Generate the Secret that the base `HelmRelease` already expects:
 
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: cert-manager
-
 secretGenerator:
   - name: cert-manager-values-override
+    namespace: cert-manager
     files:
       - override.yaml=override-values.yaml
     options:
       disableNameSuffixHash: true
-
-generatorOptions:
-  disableNameSuffixHash: true
 ```
 
-### 5. Create enterprise values (optional)
+The important point is that the override Secret name must match the `valuesFrom` entry in the base service.
 
-For enterprise features, create `hardened-enterprise.yaml`:
+## Step 5: Validate the Effective Configuration
 
-```yaml
-# Enterprise edition features
-
-# Enable advanced security
-securityContext:
-  seccompProfile:
-    type: RuntimeDefault
-  runAsNonRoot: true
-  runAsUser: 1000
-  fsGroup: 1000
-
-# Enable audit logging
-webhook:
-  auditAnnotations:
-    enabled: true
-
-# Configure high availability
-affinity:
-  podAntiAffinity:
-    requiredDuringSchedulingIgnoredDuringExecution:
-      - labelSelector:
-          matchExpressions:
-            - key: app.kubernetes.io/name
-              operator: In
-              values:
-                - cert-manager
-        topologyKey: kubernetes.io/hostname
-
-# Enable backup
-backup:
-  enabled: true
-  schedule: "0 2 * * *"
-  retention: 30
-```
-
-Add to `kustomization.yaml`:
-
-```yaml
-secretGenerator:
-  - name: cert-manager-values-override
-    files:
-      - override.yaml=override-values.yaml
-    options:
-      disableNameSuffixHash: true
-  - name: cert-manager-values-enterprise
-    files:
-      - hardened-enterprise.yaml=hardened-enterprise.yaml
-    options:
-      disableNameSuffixHash: true
-```
-
-### 6. Validate values hierarchy
-
-Build and inspect final values:
+Render the consuming overlay:
 
 ```bash
-# From customer overlay directory
+kustomize build .
+```
+
+Dry-run the apply when appropriate:
+
+```bash
 kustomize build . | kubectl apply --dry-run=client -f -
-
-# Check generated secrets
-kustomize build . | grep -A 20 "kind: Secret"
 ```
 
-### 7. Apply to cluster
-
-Commit customer overlay changes:
+After reconciliation, inspect the `HelmRelease`:
 
 ```bash
-git add applications/overlays/k8s-sandbox/services/cert-manager/
-git commit -m "feat(cert-manager): configure for k8s-sandbox cluster"
-git push origin main
-```
-
-FluxCD will reconcile automatically within 5 minutes.
-
-### 8. Force immediate reconciliation
-
-```bash
-flux reconcile kustomization cert-manager -n flux-system
-```
-
-## Verification
-
-Check HelmRelease values:
-
-```bash
-# View applied values
 kubectl get helmrelease cert-manager -n cert-manager -o yaml
-
-# Check valuesFrom references
 kubectl get helmrelease cert-manager -n cert-manager -o jsonpath='{.spec.valuesFrom[*].name}'
 ```
 
-Expected output:
-```
-cert-manager-values-base cert-manager-values-override cert-manager-values-enterprise
+Typical output:
+
+```text
+cert-manager-values-base cert-manager-values-override
 ```
 
-Verify secrets exist:
+## Step 6: Reconcile
+
+If you need to trigger an immediate reconcile:
 
 ```bash
-kubectl get secret -n cert-manager | grep cert-manager-values
-```
-
-Check effective configuration:
-
-```bash
-# View deployed resources
-kubectl get deployment cert-manager -n cert-manager -o yaml
-
-# Verify resource limits
-kubectl get deployment cert-manager -n cert-manager -o jsonpath='{.spec.template.spec.containers[0].resources}'
+flux reconcile kustomization cert-manager -n flux-system
+flux reconcile helmrelease cert-manager -n cert-manager --with-source
 ```
 
 ## Common Patterns
 
-### Override single nested value
+### Resource Tuning in Overrides
 
-Base values:
+Use overrides for environment-specific sizing:
 
 ```yaml
-controller:
-  resources:
-    limits:
-      cpu: 100m
-      memory: 128Mi
+resources:
+  requests:
+    cpu: 500m
+    memory: 512Mi
 ```
 
-Override values (only change memory):
+### Storage Class Selection
+
+Use overrides for cluster storage differences:
 
 ```yaml
-controller:
-  resources:
-    limits:
-      memory: 256Mi  # Only this value changes
+persistence:
+  storageClass: longhorn
 ```
 
-Result: CPU limit remains 100m, memory becomes 256Mi.
+### Hostnames and Ingress
 
-### Disable feature from base
-
-Base values:
+Use overrides for cluster-specific DNS:
 
 ```yaml
-monitoring:
+ingress:
   enabled: true
+  hosts:
+    - app.example.com
 ```
 
-Override values:
+## Enterprise Repo Note
 
-```yaml
-monitoring:
-  enabled: false
-```
+When a private enterprise repo consumes this base, it may also:
 
-### Add environment-specific configuration
+- patch chart sources to private registries or repositories
+- add enterprise-only values
+- replace image references
 
-Override values for development:
-
-```yaml
-logLevel: debug
-replicaCount: 1
-resources:
-  requests:
-    cpu: 10m
-    memory: 32Mi
-```
-
-Override values for production:
-
-```yaml
-logLevel: info
-replicaCount: 3
-resources:
-  requests:
-    cpu: 100m
-    memory: 128Mi
-```
-
-## Troubleshooting
-
-### Values not applied
-
-Check secret exists:
-
-```bash
-kubectl get secret cert-manager-values-override -n cert-manager
-```
-
-If missing, verify Kustomization built correctly:
-
-```bash
-kustomize build applications/overlays/k8s-sandbox/services/cert-manager/
-```
-
-### Wrong values applied
-
-Check HelmRelease status:
-
-```bash
-kubectl describe helmrelease cert-manager -n cert-manager
-```
-
-View Helm release values:
-
-```bash
-helm get values cert-manager -n cert-manager
-```
-
-### Values conflict
-
-Values are merged in order. Later values override earlier. Check merge result:
-
-```bash
-# Extract values from secrets
-kubectl get secret cert-manager-values-base -n cert-manager -o jsonpath='{.data.values\.yaml}' | base64 -d
-
-kubectl get secret cert-manager-values-override -n cert-manager -o jsonpath='{.data.override\.yaml}' | base64 -d
-```
+That is a consumer-repo concern, not a standard file layout inside `openCenter-gitops-base`.
 
 ## Best Practices
 
-1. **Keep base values minimal** - Only include required configuration
-2. **Document overrides** - Add comments explaining why values are overridden
-3. **Use semantic versioning** - Tag base values with version numbers
-4. **Test in non-production first** - Validate changes in dev/staging
-5. **Avoid duplicating base values** - Only override what changes
-6. **Use SOPS for secrets** - Never commit plaintext credentials (see [manage-secrets.md](manage-secrets.md))
+- keep base values small, durable, and shared
+- keep override files focused on true cluster differences
+- avoid copying large parts of the base file into overrides
+- align values filenames with the chart version in the `HelmRelease`
+- validate rendered manifests before pushing changes
 
-## Next Steps
+## Related References
 
-- Encrypt sensitive values (see [manage-secrets.md](manage-secrets.md))
-- Add observability configuration (see [setup-observability.md](setup-observability.md))
-- Configure Gateway API routing (see [configure-gateway.md](configure-gateway.md))
-
-## Evidence
-
-**Sources:**
-- `applications/base/services/cert-manager/helmrelease.yaml` - valuesFrom configuration
-- `applications/base/services/cert-manager/kustomization.yaml` - secretGenerator pattern
-- S1-APP-RUNTIME-APIS.md - Three-tier values hierarchy
-- S4-FLUXCD-GITOPS.md - Values hierarchy via secrets
+- [Helm Values Schema](../reference/helm-values-schema.md)
+- [Kustomize Patterns](../reference/kustomize-patterns.md)
+- [Enterprise Components](../explanation/enterprise-components.md)

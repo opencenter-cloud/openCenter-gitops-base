@@ -1,7 +1,11 @@
 ---
+id: setup-observability
+sidebar_label: Setup Observability
+description: Shows how to configure metrics, logs, and traces for services deployed with openCenter.
 doc_type: how-to
 title: "Set Up Service Observability"
 audience: "platform engineers"
+tags: [observability, prometheus, loki, tempo]
 ---
 
 # Set Up Service Observability
@@ -553,9 +557,9 @@ kubectl get secret alertmanager-kube-prometheus-stack-alertmanager -n observabil
 ## Evidence
 
 **Sources:**
-- `applications/base/services/observability/kube-prometheus-stack/README.md` - Prometheus stack
-- `applications/base/services/observability/loki/README.md` - Log aggregation
-- `applications/base/services/observability/tempo/README.md` - Distributed tracing
-- `applications/base/services/observability/opentelemetry-kube-stack/README.md` - Unified telemetry
-- `docs/service-standards-and-lifecycle.md` lines 56-60 - Observability requirements
+- [applications/base/services/observability/kube-prometheus-stack/README.md](../../applications/base/services/observability/kube-prometheus-stack/README.md) - Prometheus stack
+- [applications/base/services/observability/loki/README.md](../../applications/base/services/observability/loki/README.md) - Log aggregation
+- [applications/base/services/observability/tempo/README.md](../../applications/base/services/observability/tempo/README.md) - Distributed tracing
+- [applications/base/services/observability/opentelemetry-kube-stack/README.md](../../applications/base/services/observability/opentelemetry-kube-stack/README.md) - Unified telemetry
+- [docs/service-standards-and-lifecycle.md](../service-standards-and-lifecycle.md) lines 56-60 - Observability requirements
 - S6-OBSERVABILITY.md - Observability stack architecture

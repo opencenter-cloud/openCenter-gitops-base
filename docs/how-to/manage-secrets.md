@@ -1,7 +1,11 @@
 ---
+id: manage-secrets
+sidebar_label: Manage Secrets
+description: Shows how to encrypt, store, and reconcile secrets with SOPS and age in openCenter.
 doc_type: how-to
 title: "Manage Secrets with SOPS"
 audience: "platform engineers"
+tags: [sops, age, secrets, gitops]
 ---
 
 # Manage Secrets with SOPS
@@ -177,7 +181,7 @@ kubectl get secret sops-age -n flux-system
 
 ### 7. Configure FluxCD Kustomization for decryption
 
-In customer overlay `applications/overlays/k8s-sandbox/kustomization.yaml`:
+In cluster repo path `applications/overlays/k8s-sandbox/kustomization.yaml`:
 
 ```yaml
 apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -406,7 +410,7 @@ Use Sealed Secrets when:
 ## Evidence
 
 **Sources:**
-- `llms.txt` lines 209-262 - SOPS workflow
-- `docs/service-standards-and-lifecycle.md` lines 48-55 - Security requirements
+- [llms.txt](../../llms.txt) lines 209-262 - SOPS workflow
+- [docs/service-standards-and-lifecycle.md](../service-standards-and-lifecycle.md) lines 48-55 - Security requirements
 - S4-FLUXCD-GITOPS.md - SOPS secret management
 - S7-SECURITY-GOVERNANCE.md - Dual secret management strategy

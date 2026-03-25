@@ -2,18 +2,26 @@
 id: adr-001-kustomize-components
 title: "ADR-001: Use Kustomize Components for Community/Enterprise Pattern"
 sidebar_label: ADR-001 Kustomize
-description: Architecture decision record for adopting Kustomize Components to replace duplicated community/enterprise directory structures.
+description: Historical architecture decision record for an earlier Kustomize Components approach that is no longer the active repo model.
 doc_type: explanation
 audience: "architects, platform engineers"
 tags: [adr, kustomize, enterprise, architecture]
+unlisted: true
 ---
 
 # ADR-001: Use Kustomize Components for Community/Enterprise Pattern
 
-> **Status**: Proposed  
+> Historical / superseded: this ADR reflects an earlier design stage and is retained only as architectural history. It does **not** describe the current `openCenter-gitops-base` layout or the current base/private-enterprise split.
+>
+> Current guidance lives in:
+> - [`docs/explanation/enterprise-components.md`](explanation/enterprise-components.md)
+> - [`docs/reference/kustomize-patterns.md`](reference/kustomize-patterns.md)
+> - [`docs/reference/directory-structure.md`](reference/directory-structure.md)
+>
+> **Status at the time**: Proposed  
 > **Date**: 2025-02-09  
 > **Deciders**: Platform Engineering Team  
-> **Related**: [Community vs Enterprise Improvement Proposal](./02-community-enterprise-improvement-proposal.md)
+> **Related**: Community vs Enterprise Improvement Proposal (historical internal planning note, not published in this repository)
 
 ---
 
@@ -596,7 +604,7 @@ Each service migration must meet these criteria:
 ## References
 
 - [Kustomize Components Documentation](https://kubectl.docs.kubernetes.io/guides/config_management/components/)
-- [Community vs Enterprise Improvement Proposal](./02-community-enterprise-improvement-proposal.md)
+- Community vs Enterprise Improvement Proposal (historical internal planning note, not published in this repository)
 - [Kustomize v5.0 Release Notes](https://github.com/kubernetes-sigs/kustomize/releases/tag/kustomize%2Fv5.0.0)
 - [Kubernetes Reflector GitHub](https://github.com/emberstack/kubernetes-reflector)
 - [Reflector Helm Chart](https://github.com/emberstack/kubernetes-reflector/tree/main/helm/reflector)

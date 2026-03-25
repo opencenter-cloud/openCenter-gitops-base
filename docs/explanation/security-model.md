@@ -1,7 +1,11 @@
 ---
+id: security-model
+sidebar_label: Security Model
+description: Explains the security architecture, controls, and known gaps in openCenter-gitops-base.
 doc_type: explanation
 title: "Security Model and Known Gaps"
 audience: "security engineers, platform engineers, architects"
+tags: [security, sops, policy, architecture]
 ---
 
 # Security Model and Known Gaps
@@ -33,7 +37,7 @@ SOPS (Secrets OPerationS) encrypts secrets before they're committed to Git. The 
 **Key generation** creates an age keypair:
 
 ```bash
-age-keygen -o ${HOME}/config/sops/age/${CLUSTER_NAME}_keys.txt
+age-keygen -o ${HOME}/.config/sops/age/${CLUSTER_NAME}_keys.txt
 ```
 
 This generates a private key (for decryption) and a public key (for encryption). The public key goes in `.sops.yaml` in the repository. The private key stays out of Git.
@@ -259,19 +263,15 @@ Based on code review findings:
 
 These decisions reflect openCenter's priorities: simplicity, maintainability, and safety over maximum flexibility and automation.
 
-## Evidence
+## Source Material
 
-This explanation is based on the following repository analysis:
+This explanation is based on the following repository sources:
 
-- SOPS encryption workflow: `llms.txt` lines 209-262
-- SOPS configuration: `.sops.yaml` files throughout repository
-- Kyverno policy engine: `applications/base/services/kyverno/policy-engine/README.md`
-- Security requirements: `docs/service-standards-and-lifecycle.md` lines 48-55
-- Keycloak IAM: `applications/base/services/keycloak/` directory structure
-- Network policy gaps: `applications/policies/network-policies/placeholder.txt`
-- Pod Security gaps: `applications/policies/pod-security-policies/placeholder.txt`
-- RBAC gaps: `applications/policies/rbac/placeholder.txt`
-- Security findings: `docs/analysis/S7-SECURITY-GOVERNANCE.md`
-- Code review security assessment: `docs/analysis/A-CODE-REVIEW.md` sections A3, A11
-- Image scanning gaps: `docs/analysis/S7-SECURITY-GOVERNANCE.md` HIGH findings
-- mTLS gaps: `docs/analysis/A-CODE-REVIEW.md` section A11
+- SOPS encryption workflow: [Manage Secrets with SOPS](../how-to/manage-secrets.md) and [Service Onboarding Workflow](../how-to/service-onboarding.md)
+- SOPS configuration: `.sops.yaml` examples and [SOPS Configuration](../reference/sops-configuration.md)
+- Kyverno policy engine: [applications/base/services/kyverno/policy-engine/README.md](../../applications/base/services/kyverno/policy-engine/README.md)
+- Security requirements: [docs/service-standards-and-lifecycle.md](../service-standards-and-lifecycle.md)
+- Keycloak IAM: [applications/base/services/keycloak/](../../applications/base/services/keycloak/)
+- Network policy placeholders: [applications/policies/network-policies/](../../applications/policies/network-policies/)
+- Pod Security placeholders: [applications/policies/pod-security-policies/](../../applications/policies/pod-security-policies/)
+- RBAC placeholders: [applications/policies/rbac/](../../applications/policies/rbac/)

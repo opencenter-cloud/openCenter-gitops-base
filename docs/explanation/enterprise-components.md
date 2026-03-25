@@ -1,227 +1,214 @@
 ---
+id: enterprise-components
+sidebar_label: Enterprise Components
+description: Explains how the private enterprise repository composes on top of openCenter-gitops-base and where enterprise components belong.
 doc_type: explanation
 title: "Enterprise Components Pattern"
 audience: "platform engineers, architects"
+tags: [enterprise, kustomize, architecture, overlays]
 ---
 
 # Enterprise Components Pattern
 
-**Purpose:** For platform engineers and architects, explains the Kustomize components pattern used to differentiate community and enterprise editions, how components enable optional features, and the migration strategy from the previous approach.
+**Purpose:** For platform engineers and architects, explains how the private enterprise repository composes on top of `openCenter-gitops-base`, and why those enterprise-specific deltas are not stored in this base repository.
 
-## The Problem: Edition Sprawl
+## The Important Distinction
 
-openCenter supports both community and enterprise editions. Enterprise editions include additional features:
+`openCenter-gitops-base` contains the **base service definitions only**.
 
-- High availability configurations (multiple replicas, pod anti-affinity)
-- Advanced security (mTLS, encryption at rest, audit logging)
-- Premium integrations (enterprise monitoring, backup, disaster recovery)
-- Commercial support and SLAs
+Those base definitions:
 
-The naive approach creates separate directories for each edition:
+- describe the reusable Kubernetes resources for each service
+- reference **upstream public chart sources**
+- use upstream/default image locations unless overridden elsewhere
+- are intended to be consumed by other repositories
 
+The **enterprise component pattern is not implemented inside this base repository**. It is implemented in the **private enterprise repository**, which imports this base and layers enterprise-specific deltas on top.
+
+That means:
+
+- the base repo owns the shared service definition
+- the enterprise repo owns private registry/chart source overrides
+- cluster repositories consume either the public base directly or the enterprise repo’s install overlay
+
+## Why The Components Live in the Enterprise Repo
+
+The enterprise-specific changes are not generic base behavior. They are edition-specific deltas such as:
+
+- swapping an upstream `HelmRepository` for a private enterprise source
+- adding enterprise-only hardened values
+- injecting mirrored/private image settings
+- wiring private registry or OCI authentication
+
+Those changes are intentionally kept out of `openCenter-gitops-base` so the base remains:
+
+- public
+- upstream-backed
+- reusable across community and enterprise consumers
+- free of private registry or enterprise-only implementation details
+
+## Repo Relationship
+
+At a high level, the flow looks like this:
+
+```text
+openCenter-gitops-base
+  -> defines base service manifests
+  -> points to upstream public sources
+
+openCenter-gitops-enterprise
+  -> imports the base service path
+  -> enables enterprise component(s)
+  -> rewrites source/image settings to private enterprise artifacts
+
+cluster repo
+  -> points Flux at the desired install path
+  -> adds environment-specific overrides and dependencies
 ```
-applications/base/services/cert-manager-community/
-applications/base/services/cert-manager-enterprise/
+
+## Concrete Example: cert-manager
+
+In the base repo, `cert-manager` is defined as a normal base service under:
+
+`applications/base/services/cert-manager`
+
+That base service:
+
+- defines the namespace
+- defines the upstream `jetstack` Helm repository
+- defines the `HelmRelease`
+- generates the base values Secret
+
+In the enterprise repo, the enterprise-specific logic lives under:
+
+`applications/enterprise/services/cert-manager`
+
+The path is shown as a repo-relative example, not a clickable link, because it lives in the private enterprise repo rather than in `openCenter-gitops-base`.
+
+The relevant structure is:
+
+```text
+applications/enterprise/services/cert-manager/
+└── overlays/
+    └── install/
+        └── kustomization.yaml
+    ... plus enterprise-specific values, patches, and source definitions as needed
 ```
 
-This duplicates most configuration. The two editions differ in 10-20% of their configuration but share 80-90%. Maintaining both versions means updating security patches, version bumps, and configuration changes in two places. Bugs fixed in one edition must be manually ported to the other.
+## What The Enterprise Overlay Does
 
-The Kustomize components pattern solves this by treating enterprise features as optional additions to a common base.
+The enterprise-specific layer for `cert-manager` does three key things:
 
-## What Are Kustomize Components
+1. adds the enterprise Helm source
+2. removes the public upstream `HelmRepository`
+3. patches the base `HelmRelease` to use the private source and enterprise values Secret
 
-Kustomize components are reusable configuration fragments that can be included in multiple kustomizations. Unlike bases (which you extend) or overlays (which you apply on top), components are optional additions that you explicitly enable.
+From the enterprise repo install path:
 
-A component is a directory containing a `kustomization.yaml` with `kind: Component`:
+`applications/enterprise/services/cert-manager/overlays/install/kustomization.yaml`
 
 ```yaml
-apiVersion: kustomize.config.k8s.io/v1alpha1
-kind: Component
-
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
 resources:
-  - high-availability.yaml
-
+  - github.com/opencenter-cloud/openCenter-gitops-base//applications/base/services/cert-manager?ref=<release/branch>
 patches:
-  - patch: |-
+  - target:
+      group: helm.toolkit.fluxcd.io
+      version: v2
+      kind: HelmRelease
+      name: cert-manager
+    patch: |-
       - op: replace
-        path: /spec/replicas
-        value: 3
-    target:
-      kind: Deployment
+        path: /spec/chart/spec/sourceRef/name
+        value: opencenter-cloud
 ```
 
-You include components in a kustomization with the `components` field:
+It may also add enterprise-specific values, private source definitions, and mirrored image settings. The enterprise layer is not creating the service from scratch. It is modifying the base service imported from `openCenter-gitops-base`.
+
+## How The Enterprise Repo Consumes The Base
+
+The enterprise repo’s install overlay shows the intended composition model:
+
+`applications/enterprise/services/cert-manager/overlays/install/kustomization.yaml`
 
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
 resources:
-  - ../../base/services/cert-manager
-
-components:
-  - ../../base/services/cert-manager/components/enterprise
+  - github.com/opencenter-cloud/openCenter-gitops-base//applications/base/services/cert-manager?ref=<release/branch>
+patches:
+  - ...
 ```
 
-The component's resources and patches are applied on top of the base configuration.
+This is the key architectural point:
 
-## How openCenter Uses Components
+- the base repo exports the reusable service path
+- the enterprise repo imports that path
+- the enterprise repo enables the component locally
 
-openCenter structures services with an optional enterprise component:
+## Base vs Enterprise Responsibilities
 
-```
-applications/base/services/cert-manager/
-├── kustomization.yaml          # Base configuration (community)
-├── helmrelease.yaml
-├── namespace.yaml
-├── helm-values/
-│   └── hardened-values-v1.18.2.yaml
-└── components/
-    └── enterprise/
-        ├── kustomization.yaml  # Component definition
-        └── helm-values/
-            └── hardened-enterprise-v1.18.2.yaml
-```
+### Base Repository Responsibilities
 
-The base configuration works for community edition. Enterprise customers include the enterprise component in their cluster overlay:
+`openCenter-gitops-base` is responsible for:
 
-```yaml
-# Customer cluster overlay
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
+- shared service manifests
+- upstream public `HelmRepository` or manifest source definitions
+- base chart versions
+- base values files
+- reusable service structure
 
-resources:
-  - ../../base/services/cert-manager
+### Enterprise Repository Responsibilities
 
-components:
-  - ../../base/services/cert-manager/components/enterprise
-```
+`openCenter-gitops-enterprise` is responsible for:
 
-The enterprise component adds enterprise-specific Helm values through a secretGenerator:
+- enterprise hardened values
+- private source definitions
+- mirrored/private image overrides
+- install overlays that combine base + enterprise deltas
 
-```yaml
-# components/enterprise/kustomization.yaml
-apiVersion: kustomize.config.k8s.io/v1alpha1
-kind: Component
+## Why This Model Works
 
-secretGenerator:
-  - name: cert-manager-values-enterprise
-    files:
-      - hardened-enterprise.yaml=helm-values/hardened-enterprise-v1.18.2.yaml
-```
+This split gives a cleaner separation of concerns than storing enterprise components inside the base repo.
 
-This creates the `cert-manager-values-enterprise` secret that the HelmRelease references in its `valuesFrom` field. Community deployments don't include the component, so the secret doesn't exist, and FluxCD skips it (because `optional: true`).
+**Public base stays clean**  
+The base repo remains consumable on its own and does not need private registries, private OCI auth, or enterprise-only values files.
 
-## Why Components Work Better
+**Enterprise stays additive**  
+The enterprise repo only stores the delta from base instead of duplicating full service definitions.
 
-**Single source of truth** - There's one base configuration. Enterprise features are additions, not duplicates. Security patches and version updates happen in one place.
+**Version alignment is explicit**  
+The enterprise repo can pin to a specific base ref and keep its hardened values aligned to the corresponding chart/app version.
 
-**Explicit opt-in** - Enterprise features are visible in the cluster overlay. You can see which clusters use enterprise features by checking their kustomization files.
+**Private implementation stays private**  
+Private sources and private image rewrites are kept outside the public base repo.
 
-**Composability** - You can have multiple components (enterprise, high-availability, advanced-monitoring) and mix and match them. A cluster could use enterprise + high-availability but not advanced-monitoring.
+## What This File Should Not Imply
 
-**Testability** - You can test the base configuration independently. You can test components in isolation. You can test combinations of components.
+This explanation should not imply that:
 
-**Migration path** - Existing deployments can adopt components incrementally. Start with base configuration, add components as needed.
+- per-service enterprise directories exist inside `openCenter-gitops-base`
+- enterprise overlays are authored or consumed inside `openCenter-gitops-base`
+- the base repo ships private image or chart source rewrites
 
-## Components vs Overlays
+Those patterns belong to the enterprise repo, not the base repo.
 
-Overlays and components both modify base configuration, but they serve different purposes:
+## Summary
 
-**Overlays** represent environments or clusters. You have one overlay per deployment target (dev, stage, prod, customer-a, customer-b). Overlays are mutually exclusive - a deployment uses exactly one overlay.
+Enterprise-specific overlays and patches are part of the overall openCenter enterprise model, but they are **not a base-repo implementation detail**.
 
-**Components** represent optional features. You have one component per feature (enterprise, high-availability, backup). Components are composable - a deployment can use zero, one, or many components.
+In the current architecture:
 
-In openCenter:
-- Customer cluster repositories are overlays (one per cluster)
-- Enterprise features are components (optional additions)
+- `openCenter-gitops-base` provides upstream-backed base service definitions
+- `openCenter-gitops-enterprise` imports those base definitions
+- enterprise components in the private repo patch the imported base to use private sources and enterprise values
 
-This separation keeps concerns distinct. The overlay handles cluster-specific configuration (domain names, storage classes). Components handle feature flags (enterprise vs community).
-
-## Migration from Previous Approach
-
-openCenter recently migrated from a different pattern to components. The previous approach used separate directories for community and enterprise editions. The migration involved:
-
-1. **Consolidate base configuration** - Move shared configuration to a single base directory
-2. **Extract enterprise differences** - Identify configuration that differs between editions
-3. **Create enterprise component** - Move enterprise-specific configuration to `components/enterprise/`
-4. **Update overlays** - Add `components` field to cluster overlays that need enterprise features
-5. **Test both editions** - Verify community and enterprise deployments produce correct configuration
-6. **Deploy incrementally** - Migrate non-production clusters first, then production
-
-The migration tools in `tools/kustomize-migration/` automate parts of this process. They analyze existing configurations, identify differences, and generate component definitions.
-
-## Trade-offs
-
-**Complexity** - Components add another layer to the Kustomize hierarchy. Understanding the final configuration requires mentally applying base + components + overlay.
-
-**Discoverability** - Finding which features are available requires looking for component directories. There's no central registry of components.
-
-**Ordering** - Components are applied in the order listed. If two components modify the same field, the later one wins. This can cause unexpected behavior.
-
-**Tooling** - Not all tools understand components. Some Kustomize-based tools only support bases and overlays.
-
-**Documentation** - Each component needs documentation explaining what it does, when to use it, and what it changes.
-
-## When to Use Components
-
-**Use components for:**
-- Edition differences (community vs enterprise)
-- Optional features (backup, disaster recovery, advanced monitoring)
-- Experimental features (alpha/beta features that aren't ready for all deployments)
-- Compliance profiles (PCI-DSS, HIPAA, FedRAMP configurations)
-- Performance profiles (high-throughput, low-latency, cost-optimized)
-
-**Don't use components for:**
-- Environment differences (dev vs prod) - use overlays
-- Customer-specific configuration - use overlays
-- Required configuration - put it in the base
-- Configuration that varies continuously - use Helm values
-
-## Common Patterns
-
-**Feature flags** - Components act as feature flags. Including the component enables the feature. This is cleaner than Helm values with boolean flags because the feature configuration is self-contained.
-
-**Compliance profiles** - Different customers need different compliance configurations. Create components for each compliance framework (pci-dss, hipaa, fedramp) and include the appropriate component in each customer's overlay.
-
-**Performance profiles** - Create components for different performance characteristics (high-throughput, low-latency, cost-optimized). Customers choose the profile that matches their needs.
-
-**Experimental features** - New features start as components. Once they're stable and widely adopted, they can move to the base configuration.
-
-## Alternatives Considered
-
-**Separate repositories** - Maintain separate repositories for community and enterprise editions. This provides complete isolation but makes sharing improvements difficult. Security patches must be manually ported between repositories.
-
-**Helm chart dependencies** - Use Helm subcharts for enterprise features. This works but is more complex than Kustomize components and doesn't integrate as cleanly with the GitOps workflow.
-
-**Conditional Helm values** - Use boolean flags in Helm values to enable enterprise features. This works but mixes feature flags with configuration. Components keep feature selection (which components to include) separate from configuration (what values to use).
-
-**Git branches** - Maintain community and enterprise editions on separate branches. This creates merge conflicts and makes it hard to keep editions in sync.
-
-The Kustomize components pattern provides better separation of concerns and easier maintenance than these alternatives.
-
-## Future Direction
-
-The components pattern enables additional capabilities:
-
-**Component marketplace** - A catalog of available components with descriptions, dependencies, and compatibility information.
-
-**Automated testing** - Test all combinations of components to ensure they work together correctly.
-
-**Component versioning** - Version components independently from base configuration, allowing faster iteration on enterprise features.
-
-**Component dependencies** - Express that component A requires component B, enabling automatic inclusion of dependencies.
-
-These enhancements would make components more powerful and easier to use, but they're not implemented yet.
+That is the correct mental model for how enterprise composition works today.
 
 ## Evidence
 
-This explanation is based on the following repository analysis:
-
-- Kustomize components structure: `applications/base/services/*/components/enterprise/`
-- Component kustomization format: `applications/base/services/*/components/enterprise/kustomization.yaml`
-- Migration tools: `tools/kustomize-migration/` directory
-- Service standards mentioning enterprise editions: `docs/service-standards-and-lifecycle.md`
-- Components pattern analysis: `docs/analysis/S1-APP-RUNTIME-APIS.md`
-- Build tooling and migration strategy: `docs/analysis/S2-BUILD-DEV-TOOLING.md`
-- HelmRelease optional values pattern: `applications/base/services/cert-manager/helmrelease.yaml`
+- Base service example:
+  [applications/base/services/cert-manager/](../../applications/base/services/cert-manager/)
+- Enterprise install overlay example in the private enterprise repository:
+  `applications/enterprise/services/cert-manager/overlays/install/kustomization.yaml`

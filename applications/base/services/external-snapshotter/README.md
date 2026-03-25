@@ -1,7 +1,9 @@
 # External-Snapshotter – Base Configuration
 
 This directory contains the **base manifests** for deploying the [External Snapshotter](https://kubernetes-csi.github.io/docs/snapshot-controller.html), a Kubernetes CSI component responsible for managing volume snapshots.  
-It is designed to be **consumed by cluster repositories** as a remote base, allowing each cluster to apply **custom overrides** as needed.
+It can be consumed directly by cluster repositories or imported by the private enterprise repository for enterprise-specific overrides.
+
+For service overview, use cases, examples, and upstream references, see the [service reference](../../../../docs/reference/services/external-snapshotter.md).
 
 **About External-Snapshotter:**
 

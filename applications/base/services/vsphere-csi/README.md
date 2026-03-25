@@ -1,7 +1,9 @@
 # vSphere CSI – Base Configuration
 
 This directory contains the base manifests for deploying the vSphere Cloud Storage Interface (CSI) driver, enabling Kubernetes clusters running on VMware vSphere to provision and manage persistent storage natively.  
-It is designed to be consumed by cluster repositories as a remote base, allowing each cluster to apply custom overrides such as StorageClass definitions, topology settings, or credentials.
+It can be consumed directly by cluster repositories or imported by the private enterprise repository for enterprise-specific overrides.
+
+For service overview, use cases, examples, and upstream references, see the [service reference](../../../../docs/reference/services/vsphere-csi.md).
 
 **About vSphere CSI:**
 

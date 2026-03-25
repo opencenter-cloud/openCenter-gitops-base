@@ -1,6 +1,11 @@
 ---
+id: docs-index
+sidebar_label: Documentation
+description: Primary documentation index for openCenter-gitops-base.
 doc_type: overview
 title: "openCenter-gitops-base Documentation"
+audience: "platform engineers, operators, architects"
+tags: [docs, index, navigation]
 ---
 
 # openCenter-gitops-base Documentation
@@ -15,29 +20,41 @@ openCenter-gitops-base is a centralized library of production-ready, security-ha
 - **GitOps-native:** All services deployed and managed via FluxCD
 - **Security-hardened:** Production-ready configurations with security best practices
 - **Standardized:** Consistent deployment patterns across all services
-- **Customizable:** Three-tier values hierarchy for environment-specific configuration
+- **Customizable:** Base values in this repo with optional overrides supplied by consuming overlays
 - **Observable:** Complete monitoring, logging, and tracing stack included
+- **Provisionable:** `iac/` provisions infrastructure, renders Kubespray inputs, and triggers Kubernetes installation through Kubespray
 
-**Services included:** cert-manager, Harbor, Keycloak, Kyverno, Longhorn, MetalLB, Velero, Gateway API, Prometheus, Grafana, Loki, Tempo, and more. See [Service Catalog](reference/service-catalog.md) for the complete list.
+The authoritative service and version inventory is maintained in the top-level [README](../README.md). For deeper per-service documentation, use the [Service Catalog](reference/service-catalog.md) and the [Service Reference Library](reference/services/index.md).
+
+## Infrastructure and Services
+
+This repository supports both parts of the openCenter cluster lifecycle:
+
+- **Infrastructure as Code** under [`iac/`](../iac/README.md) provisions the underlying infrastructure, renders Kubespray inventory and group variables, and initiates Kubernetes cluster deployment through Kubespray
+- **GitOps base services** under `applications/` provide the reusable service definitions that cluster repositories can consume directly, or that the private enterprise repo can import and extend
 
 ## How This Repository Fits in the Ecosystem
 
 openCenter-gitops-base is one component of the larger openCenter platform:
 
-- **openCenter-cli** generates customer cluster repositories that reference this base repository
-- **Customer clusters** deploy services by pointing FluxCD at specific paths in this repository
-- **Base configurations** are customized via overlays in customer repositories
+- **openCenter-cli** generates cluster repositories that reference this base repository
+- **Cluster deployments** install services by pointing FluxCD at specific paths in this repository or in the private enterprise repo that imports it
+- **Base configurations** are customized via overlays in cluster repositories
+- **Infrastructure as Code** under `iac/` provisions the underlying cluster hosts and runs Kubespray
+- **Private enterprise repositories** can import this base and apply enterprise-specific source and image overrides
 - **Version pinning** via Git tags ensures reproducible deployments
 
-For the complete ecosystem architecture, see [ecosystem.md](../ecosystem.md).
+For the complete repo architecture described here, see [Architecture Overview](explanation/architecture.md).
 
 ## Quick Start by Role
 
 ### New to openCenter?
 
-**Start here:** [Getting Started Tutorial](tutorials/getting-started.md)
+**Start here:**
+- [Infrastructure as Code](../iac/README.md)
+- [Getting Started Tutorial](tutorials/getting-started.md)
 
-Follow the step-by-step guide to deploy your first service (cert-manager) and understand the GitOps workflow. Takes 30-45 minutes.
+Use the IaC guide to build a cluster, then follow the tutorial to deploy your first service (cert-manager) and understand the GitOps workflow.
 
 ### Platform Engineers
 
@@ -50,11 +67,12 @@ Follow the step-by-step guide to deploy your first service (cert-manager) and un
 - [Setup Observability](how-to/setup-observability.md) - Deploy monitoring stack
 
 **Reference documentation:**
+- [iac/ README](../iac/README.md) - Cluster provisioning, Kubespray inventory generation, and bootstrap flow
 - [Service Catalog](reference/service-catalog.md) - All available services
 - [Directory Structure](reference/directory-structure.md) - Repository layout
 - [Flux Resources](reference/flux-resources.md) - GitRepository, HelmRelease, Kustomization specs
-- [Helm Values Schema](reference/helm-values-schema.md) - Three-tier values pattern
-- [Kustomize Patterns](reference/kustomize-patterns.md) - Components and overlays
+- [Helm Values Schema](reference/helm-values-schema.md) - Base values, override values, and merge behavior
+- [Kustomize Patterns](reference/kustomize-patterns.md) - Base service composition patterns
 - [SOPS Configuration](reference/sops-configuration.md) - Secret encryption
 
 ### Architects and Decision Makers
@@ -62,14 +80,9 @@ Follow the step-by-step guide to deploy your first service (cert-manager) and un
 **Understand the system:**
 - [Architecture Overview](explanation/architecture.md) - System design and decisions
 - [GitOps Workflow](explanation/gitops-workflow.md) - How FluxCD manages deployments
-- [Three-Tier Values](explanation/three-tier-values.md) - Configuration hierarchy rationale
-- [Enterprise Components](explanation/enterprise-components.md) - Community vs enterprise editions
+- [Base, Override, and Enterprise Values](explanation/three-tier-values.md) - Configuration layering rationale
+- [Enterprise Components](explanation/enterprise-components.md) - How the private enterprise repo composes on top of base
 - [Security Model](explanation/security-model.md) - Security controls and gaps
-
-**Analysis and review:**
-- [Code Review](analysis/A-CODE-REVIEW.md) - Comprehensive security and architecture review
-- [Executive Summary](analysis/EXECUTIVE-SUMMARY.md) - Key findings and recommendations
-- [Evidence Packs](analysis/) - Detailed analysis of all platform components
 
 ## Documentation Structure
 
@@ -102,6 +115,7 @@ This documentation follows the [Diátaxis framework](https://diataxis.fr/) with 
 
 - [Directory Structure](reference/directory-structure.md)
 - [Service Catalog](reference/service-catalog.md)
+- [Service References](reference/services/index.md)
 - [Flux Resources](reference/flux-resources.md)
 - [Helm Values Schema](reference/helm-values-schema.md)
 - [Kustomize Patterns](reference/kustomize-patterns.md)
@@ -115,7 +129,7 @@ This documentation follows the [Diátaxis framework](https://diataxis.fr/) with 
 
 - [Architecture Overview](explanation/architecture.md)
 - [GitOps Workflow](explanation/gitops-workflow.md)
-- [Three-Tier Values](explanation/three-tier-values.md)
+- [Base, Override, and Enterprise Values](explanation/three-tier-values.md)
 - [Enterprise Components](explanation/enterprise-components.md)
 - [Security Model](explanation/security-model.md)
 
@@ -123,34 +137,34 @@ This documentation follows the [Diátaxis framework](https://diataxis.fr/) with 
 
 ## Service-Specific Documentation
 
-Each service has detailed configuration guides:
+Each deployable service now has a dedicated reference page in the service library:
 
-**Core Services:**
-- [cert-manager](../cert-manager-config-guide.md) - TLS certificate management
-- [Harbor](../harbor-config-guide.md) - Container registry
-- [Keycloak](../keycloak-config-guide.md) - Identity and access management
-- [Kyverno](../kyverno-config-guide.md) - Policy engine
-- [Longhorn](../longhorn-config-guide.md) - Distributed storage
-- [MetalLB](../metallb-config-guide.md) - Load balancer
-- [Velero](../velero-config-guide.md) - Backup and disaster recovery
-- [vSphere CSI](../vsphere-csi-config-guide.md) - vSphere storage integration
+- [Service Reference Library](reference/services/index.md)
 
-**Observability:**
-- [kube-prometheus-stack](../kube-prometheus-stack-config-guide.md) - Prometheus, Grafana, Alertmanager
-- [Loki](../loki-config-guide.md) - Log aggregation
-- [Tempo](../tempo-config-guide.md) - Distributed tracing
-- [OpenTelemetry](../opentelemetry-kube-stack-config-guide.md) - Telemetry collection
+Detailed configuration guides also exist for selected services:
 
-**Operations:**
-- [Sealed Secrets](../sealed-secrets-config-guide.md) - Secret management
-- [Adding New Service](../adding-new-service.md) - Service onboarding process
-- [Service Standards](../service-standards-and-lifecycle.md) - Standards and lifecycle
+- [Service Configuration Guides](how-to/services/index.md)
+- [cert-manager](how-to/services/cert-manager.md)
+- [Harbor](how-to/services/harbor.md)
+- [Keycloak](how-to/services/keycloak.md)
+- [Kyverno](how-to/services/kyverno.md)
+- [Longhorn](how-to/services/longhorn.md)
+- [MetalLB](how-to/services/metallb.md)
+- [Velero](how-to/services/velero.md)
+- [vSphere CSI](how-to/services/vsphere-csi.md)
+- [kube-prometheus-stack](how-to/services/kube-prometheus-stack.md)
+- [Loki](how-to/services/loki.md)
+- [Tempo](how-to/services/tempo.md)
+- [OpenTelemetry](how-to/services/opentelemetry-kube-stack.md)
+- [Sealed Secrets](how-to/services/sealed-secrets.md)
+- [Adding New Service](how-to/add-new-service.md)
+- [Service Standards](service-standards-and-lifecycle.md)
 
 ## Common Workflows
 
 ### Deploying a New Cluster
 
-1. Use openCenter-cli to generate customer repository
+1. Use openCenter-cli to generate the cluster repository
 2. Bootstrap FluxCD on the cluster
 3. Configure GitRepository sources pointing to this repository
 4. Create Kustomizations for desired services
@@ -191,8 +205,8 @@ See [Troubleshoot Flux](how-to/troubleshoot-flux.md) for comprehensive guide.
 ### Documentation Issues
 
 If you find errors or gaps in documentation:
-1. Check if the issue is already documented in [Known Gaps](analysis/A-CODE-REVIEW.md#known-gaps)
-2. Review [Evidence Packs](analysis/) for detailed technical information
+1. Review the relevant service or workflow guide in this documentation set
+2. Cross-check the corresponding manifests under `applications/` or Terraform under `iac/`
 3. Consult service-specific configuration guides
 
 ### Technical Support
@@ -206,14 +220,14 @@ For technical issues:
 ### Contributing
 
 To contribute to this repository:
-1. Review [Service Standards](../service-standards-and-lifecycle.md)
-2. Follow [Adding New Service](../adding-new-service.md) process
-3. Use [Service Templates](../templates/) for consistency
+1. Review [Service Standards](service-standards-and-lifecycle.md)
+2. Follow [Adding New Service](how-to/add-new-service.md)
+3. Use [Service Templates](templates/) for consistency
 4. Ensure all changes follow GitOps principles
 
 ## Repository Information
 
-**Repository:** [rackerlabs/openCenter-gitops-base](https://github.com/rackerlabs/openCenter-gitops-base)  
+**Repository:** [opencenter-cloud/openCenter-gitops-base](https://github.com/opencenter-cloud/openCenter-gitops-base)  
 **FluxCD Version:** v2.7.0+  
 **Kubernetes Version:** v1.28+  
 **License:** See repository LICENSE file
@@ -223,6 +237,7 @@ To contribute to this repository:
 - `applications/base/services/observability/` - Monitoring, logging, tracing
 - `applications/base/managed-services/` - Rackspace-managed services
 - `applications/policies/` - Security and network policies
+- `iac/` - Infrastructure provisioning plus Kubespray inventory generation and cluster bootstrap
 - `docs/` - Documentation (you are here)
 
 ## Next Steps
@@ -237,12 +252,12 @@ To contribute to this repository:
 
 **If you want to understand the system:** Read [Architecture Overview](explanation/architecture.md)
 
-## Evidence
+## Source Material
 
-This documentation is based on comprehensive analysis of the repository:
-- `docs/analysis/B-DOCUMENTATION-PLAN.md` - Documentation structure and planning
-- `docs/analysis/EXECUTIVE-SUMMARY.md` - Key findings and recommendations
-- `docs/analysis/S1-APP-RUNTIME-APIS.md` - Service deployment patterns
-- `docs/analysis/S4-FLUXCD-GITOPS.md` - FluxCD workflow analysis
-- `README.md` - Repository overview and service catalog
-- `ecosystem.md` - openCenter ecosystem architecture
+This documentation is maintained from the live repository structure and manifests, including:
+- [README.md](../README.md)
+- [applications/base/services/](../applications/base/services/)
+- [applications/base/managed-services/](../applications/base/managed-services/)
+- [applications/policies/](../applications/policies/)
+- [iac/](../iac/)
+- [docs/explanation/architecture.md](explanation/architecture.md)

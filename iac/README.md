@@ -1,13 +1,25 @@
-Kubespray Provider Configuration Guide
+# Infrastructure as Code (iac/)
 
-We use OpenTofu to deploy virtual machines on OpenStack, using the outputs of the infra module, we generate the Kubespray YAML manifests, then run the Kubespray playbooks to deploy Kubernetes on the virtual machines.
+This directory contains the Infrastructure as Code used to build Kubernetes clusters for openCenter.
 
-**NOTE:** These steps will change once automation is built.
+The flow is:
 
-The terraform state file will be stored in an S3 bucket
+1. Terraform or OpenTofu `main.tf` collects the cluster inputs from the user such as node counts, node roles, Kubernetes version, networking, and provider-specific settings.
+2. Terraform or OpenTofu provisions the underlying infrastructure, for example the virtual machines, networking, and related cloud resources.
+3. Using those outputs, the Kubespray provider renders the Ansible inventory and group variable files under `inventory/`.
+4. Terraform or OpenTofu then uses `local-exec` provisioners to clone Kubespray, prepare the Python virtual environment, wait for cloud-init, and run the Kubespray playbooks locally from the deployment node.
 
-This will configure a Ubuntu 24.04 Linux VM as a deployment node that will be used to bootstrap and deploy openCenter clusters. The VM can go away once the resulting files have been committed to a code repository.
-The deployment node could be your laptop or an existing Linux VM. 
+In other words, `iac/` is not only provisioning infrastructure. It is also responsible for preparing the Kubespray inputs and initiating Kubernetes cluster deployment through Kubespray.
+
+The relevant implementation is under:
+
+- `iac/provider/kubespray/main.tf`
+- `iac/provider/kubespray/hosts.tpl`
+- `iac/provider/kubespray/README.md`
+
+The Terraform state file is expected to be stored remotely in an S3 bucket.
+
+This process assumes a Ubuntu 24.04 Linux deployment node that is used to bootstrap and deploy openCenter clusters. The deployment node can be a laptop or an existing Linux VM. It is primarily the execution environment from which Terraform or OpenTofu and Kubespray are run.
 
 - [openCenter Deployment Guide](#opencenter-deployment-guide)
   - [Pre Requisites](#pre-requisites)
@@ -160,7 +172,7 @@ The starting point is to copy the init directory into the new clusters directory
 
 ### Initialize the new cluster OpenTofu files
 
-**NOTE:** As of time of writing: The init files are expected to be in customer repo, where we really want them in the openCenter code repo. So for now you are going to have to copy the base terraform files manually from somewhere else or another cluster.
+**NOTE:** As of time of writing, the init files are expected to live in the cluster repo, even though the long-term goal is to keep that bootstrap content centrally managed in openCenter code. For now you may need to copy the base Terraform files manually from another cluster or source location.
 
 ```
 # cd /etc/openCenter
@@ -265,8 +277,8 @@ export AWS_SECRET_ACCESS_KEY=<KEY>
 # terraform init
 ```
 The terraform init needs to access modules in git which can be done with SSH keys or a Git Token.
-If you want to use the SSH Key method each module source will use: `git@github.com:rackerlabs/openCenter.git`
-For Token `github.com/rackerlabs/openCenter.git`
+If you want to use the SSH key method, point module sources at the current repository URL, for example: `git@github.com:opencenter-cloud/openCenter-gitops-base.git`
+For token-based access, use the HTTPS form of the same repository URL.
 
 If the init succeeds you are good to apply
 
@@ -474,6 +486,6 @@ demo-cluster-wn1   Ready    <none>          17h   v1.31.4
 # To Do's:
 - Add support for app credentials auth
 - Document how to switch remote state teraform between S3 and Local
-- Review Git Tokens as a method of giving access to customer repo to Flux.
+- Review Git Tokens as a method of giving Flux access to the cluster repo.
 - Document upgrade process
 - Add Windows nodes to cluster

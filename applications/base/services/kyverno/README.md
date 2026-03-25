@@ -2,10 +2,12 @@
 
 This directory contains the **base manifests** for deploying [Kyverno](https://kyverno.io/), a Kubernetes-native policy engine used to enforce security, governance, and compliance policies as Kubernetes resources.
 
+For service overview, use cases, examples, and upstream references, see the [service reference](../../../../docs/reference/services/kyverno.md).
+
 ## Public Repository Scope
 
-- This public repository contains **community/base** Kyverno assets only.
-- Enterprise-specific values, chart source changes, and enterprise-only resources must be delivered from a **private enterprise repository** as an overlay/component on top of this base.
+- This public repository contains the **base** Kyverno assets backed by upstream public artifacts.
+- If private chart sources, private registries, or enterprise-only changes are required, they should be applied from the **private enterprise repository** that consumes this base.
 
 ## Directory Layout
 

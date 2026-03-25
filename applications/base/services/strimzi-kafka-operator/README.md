@@ -4,9 +4,9 @@ This directory contains the **base manifests** for deploying the
 [Strimzi Kafka Operator](https://github.com/strimzi/strimzi-kafka-operator)
 to run Apache Kafka on Kubernetes using a Kubernetes-native, operator-driven workflow.
 
-It is intended to be consumed by **cluster repositories** as a remote base,
-with the option to provide cluster-specific overrides such as storage classes,
-node placement, resource sizing, and exposure methods.
+It can be consumed directly by cluster repositories or imported by the private enterprise repository for enterprise-specific overrides.
+
+For service overview, use cases, examples, and upstream references, see the [service reference](../../../../docs/reference/services/strimzi-kafka-operator.md).
 
 ## About Strimzi Kafka Operator
 

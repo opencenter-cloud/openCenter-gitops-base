@@ -1,51 +1,85 @@
 ---
+id: values-layering
+sidebar_label: Values Layering
+description: Explains how base values, cluster overrides, and optional enterprise values are layered across the openCenter repositories.
 doc_type: explanation
-title: "Three-Tier Helm Values Architecture"
+title: "Base, Override, and Enterprise Values"
 audience: "platform engineers"
+tags: [helm, values, overlays, enterprise]
 ---
 
-# Three-Tier Helm Values Architecture
+# Base, Override, and Enterprise Values
 
-**Purpose:** For platform engineers, explains the three-tier Helm values pattern (base, override, enterprise), why this architecture exists, its trade-offs and benefits, and when to use each tier.
+**Purpose:** For platform engineers, explains how configuration is layered across the base repo, consuming cluster overlays, and the private enterprise repo.
 
-## The Problem: Configuration Sprawl
+## Why This Exists
 
-Kubernetes services need configuration that varies across environments, customers, and editions. A naive approach creates separate Helm values files for every combination:
+Kubernetes platform services need a shared baseline, but clusters also need local differences such as hostnames, storage classes, replica counts, and environment-specific integrations.
 
-- `values-dev.yaml`
-- `values-stage.yaml`
-- `values-prod.yaml`
-- `values-customer-a-dev.yaml`
-- `values-customer-a-prod.yaml`
-- `values-customer-b-dev.yaml`
-- `values-enterprise-dev.yaml`
+If every cluster copied a full values file, upgrades would become expensive and error-prone. The base repo would drift from cluster repos, and small fixes would need to be repeated everywhere.
 
-This explodes to N × M × P files (environments × customers × editions). Maintaining consistency becomes impossible. Updating a security setting requires changing dozens of files. Finding which file controls a specific setting requires searching through all of them.
+The openCenter model avoids that by separating responsibilities.
 
-The three-tier values pattern solves this by separating concerns into layers.
+## The Current Layering Model
 
-## The Three Tiers
+In practice, openCenter uses up to three value layers:
 
-openCenter uses three value tiers, applied in order:
+1. **Base values** in `openCenter-gitops-base`
+2. **Override values** in the consuming cluster repository
+3. **Enterprise values** in the private enterprise repository, when used
 
-**Base values** (required) contain security-hardened defaults that apply to all deployments. These values enforce security policies, set resource limits, enable monitoring, and configure production-ready settings. Base values live in `applications/base/services/<service>/helm-values/hardened-values-v<version>.yaml`.
+The important architectural point is that only the first layer lives in this repository by default.
 
-**Override values** (optional) contain cluster-specific customization. These values change settings that vary by environment (domain names, storage classes, node selectors) or by customer requirements (replica counts, resource limits, feature flags). Override values live in customer cluster repositories at `applications/overlays/<cluster>/services/<service>/override-values.yaml`.
+## Base Values
 
-**Enterprise values** (optional) contain enterprise edition features. These values enable advanced capabilities (high availability, advanced security, premium features) that community editions don't include. Enterprise values live in `applications/base/services/<service>/helm-values/hardened-enterprise-v<version>.yaml`.
+Base values define the shared default behavior for a service:
 
-FluxCD merges these tiers in order. Later tiers override earlier tiers. The final configuration is base + override + enterprise.
+- hardened defaults
+- monitoring enablement
+- common resource baselines
+- chart settings that should be consistent for all consumers
 
-## How It Works
+Example location:
 
-The HelmRelease resource references all three tiers through `valuesFrom`:
+`applications/base/services/<service>/helm-values/values-v<chart-version>.yaml`
+
+These values are usually turned into a Kubernetes Secret by the base service `kustomization.yaml`.
+
+## Override Values
+
+Override values are supplied by the repo that deploys the service into a real cluster.
+
+They are the right place for:
+
+- ingress hosts
+- storage classes
+- node selectors
+- replica counts
+- environment-specific endpoints
+- cluster-specific integrations
+
+The base service `HelmRelease` typically expects an optional Secret such as `cert-manager-values-override`, but the Secret itself is created outside this repo.
+
+## Enterprise Values
+
+Enterprise values are optional and belong to the private enterprise repo, not to `openCenter-gitops-base`.
+
+That private repo may:
+
+- import a base service path from this repo
+- patch upstream chart sources to private repositories
+- rewrite images to private registries
+- add enterprise-only values or manifests
+
+So the third layer exists in the broader platform model, but it is not part of the standard on-disk service layout in this repository.
+
+## How Flux Sees the Layers
+
+Flux merges `valuesFrom` entries in order. Later entries override earlier ones.
+
+A typical base-repo `HelmRelease` looks like this:
 
 ```yaml
-apiVersion: helm.toolkit.fluxcd.io/v2
-kind: HelmRelease
-metadata:
-  name: cert-manager
-  namespace: cert-manager
 spec:
   valuesFrom:
     - kind: Secret
@@ -55,129 +89,67 @@ spec:
       name: cert-manager-values-override
       valuesKey: override.yaml
       optional: true
-    - kind: Secret
-      name: cert-manager-values-enterprise
-      valuesKey: hardened-enterprise.yaml
-      optional: true
 ```
 
-The `optional: true` setting means FluxCD doesn't fail if the secret doesn't exist. Clusters that don't need overrides or enterprise features simply don't create those secrets.
+An enterprise consumer may add a third source in its own repo, but that is not a requirement for base-only deployments.
 
-Kustomize creates these secrets from files using `secretGenerator`:
+## Why This Split Works
 
-```yaml
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-secretGenerator:
-  - name: cert-manager-values-base
-    files:
-      - values.yaml=helm-values/hardened-values-v1.18.2.yaml
-```
+**Base stays reusable.**  
+The base repo can remain public, upstream-backed, and easy to version.
 
-This pattern keeps values in YAML files (easy to read and edit) but delivers them to Helm as Kubernetes secrets (the format FluxCD expects).
+**Cluster changes stay local.**  
+Each cluster can express only the differences it needs.
 
-## Why Three Tiers
-
-**Base tier** enforces organizational standards. Security teams define security contexts, network policies, and monitoring requirements once. Every deployment inherits these settings. When a new CVE requires changing a security setting, you update one file and all clusters get the fix.
-
-**Override tier** enables customization without forking. Customers need different domain names, storage backends, and resource allocations. Instead of copying the entire base configuration and modifying it (which breaks updates), they create a small override file with just the differences.
-
-**Enterprise tier** separates community and commercial features. The same base configuration works for both editions. Enterprise customers add the enterprise tier to unlock additional capabilities. This avoids maintaining separate codebases for different editions.
-
-## Benefits
-
-**Consistency** - All clusters start from the same hardened baseline. Security settings, monitoring configuration, and operational best practices are consistent across environments.
-
-**Maintainability** - Updating a security setting requires changing one file. The change propagates to all clusters automatically through GitOps reconciliation.
-
-**Auditability** - You can see exactly what differs between clusters by examining override files. The base configuration is the same everywhere, so differences are explicit and documented.
-
-**Testability** - You can test base values once and trust they work everywhere. Override values are small and focused, making them easier to test.
-
-**Separation of concerns** - Platform teams own base values. Cluster operators own override values. Product teams own enterprise values. Each team has clear ownership boundaries.
+**Enterprise deltas stay private.**  
+Private registries, private charts, and enterprise-only settings do not have to leak into the public base repo layout.
 
 ## Trade-offs
 
-**Indirection** - Understanding the final configuration requires mentally merging three files. Debugging "why is this setting this value" requires checking all three tiers.
+**Indirection**  
+To understand the final result, operators may need to inspect multiple repos.
 
-**Merge complexity** - Helm's value merging is deep and recursive. Nested maps merge, but lists replace. This can cause unexpected behavior when overriding complex structures.
+**Naming discipline**  
+The consuming repo must generate the override Secret names expected by the base `HelmRelease`.
 
-**Discovery** - Finding which tier controls a setting requires searching three files. Tools like `helm get values` show the final merged result but don't indicate which tier provided each value.
+**Merge behavior awareness**  
+Helm merges maps, but lists are usually replaced. Overrides should be written carefully.
 
-**Ordering constraints** - The tier order is fixed (base → override → enterprise). You can't apply enterprise values before overrides. This rarely matters but can be limiting.
+## When to Put a Change in Each Layer
 
-**Secret overhead** - Each tier becomes a Kubernetes secret. This adds resources to the cluster and complexity to the Kustomization configuration.
+Use **base values** for:
 
-## When to Use Each Tier
+- defaults that should apply everywhere
+- security posture
+- baseline observability settings
+- broadly correct resource settings
 
-**Use base values for:**
-- Security contexts (runAsNonRoot, readOnlyRootFilesystem, capabilities)
-- Resource limits (memory, CPU)
-- Monitoring configuration (ServiceMonitor, PodMonitor)
-- Network policies
-- Pod disruption budgets
-- Affinity and anti-affinity rules
-- Security scanning and compliance settings
-- Anything that should be consistent across all deployments
+Use **override values** for:
 
-**Use override values for:**
-- Domain names and ingress hosts
-- Storage classes and volume sizes
-- Node selectors and tolerations
-- Replica counts (when different from base)
-- Environment-specific endpoints (databases, APIs)
-- Customer-specific feature flags
-- Resource limits (when base limits are insufficient)
-- Anything that varies by cluster or customer
+- cluster-specific infrastructure differences
+- environment-specific tuning
+- local hostnames and integration endpoints
 
-**Use enterprise values for:**
-- High availability settings (multiple replicas, pod anti-affinity)
-- Advanced security features (mTLS, encryption at rest)
-- Premium features (advanced monitoring, backup, disaster recovery)
-- Enterprise integrations (LDAP, SAML, SSO)
-- Anything that differentiates enterprise from community editions
+Use **enterprise values** for:
 
-## Common Patterns
+- private artifact rewrites
+- enterprise-only behavior
+- private-repo-specific hardening or integrations
 
-**Minimal overrides** - Most clusters need few overrides. A typical override file contains 5-10 lines changing domain names and storage classes. If your override file is hundreds of lines, you're probably duplicating base configuration.
+## A Better Mental Model Than the Old "Three-Tier in One Repo" View
 
-**Environment-specific overrides** - Development clusters might reduce replica counts and resource limits. Production clusters might increase them. These differences belong in override values.
+The older explanation implied that base, override, and enterprise values were all normal parts of the service tree in this repository.
 
-**Customer-specific overrides** - Customer A needs integration with their LDAP server. Customer B needs a specific storage class. These differences belong in override values in each customer's repository.
+That is not how the repo is used now.
 
-**Edition-specific features** - Enterprise edition enables backup, disaster recovery, and advanced monitoring. These features belong in enterprise values.
+The more accurate model is:
 
-## Alternatives Considered
+- this repo owns the **base**
+- consuming cluster repos own **overrides**
+- the private enterprise repo owns **enterprise-specific deltas**
 
-**Single values file per cluster** - Simple but doesn't scale. Every cluster duplicates the entire configuration. Updates require changing every file.
+## Related References
 
-**Environment variables** - Doesn't work for complex nested configuration. Helm values are deeply nested YAML structures that don't map well to flat environment variables.
-
-**Helm subcharts** - Could separate base and override configuration into separate charts. More complex than the three-tier pattern and doesn't integrate as cleanly with Kustomize.
-
-**Kustomize patches** - Could use strategic merge patches or JSON patches instead of Helm values. Works but is more verbose and harder to read than YAML values files.
-
-The three-tier pattern balances simplicity, flexibility, and maintainability better than these alternatives.
-
-## Migration Path
-
-Existing deployments using single values files can migrate incrementally:
-
-1. Extract common settings into base values
-2. Leave cluster-specific settings in override values
-3. Test that merged values produce the same result
-4. Deploy to non-production first
-5. Gradually migrate production clusters
-
-The migration is low-risk because you can verify the final merged values match the original values before deploying.
-
-## Evidence
-
-This explanation is based on the following repository analysis:
-
-- Three-tier values pattern in HelmRelease: `applications/base/services/cert-manager/helmrelease.yaml` lines 28-36
-- Kustomize secretGenerator for values: `applications/base/services/cert-manager/kustomization.yaml`
-- Values hierarchy documentation: `llms.txt` lines 95-125
-- Service standards requiring hardened values: `docs/service-standards-and-lifecycle.md`
-- HelmRelease configuration patterns: `docs/analysis/S1-APP-RUNTIME-APIS.md`
-- Values merging behavior: `docs/analysis/S4-FLUXCD-GITOPS.md`
+- [Configure Helm Values](../how-to/configure-helm-values.md)
+- [Helm Values Schema](../reference/helm-values-schema.md)
+- [Enterprise Components](enterprise-components.md)
