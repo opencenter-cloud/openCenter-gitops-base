@@ -81,7 +81,7 @@ applications/base/services/<service-name>/
 ├── source.yaml
 ├── helmrelease.yaml
 └── helm-values/
-    └── values-<version>.yaml
+    └── values-v<version>.yaml
 ```
 
 #### Helm Service with Extra Resources
@@ -106,7 +106,7 @@ Examples:
 ```text
 applications/base/services/<service-name>/
 ├── kustomization.yaml
-├── namespace.yaml
+├── namespace.yaml (optional)
 └── local or remote manifests
 ```
 
@@ -128,7 +128,17 @@ applications/base/services/<service-name>/
 Examples:
 
 - `keycloak/`
-- `istio/`
+
+Some multi-part services use named stages instead of numbered directories. For example, `istio/` uses:
+
+```text
+applications/base/services/istio/
+├── base/
+├── gateway/
+├── istiod/
+├── namespace/
+└── sources/
+```
 
 ### Grouping Directories
 
