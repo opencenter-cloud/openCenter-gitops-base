@@ -27,7 +27,6 @@ The repository currently provides:
 
 - core platform services under `applications/base/services/`
 - observability components under `applications/base/services/observability/`
-- managed services under `applications/base/managed-services/`
 - policy resources under `applications/policies/`
 
 ## Recommended Navigation
@@ -66,15 +65,6 @@ See:
 - [Available Applications](../../README.md#available-applications)
 - [Service Reference Library](services/index.md)
 
-### Managed Services
-
-Managed services live under `applications/base/managed-services/`.
-
-These services are maintained separately from the core platform service catalog but still follow the same repo-level documentation model:
-
-- repo-local service README
-- optional reference and how-to documentation where needed
-
 ### Policies
 
 Policy resources under `applications/policies/` are part of the platform baseline but are not listed in the service reference library as deployable application services.
@@ -85,6 +75,5 @@ This page is derived from:
 
 - [README](../../README.md)
 - [applications/base/services/](../../applications/base/services/)
-- [applications/base/managed-services/](../../applications/base/managed-services/)
 - [applications/policies/](../../applications/policies/)
 - [Service Reference Library](services/index.md)

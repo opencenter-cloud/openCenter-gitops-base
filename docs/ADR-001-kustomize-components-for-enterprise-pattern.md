@@ -271,10 +271,10 @@ Deploy [Kubernetes Reflector](https://github.com/emberstack/kubernetes-reflector
 
 **Step 1: Deploy Reflector**
 
-Add Reflector to the base repository as a managed service:
+Add Reflector to the repository as a managed service:
 
 ```yaml
-# applications/base/managed-services/reflector/helmrelease.yaml
+# applications/enterprise/managed-services/reflector/helmrelease.yaml
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
