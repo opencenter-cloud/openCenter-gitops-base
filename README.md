@@ -75,7 +75,11 @@ Use the documentation set under `docs/` together with the service README files f
 - [Infrastructure as Code](iac/README.md) - Cluster provisioning, Kubespray inventory generation, and Kubernetes bootstrap flow
 - [Documentation Index](docs/index.md) - Main entry point for tutorials, how-to guides, references, and explanations
 - [Getting Started Tutorial](docs/tutorials/getting-started.md) - Deploy a first service end to end
-- [Cluster Overlay Guidance](docs/how-to/cluster-overlay-guidance.md) - How cluster repos consume this base
+- [Service Deployment Patterns](docs/how-to/service-deployment-patterns.md) - How cluster repos consume services from the community or enterprise repo
+- [Helm Service Onboarding](docs/how-to/helm-service-onboarding.md) - Onboard Helm-based services such as cert-manager, Harbor, Longhorn, MetalLB, and Loki
+- [OLM Service Onboarding](docs/how-to/olm-service-onboarding.md) - Onboard services whose operator is installed through OLM, such as Keycloak
+- [Operator CR Service Onboarding](docs/how-to/operator-cr-service-onboarding.md) - Onboard services where Helm installs the operator and the cluster overlay creates Kafka or PostgreSQL custom resources
+- [Add a Service to the Community Repo](docs/how-to/add-service-to-community-repo.md) - Add a new shared service under `applications/base/services/`
 - [Service Catalog](docs/reference/service-catalog.md) - Service inventory, dependencies, and configuration surfaces
 
 ### Service Docs

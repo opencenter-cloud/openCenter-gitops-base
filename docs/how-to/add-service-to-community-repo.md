@@ -1,16 +1,16 @@
 ---
-id: add-new-service
-sidebar_label: Add New Service
-description: Step-by-step guide for adding a new platform service to openCenter-gitops-base.
+id: add-service-to-community-repo
+sidebar_label: Add Service To Community Repo
+description: Step-by-step guide for adding a new platform service to the openCenter-gitops-base community repo.
 doc_type: how-to
-title: "Add a New Platform Service"
+title: "Add a Service to the Community Repo"
 audience: "platform engineers"
 tags: [services, helmrelease, kustomize, onboarding]
 ---
 
-# Add a New Platform Service
+# Add a Service to the Community Repo
 
-**Purpose:** For platform engineers, shows how to add a new platform service to openCenter-gitops-base, covering directory structure, HelmRelease configuration, and testing.
+**Purpose:** For platform engineers, shows how to add a new platform service to the `openCenter-gitops-base` community repo under `applications/base/services/`, covering directory structure, HelmRelease configuration, and testing.
 
 ## Prerequisites
 

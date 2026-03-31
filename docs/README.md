@@ -25,7 +25,10 @@ Start there for:
 Common entry points:
 
 - [Architecture Overview](explanation/architecture.md)
-- [Cluster Overlay Guidance](how-to/cluster-overlay-guidance.md)
-- [Add a New Service](how-to/add-new-service.md)
+- [Service Deployment Patterns](how-to/service-deployment-patterns.md)
+- [Helm Service Onboarding](how-to/helm-service-onboarding.md)
+- [OLM Service Onboarding](how-to/olm-service-onboarding.md)
+- [Operator CR Service Onboarding](how-to/operator-cr-service-onboarding.md)
+- [Add a Service to the Community Repo](how-to/add-service-to-community-repo.md)
 - [Kustomize Patterns](reference/kustomize-patterns.md)
 - [Directory Structure](reference/directory-structure.md)

@@ -13,4 +13,4 @@ unlisted: true
 
 The canonical location for this guide is:
 
-- [Cluster Overlay Guidance](how-to/cluster-overlay-guidance.md)
+- [Service Deployment Patterns](how-to/service-deployment-patterns.md)

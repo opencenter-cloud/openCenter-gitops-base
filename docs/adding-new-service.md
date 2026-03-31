@@ -2,7 +2,7 @@
 id: adding-new-service
 title: "Adding a New Service to openCenter GitOps Base"
 sidebar_label: Add New Service
-description: Compatibility page pointing to the canonical add-new-service guide and related standards.
+description: Compatibility page pointing to the canonical community-repo service guide and related standards.
 doc_type: how-to
 audience: "platform engineers"
 tags: [services, onboarding, compatibility]
@@ -13,7 +13,7 @@ unlisted: true
 
 The canonical procedural guide lives here:
 
-- [Add a New Platform Service](how-to/add-new-service.md)
+- [Add a Service to the Community Repo](how-to/add-service-to-community-repo.md)
 
 Related standards and references:
 

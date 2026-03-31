@@ -1,0 +1,276 @@
+---
+id: helm-service-onboarding
+sidebar_label: Helm Service Onboarding
+description: Step-by-step guide for onboarding Helm-based services from the community or enterprise repo into a cluster overlay repo.
+doc_type: how-to
+title: "Helm Service Onboarding"
+audience: "platform engineers, cluster operators"
+tags: [helmrelease, overlays, fluxcd, onboarding]
+---
+
+# Helm Service Onboarding
+
+**Purpose:** For platform engineers and cluster operators, explains how to onboard a Helm-based service into a cluster overlay repo. Use this guide for services such as `cert-manager`, `harbor`, `longhorn`, `metallb`, `loki`, and other Helm-based platform services.
+
+## When To Use This Guide
+
+Use this guide when the base service is deployed with:
+
+- `HelmRelease`
+- `HelmRepository` or OCI `HelmRepository`
+- Base values under `helm-values/`
+
+If the service is installed through OLM, use [OLM Service Onboarding](olm-service-onboarding.md) instead.
+
+If the operator is installed with Helm and the cluster overlay repo must create custom resources such as `Kafka` or `postgresql`, use [Operator CR Service Onboarding](operator-cr-service-onboarding.md) instead.
+
+---
+
+## Workflow Summary
+
+1. Decide whether the cluster should consume the community repo or the enterprise repo
+2. Inspect the base service `HelmRelease` to understand how overrides are accepted
+3. Create the cluster overlay directory structure for the service
+4. Add the Flux source object in `services/sources/`
+5. Add the install `Kustomization` in `services/fluxcd/`
+6. Add cluster-local values, secrets, and manifests in `services/<service>/`
+7. Validate Flux reconciliation and the resulting workload
+
+For the community versus enterprise source pattern, use [Service Deployment Patterns](service-deployment-patterns.md).
+
+---
+
+## Step 1: Inspect The Base Service
+
+Before onboarding, check the service under:
+
+```text
+applications/base/services/<service>/
+```
+
+Confirm:
+
+- The service is installed with `HelmRelease`
+- The namespace used by the service
+- The chart source object and repository type
+- Whether the `HelmRelease` uses `valuesFrom`
+- The Secret names and key names expected by `valuesFrom`
+
+Do not assume every Helm service follows the exact `cert-manager` pattern. Some services may use different Secret names, different keys, or a different values layout.
+
+---
+
+## Step 2: Create The Cluster Overlay Structure
+
+Create the service structure in the **cluster overlay repo**:
+
+```text
+applications/overlays/<cluster>/services/
+├── sources/
+│   ├── kustomization.yaml
+│   └── opencenter-<service>-community.yaml
+├── fluxcd/
+│   ├── kustomization.yaml
+│   └── <service>.yaml
+└── <service>/
+    ├── kustomization.yaml
+    ├── helm-values/override-values.yaml
+    └── cluster-specific secrets or manifests
+```
+
+If the service is sourced from the enterprise repo, replace the source file name with:
+
+```text
+opencenter-<service>-enterprise.yaml
+```
+
+---
+
+## Step 3: Add The Flux Source
+
+Create the `GitRepository` in:
+
+```text
+applications/overlays/<cluster>/services/sources/
+```
+
+Then register it from:
+
+```text
+applications/overlays/<cluster>/services/sources/kustomization.yaml
+```
+
+Typical source naming:
+
+- Community: `opencenter-<service>-community`
+- Enterprise: `opencenter-<service>-enterprise`
+
+For private enterprise sourcing, the cluster repo also needs:
+
+- `enterprise-repo` for Git access
+- `oci-creds` for private OCI charts, when used
+- `registry-credentials` for private image pulls, when used
+
+Store sensitive values with SOPS. See [Manage Secrets with SOPS](manage-secrets.md) and [SOPS Configuration](../reference/sops-configuration.md).
+
+---
+
+## Step 4: Add The Install Kustomization
+
+Create the install object in:
+
+```text
+applications/overlays/<cluster>/services/fluxcd/<service>.yaml
+```
+
+Then register it from:
+
+```text
+applications/overlays/<cluster>/services/fluxcd/kustomization.yaml
+```
+
+If `fluxcd/kustomization.yaml` does not include `<service>.yaml`, Flux will not apply the service install `Kustomization`.
+
+This object should:
+
+- Point to the correct `GitRepository`
+- Use the correct path for the selected source repo
+- Target the correct namespace
+- Declare `dependsOn` when the service requires source ordering
+
+Typical service paths:
+
+- Community: `./applications/base/services/<service>`
+- Enterprise: `./applications/enterprise/services/<service>/overlays/install`
+
+---
+
+## Step 5: Add Cluster-Local Overrides
+
+Create the cluster-local overlay in:
+
+```text
+applications/overlays/<cluster>/services/<service>/
+```
+
+Typical cluster-local content includes:
+
+- Override values rendered into a Secret
+- Issuers, ingress, routes, or certificates
+- Storage class changes
+- Environment-specific credentials
+- Additional labels, annotations, or policies
+
+If the service `HelmRelease` uses `valuesFrom`, create the matching Secret or generator in the cluster overlay.
+
+The cluster overlay can also contain additional manifests, Secrets, or service-specific resources. For example, `cert-manager` commonly needs cluster-local resources such as a `ClusterIssuer` manifest in addition to Helm values.
+
+---
+
+## Cert-Manager Example
+
+`cert-manager` is a good example of the standard Helm onboarding flow because the base service exposes:
+
+- A `HelmRelease`
+- Base values from `cert-manager-values-base`
+- Optional cluster-local overrides from `cert-manager-values-override`
+
+Typical cluster-local override structure:
+
+```text
+applications/overlays/<cluster>/services/cert-manager/
+├── kustomization.yaml
+├── helm-values/override-values.yaml
+└── letsencrypt-issuer.yaml
+```
+
+Example `kustomization.yaml`:
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: cert-manager
+
+resources:
+  - letsencrypt-issuer.yaml
+
+secretGenerator:
+  - name: cert-manager-values-override
+    files:
+      - override.yaml=helm-values/override-values.yaml
+    options:
+      disableNameSuffixHash: true
+```
+
+Example `helm-values/override-values.yaml`:
+
+```yaml
+replicaCount: 3
+prometheus:
+  enabled: true
+```
+
+Example `letsencrypt-issuer.yaml`:
+
+```yaml
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: platform@example.com
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+      - http01:
+          ingress:
+            class: nginx
+```
+
+For service-specific guidance, see [Cert-manager Configuration Guide](services/cert-manager.md).
+
+---
+
+## Updating Existing Helm Service Configuration
+
+For an existing Helm-based deployment, update the required cluster-overlay-managed content in the **cluster overlay repo**:
+
+- Update `services/<service>/helm-values/override-values.yaml` for Helm value changes
+- Update any existing resource manifest managed from the cluster overlay
+- Add or update any required Secret or supporting manifest
+- Commit and push the cluster repo change
+
+Do not edit the community or enterprise repo as part of a normal cluster change.
+
+If a shared baseline change is required, raise an issue in the relevant repository instead.
+
+---
+
+## Validation
+
+Check:
+
+```bash
+flux get sources git -n flux-system
+flux get kustomizations -n flux-system
+kubectl get helmreleases -A
+kubectl get pods -n <namespace>
+```
+
+For a parameter change, inspect the live workload:
+
+```bash
+kubectl get deploy -n <namespace> <deployment-name> -o yaml
+```
+
+---
+
+## Related Docs
+
+- [Service Deployment Patterns](service-deployment-patterns.md)
+- [OLM Service Onboarding](olm-service-onboarding.md)
+- [Operator CR Service Onboarding](operator-cr-service-onboarding.md)
+- [Configure Helm Values](configure-helm-values.md)
+- [Manage Secrets with SOPS](manage-secrets.md)

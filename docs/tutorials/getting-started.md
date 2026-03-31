@@ -380,7 +380,7 @@ Now that you've deployed your first service, explore these topics:
 - [Manage Secrets with SOPS](../how-to/manage-secrets.md) - Encrypt sensitive configuration
 
 **Deploy More Services:**
-- [Add a New Service](../how-to/add-new-service.md) - Deploy additional platform services
+- [Add a Service to the Community Repo](../how-to/add-service-to-community-repo.md) - Add a new shared service to the community repo
 - [Service Catalog](../reference/service-catalog.md) - Browse available services
 
 **Advanced Topics:**
@@ -400,4 +400,4 @@ This tutorial is based on:
 - [`applications/base/services/cert-manager/kustomization.yaml`](../../applications/base/services/cert-manager/kustomization.yaml)
 - [`applications/base/services/cert-manager/source.yaml`](../../applications/base/services/cert-manager/source.yaml)
 - [GitOps Workflow](../explanation/gitops-workflow.md)
-- [Cluster Overlay Guidance](../how-to/cluster-overlay-guidance.md)
+- [Service Deployment Patterns](../how-to/service-deployment-patterns.md)
