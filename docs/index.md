@@ -59,7 +59,11 @@ Use the IaC guide to build a cluster, then follow the tutorial to deploy your fi
 ### Platform Engineers
 
 **Common tasks:**
-- [Add a New Service](how-to/add-new-service.md) - Deploy additional platform services
+- [Add a Helm Service to the Community Repo](how-to/add-helm-service-to-community-repo.md) - Add a new shared Helm-based service to the community repo
+- [Service Deployment Patterns](how-to/service-deployment-patterns.md) - Choose community versus enterprise sourcing and the right deployment model
+- [Helm Service Onboarding](how-to/helm-service-onboarding.md) - Onboard Helm-based services into a cluster overlay repo
+- [OLM Service Onboarding](how-to/olm-service-onboarding.md) - Onboard services whose operator is installed through OLM
+- [Operator CR Service Onboarding](how-to/operator-cr-service-onboarding.md) - Onboard services where Helm installs the operator and the cluster overlay creates the workload custom resources
 - [Configure Helm Values](how-to/configure-helm-values.md) - Customize service configuration
 - [Manage Secrets with SOPS](how-to/manage-secrets.md) - Encrypt sensitive data
 - [Troubleshoot Flux](how-to/troubleshoot-flux.md) - Debug reconciliation issues
@@ -100,7 +104,11 @@ This documentation follows the [Diátaxis framework](https://diataxis.fr/) with 
 
 **Goal:** Complete specific tasks with minimal background
 
-- [Add a New Service](how-to/add-new-service.md)
+- [Add a Helm Service to the Community Repo](how-to/add-helm-service-to-community-repo.md)
+- [Service Deployment Patterns](how-to/service-deployment-patterns.md)
+- [Helm Service Onboarding](how-to/helm-service-onboarding.md)
+- [OLM Service Onboarding](how-to/olm-service-onboarding.md)
+- [Operator CR Service Onboarding](how-to/operator-cr-service-onboarding.md)
 - [Configure Helm Values](how-to/configure-helm-values.md)
 - [Manage Secrets with SOPS](how-to/manage-secrets.md)
 - [Configure Gateway API](how-to/configure-gateway.md)
@@ -157,7 +165,7 @@ Detailed configuration guides also exist for selected services:
 - [Tempo](how-to/services/tempo.md)
 - [OpenTelemetry](how-to/services/opentelemetry-kube-stack.md)
 - [Sealed Secrets](how-to/services/sealed-secrets.md)
-- [Adding New Service](how-to/add-new-service.md)
+- [Adding a Helm Service to the Community Repo](how-to/add-helm-service-to-community-repo.md)
 - [Service Standards](service-standards-and-lifecycle.md)
 
 ## Common Workflows
@@ -175,12 +183,11 @@ See [Getting Started Tutorial](tutorials/getting-started.md) for detailed walkth
 ### Adding a Service to Existing Cluster
 
 1. Review [Service Catalog](reference/service-catalog.md) for available services
-2. Create GitRepository source for the service
-3. Create Kustomization pointing to service path
-4. (Optional) Add cluster-specific overrides
-5. Commit and push
+2. Choose the correct source and deployment model using [Service Deployment Patterns](how-to/service-deployment-patterns.md)
+3. Follow [Helm Service Onboarding](how-to/helm-service-onboarding.md), [OLM Service Onboarding](how-to/olm-service-onboarding.md), or [Operator CR Service Onboarding](how-to/operator-cr-service-onboarding.md)
+4. Commit and push
 
-See [Add a New Service](how-to/add-new-service.md) for step-by-step instructions.
+See [Service Deployment Patterns](how-to/service-deployment-patterns.md) and the deployment-model-specific onboarding guides for step-by-step instructions.
 
 ### Customizing Service Configuration
 
@@ -221,7 +228,7 @@ For technical issues:
 
 To contribute to this repository:
 1. Review [Service Standards](service-standards-and-lifecycle.md)
-2. Follow [Adding New Service](how-to/add-new-service.md)
+2. Follow [Adding a Helm Service to the Community Repo](how-to/add-helm-service-to-community-repo.md)
 3. Use [Service Templates](templates/) for consistency
 4. Ensure all changes follow GitOps principles
 

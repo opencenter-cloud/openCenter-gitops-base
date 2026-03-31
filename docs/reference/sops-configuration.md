@@ -511,6 +511,6 @@ openCenter also supports Bitnami Sealed Secrets as an alternative to SOPS.
 
 **Source Files:**
 - [Manage Secrets with SOPS](../how-to/manage-secrets.md)
-- [Service Onboarding Workflow](../how-to/service-onboarding.md)
+- [Service Deployment Patterns](../how-to/service-deployment-patterns.md)
 - [Security Model](../explanation/security-model.md)
 - [FluxCD Resources Reference](flux-resources.md)

@@ -4,19 +4,23 @@ sidebar_label: Configure Helm Values
 description: Shows how to combine base Helm values from this repo with cluster-specific override values from consuming repositories.
 doc_type: how-to
 title: "Configure Helm Values"
-audience: "platform engineers"
+audience: "platform engineers, operators"
 tags: [helm, values, overrides, configuration]
 ---
 
 # Configure Helm Values
 
-**Purpose:** For platform engineers, shows how to customize Helm-based services by combining base values from this repository with optional override values supplied by the consuming repository.
+**Purpose:** Shows how to customize Helm-based services by combining base values from this repository with optional override values supplied by the consuming repository.
 
 ## Prerequisites
 
 - Service already exists in `openCenter-gitops-base`
 - Access to the repository that deploys the service to a cluster
 - Familiarity with Flux `HelmRelease.valuesFrom`
+
+This guide is about **values layering only**. For end-to-end service onboarding in a cluster overlay repo, use [Helm Service Onboarding](helm-service-onboarding.md).
+
+---
 
 ## Base Repo Model
 
@@ -30,7 +34,9 @@ The base repo owns the baseline. The consuming cluster repo owns cluster-specifi
 
 If a private enterprise repo is used, that repo can add an additional enterprise-specific values source or patch the upstream chart/image source, but that behavior is outside this base repo.
 
-## Step 1: Inspect the Base Values
+---
+
+## Step 1: Inspect The Base Values
 
 Check the values currently shipped by the base service:
 
@@ -47,28 +53,32 @@ sed -n '1,220p' applications/base/services/cert-manager/helmrelease.yaml
 
 You should typically see:
 
-- a generated `cert-manager-values-base` Secret
-- an optional `cert-manager-values-override` entry in `valuesFrom`
+- A generated `cert-manager-values-base` Secret
+- An optional `cert-manager-values-override` entry in `valuesFrom`
 
-## Step 2: Decide Whether the Change Belongs in Base or Override
+---
+
+## Step 2: Decide Whether The Change Belongs In Base Or Override
 
 Use **base values** when the setting should apply to all consumers of this repo:
 
-- hardened defaults
-- common resource baselines
-- common monitoring settings
-- chart-wide safe defaults
+- Hardened defaults
+- Common resource baselines
+- Common monitoring settings
+- Chart-wide safe defaults
 
 Use **override values** when the setting varies by cluster or environment:
 
-- domain names
-- storage classes
-- replica counts
-- node selectors and tolerations
-- ingress hosts
-- external endpoints or environment-specific integration values
+- Domain names
+- Storage classes
+- Replica counts
+- Node selectors and tolerations
+- Ingress hosts
+- External endpoints or environment-specific integration values
 
-## Step 3: Update Base Values When the Default Should Change
+---
+
+## Step 3: Update Base Values When The Default Should Change
 
 Edit the versioned base values file:
 
@@ -90,6 +100,8 @@ prometheus:
 ```
 
 This is the right place for settings that should travel with the base service everywhere it is consumed.
+
+---
 
 ## Step 4: Create Cluster-Specific Override Values
 
@@ -124,7 +136,9 @@ secretGenerator:
 
 The important point is that the override Secret name must match the `valuesFrom` entry in the base service.
 
-## Step 5: Validate the Effective Configuration
+---
+
+## Step 5: Validate The Effective Configuration
 
 Render the consuming overlay:
 
@@ -151,6 +165,8 @@ Typical output:
 cert-manager-values-base cert-manager-values-override
 ```
 
+---
+
 ## Step 6: Reconcile
 
 If you need to trigger an immediate reconcile:
@@ -159,6 +175,8 @@ If you need to trigger an immediate reconcile:
 flux reconcile kustomization cert-manager -n flux-system
 flux reconcile helmrelease cert-manager -n cert-manager --with-source
 ```
+
+---
 
 ## Common Patterns
 
@@ -197,22 +215,27 @@ ingress:
 
 When a private enterprise repo consumes this base, it may also:
 
-- patch chart sources to private registries or repositories
-- add enterprise-only values
-- replace image references
+- Patch chart sources to private registries or repositories
+- Add enterprise-only values
+- Replace image references
 
 That is a consumer-repo concern, not a standard file layout inside `openCenter-gitops-base`.
 
+---
+
 ## Best Practices
 
-- keep base values small, durable, and shared
-- keep override files focused on true cluster differences
-- avoid copying large parts of the base file into overrides
-- align values filenames with the chart version in the `HelmRelease`
-- validate rendered manifests before pushing changes
+- Keep base values small, durable, and shared
+- Keep override files focused on true cluster differences
+- Avoid copying large parts of the base file into overrides
+- Align values filenames with the chart version in the `HelmRelease`
+- Validate rendered manifests before pushing changes
+
+---
 
 ## Related References
 
+- [Helm Service Onboarding](helm-service-onboarding.md)
 - [Helm Values Schema](../reference/helm-values-schema.md)
 - [Kustomize Patterns](../reference/kustomize-patterns.md)
 - [Enterprise Components](../explanation/enterprise-components.md)

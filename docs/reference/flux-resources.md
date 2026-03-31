@@ -496,7 +496,7 @@ kubectl logs -n flux-system deploy/kustomize-controller
 ## Source Material
 
 **Source Files:**
-- [docs/how-to/service-onboarding.md](../how-to/service-onboarding.md)
+- [docs/how-to/service-deployment-patterns.md](../how-to/service-deployment-patterns.md)
 - [docs/how-to/troubleshoot-flux.md](../how-to/troubleshoot-flux.md)
 - [docs/service-standards-and-lifecycle.md](../service-standards-and-lifecycle.md)
 - [applications/base/services/cert-manager/helmrelease.yaml](../../applications/base/services/cert-manager/helmrelease.yaml)

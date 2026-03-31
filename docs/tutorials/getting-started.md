@@ -12,6 +12,8 @@ tags: [tutorial, fluxcd, cert-manager, onboarding]
 
 **Purpose:** For platform engineers new to openCenter, shows how to deploy your first platform service (cert-manager) end-to-end using FluxCD GitOps, covering repository structure, configuration, and verification.
 
+This tutorial uses the current **community repo** onboarding pattern. For the broader decision flow and other deployment models, see [Service Deployment Patterns](../how-to/service-deployment-patterns.md) and [Helm Service Onboarding](../how-to/helm-service-onboarding.md).
+
 ## What You'll Accomplish
 
 By the end of this tutorial, you will:
@@ -138,13 +140,13 @@ FluxCD needs to know where to find the openCenter service source you want to con
 
 **In your cluster repository** (for example `applications/overlays/<cluster>/services/sources/`):
 
-Create `opencenter-cert-manager.yaml`:
+Create `opencenter-cert-manager-community.yaml`:
 
 ```yaml
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: GitRepository
 metadata:
-  name: opencenter-cert-manager
+  name: opencenter-cert-manager-community
   namespace: flux-system
 spec:
   interval: 15m
@@ -153,10 +155,20 @@ spec:
     tag: <release-tag>
 ```
 
+Register it from `applications/overlays/<cluster>/services/sources/kustomization.yaml`:
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./opencenter-cert-manager-community.yaml
+```
+
 **Commit and push:**
 
 ```bash
-git add services/sources/opencenter-cert-manager.yaml
+git add applications/overlays/<cluster>/services/sources/opencenter-cert-manager-community.yaml
+git add applications/overlays/<cluster>/services/sources/kustomization.yaml
 git commit -m "Add cert-manager GitRepository source"
 git push
 ```
@@ -164,13 +176,13 @@ git push
 **Wait for Flux to reconcile:**
 
 ```bash
-flux reconcile source git opencenter-cert-manager -n flux-system
+flux reconcile source git opencenter-cert-manager-community -n flux-system
 ```
 
 **Verify the source:**
 
 ```bash
-kubectl get gitrepository -n flux-system opencenter-cert-manager
+kubectl get gitrepository -n flux-system opencenter-cert-manager-community
 ```
 
 Expected: `READY` column shows `True`.
@@ -185,14 +197,14 @@ Now tell FluxCD to deploy cert-manager from the base repository.
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: cert-manager
+  name: cert-manager-base
   namespace: flux-system
 spec:
   interval: 5m
   sourceRef:
     kind: GitRepository
-    name: opencenter-cert-manager
-  path: applications/base/services/cert-manager
+    name: opencenter-cert-manager-community
+  path: ./applications/base/services/cert-manager
   prune: true
   targetNamespace: cert-manager
   healthChecks:
@@ -202,10 +214,22 @@ spec:
       namespace: cert-manager
 ```
 
+Register it from `applications/overlays/<cluster>/services/fluxcd/kustomization.yaml`:
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./cert-manager.yaml
+```
+
+If `services/fluxcd/kustomization.yaml` does not include `cert-manager.yaml`, Flux will not apply the install `Kustomization`.
+
 **Commit and push:**
 
 ```bash
-git add services/fluxcd/cert-manager.yaml
+git add applications/overlays/<cluster>/services/fluxcd/cert-manager.yaml
+git add applications/overlays/<cluster>/services/fluxcd/kustomization.yaml
 git commit -m "Deploy cert-manager from base repository"
 git push
 ```
@@ -213,7 +237,7 @@ git push
 **Trigger reconciliation:**
 
 ```bash
-flux reconcile kustomization cert-manager -n flux-system
+flux reconcile kustomization cert-manager-base -n flux-system
 ```
 
 ## Step 6: Watch the Deployment
@@ -222,7 +246,7 @@ FluxCD will now deploy cert-manager. Watch the progress:
 
 ```bash
 # Watch the Kustomization
-flux get kustomizations cert-manager
+flux get kustomizations cert-manager-base
 
 # Watch the HelmRelease
 flux get helmreleases -n cert-manager
@@ -345,8 +369,8 @@ Congratulations! You've deployed cert-manager using the openCenter GitOps patter
 
 Before moving on, verify:
 
-- [ ] GitRepository `opencenter-cert-manager` shows READY=True
-- [ ] Kustomization `cert-manager` shows READY=True
+- [ ] GitRepository `opencenter-cert-manager-community` shows READY=True
+- [ ] Kustomization `cert-manager-base` shows READY=True
 - [ ] HelmRelease `cert-manager` shows READY=True
 - [ ] All cert-manager pods are Running
 - [ ] Test certificate was issued successfully
@@ -366,8 +390,8 @@ flux get kustomizations
 flux get helmreleases -A
 
 # Describe resources for details
-kubectl describe gitrepository -n flux-system opencenter-cert-manager
-kubectl describe kustomization -n flux-system cert-manager
+kubectl describe gitrepository -n flux-system opencenter-cert-manager-community
+kubectl describe kustomization -n flux-system cert-manager-base
 kubectl describe helmrelease -n cert-manager cert-manager
 ```
 
@@ -380,7 +404,7 @@ Now that you've deployed your first service, explore these topics:
 - [Manage Secrets with SOPS](../how-to/manage-secrets.md) - Encrypt sensitive configuration
 
 **Deploy More Services:**
-- [Add a New Service](../how-to/add-new-service.md) - Deploy additional platform services
+- [Add a Helm Service to the Community Repo](../how-to/add-helm-service-to-community-repo.md) - Add a new shared Helm-based service to the community repo
 - [Service Catalog](../reference/service-catalog.md) - Browse available services
 
 **Advanced Topics:**
@@ -400,4 +424,4 @@ This tutorial is based on:
 - [`applications/base/services/cert-manager/kustomization.yaml`](../../applications/base/services/cert-manager/kustomization.yaml)
 - [`applications/base/services/cert-manager/source.yaml`](../../applications/base/services/cert-manager/source.yaml)
 - [GitOps Workflow](../explanation/gitops-workflow.md)
-- [Cluster Overlay Guidance](../how-to/cluster-overlay-guidance.md)
+- [Service Deployment Patterns](../how-to/service-deployment-patterns.md)

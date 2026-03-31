@@ -267,7 +267,7 @@ These decisions reflect openCenter's priorities: simplicity, maintainability, an
 
 This explanation is based on the following repository sources:
 
-- SOPS encryption workflow: [Manage Secrets with SOPS](../how-to/manage-secrets.md) and [Service Onboarding Workflow](../how-to/service-onboarding.md)
+- SOPS encryption workflow: [Manage Secrets with SOPS](../how-to/manage-secrets.md) and [Service Deployment Patterns](../how-to/service-deployment-patterns.md)
 - SOPS configuration: `.sops.yaml` examples and [SOPS Configuration](../reference/sops-configuration.md)
 - Kyverno policy engine: [applications/base/services/kyverno/policy-engine/README.md](../../applications/base/services/kyverno/policy-engine/README.md)
 - Security requirements: [docs/service-standards-and-lifecycle.md](../service-standards-and-lifecycle.md)

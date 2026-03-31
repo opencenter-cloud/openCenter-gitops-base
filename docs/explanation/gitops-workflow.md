@@ -173,8 +173,8 @@ For these cases, openCenter uses a hybrid approach: GitOps for configuration, im
 
 This explanation is based on the following repository sources:
 
-- FluxCD bootstrap and reconciliation patterns: [docs/how-to/service-onboarding.md](../how-to/service-onboarding.md)
+- FluxCD bootstrap and reconciliation patterns: [docs/how-to/service-deployment-patterns.md](../how-to/service-deployment-patterns.md)
 - GitRepository configuration: [docs/reference/flux-resources.md](../reference/flux-resources.md)
 - HelmRelease drift detection: [applications/base/services/cert-manager/helmrelease.yaml](../../applications/base/services/cert-manager/helmrelease.yaml)
 - GitOps architecture and promotion workflow: [docs/service-standards-and-lifecycle.md](../service-standards-and-lifecycle.md)
-- Cluster-repo consumption model: [docs/how-to/cluster-overlay-guidance.md](../how-to/cluster-overlay-guidance.md)
+- Cluster-repo consumption model: [docs/how-to/service-deployment-patterns.md](../how-to/service-deployment-patterns.md)
