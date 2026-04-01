@@ -165,6 +165,21 @@ Again, the workflow is two-stage:
 
 ---
 
+## Updating Existing Operator-Managed Workload Configuration
+
+For an existing operator-managed deployment, update the required cluster-overlay-managed content in the **cluster overlay repo**:
+
+- Update the workload manifests under `services/<service>/` such as `Kafka`, `KafkaTopic`, `KafkaUser`, or `postgresql`
+- Update any existing supporting Secrets, storage settings, backup settings, or exposure manifests
+- Add or update any required operator-managed custom resources for the workload
+- Commit and push the cluster repo change
+
+Do not edit the operator install in the community or enterprise repo as part of a normal cluster change.
+
+If a shared baseline change is required, raise an issue in the relevant repository instead.
+
+---
+
 ## Validation
 
 Check the Flux resources first:

@@ -319,6 +319,22 @@ For service-specific guidance, see [Keycloak Configuration Guide](services/keycl
 
 ---
 
+## Updating Existing OLM-Based Service Configuration
+
+For an existing OLM-based deployment, update the required cluster-overlay-managed content in the **cluster overlay repo**:
+
+- Update the staged manifests under `services/<service>/` for the stage you need to change
+- Update the manifests in the relevant cluster-overlay subdirectory under `services/<service>/`, for example `services/<service>/00-postgres/`, `services/<service>/10-operator/`, or `services/<service>/20-keycloak/`
+- Update any existing custom resource patches, ingress or gateway manifests, or supporting Secrets
+- Add or update any required realm, client, RBAC, or bootstrap resources
+- Commit and push the cluster repo change
+
+Do not edit the community or enterprise repo as part of a normal cluster change.
+
+If a shared baseline change is required, raise an issue in the relevant repository instead.
+
+---
+
 ## Validation
 
 Check the Flux resources first:
