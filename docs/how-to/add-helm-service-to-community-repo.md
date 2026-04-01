@@ -1,16 +1,16 @@
 ---
-id: add-new-service
-sidebar_label: Add New Service
-description: Step-by-step guide for adding a new platform service to openCenter-gitops-base.
+id: add-helm-service-to-community-repo
+sidebar_label: Add Helm Service To Community Repo
+description: Step-by-step guide for adding a new Helm-based platform service to the openCenter-gitops-base community repo.
 doc_type: how-to
-title: "Add a New Platform Service"
-audience: "platform engineers"
+title: "Add a Helm Service to the Community Repo"
+audience: "contributors, platform engineers, operators"
 tags: [services, helmrelease, kustomize, onboarding]
 ---
 
-# Add a New Platform Service
+# Add a Helm Service to the Community Repo
 
-**Purpose:** For platform engineers, shows how to add a new platform service to openCenter-gitops-base, covering directory structure, HelmRelease configuration, and testing.
+**Purpose:** Shows how to add a new Helm-based platform service to the `openCenter-gitops-base` community repo under `applications/base/services/`, covering directory structure, HelmRelease configuration, and testing.
 
 ## Prerequisites
 
@@ -221,7 +221,7 @@ Located in `helm-values/values-v<chart-version>.yaml`.
 
 ### Override Values
 
-Create in cluster repo: `applications/overlays/<cluster>/services/my-service/override-values.yaml`
+Create in the cluster repo, for example `applications/overlays/<cluster>/services/my-service/helm-values/override-values.yaml` if your consumer layout keeps service overrides under `services/<service>/helm-values/`.
 
 ## Resources
 
@@ -307,6 +307,7 @@ kubectl get all -n my-service
 ```
 
 Expected output:
+
 - HelmRelease shows "Ready" status
 - Pods are running
 - Service endpoint is accessible
@@ -346,11 +347,8 @@ Should return "enabled".
 - Add Gateway API routing (see [configure-gateway.md](configure-gateway.md))
 - Create cluster overlay content for cluster-specific configuration
 
-## Evidence
+---
 
-**Sources:**
-- [applications/base/services/cert-manager/](../../applications/base/services/cert-manager/) - Reference service structure
-- [applications/base/services/keycloak/](../../applications/base/services/keycloak/) - Multi-component pattern
-- [docs/service-standards-and-lifecycle.md](../service-standards-and-lifecycle.md) - Service standards
-- S1-APP-RUNTIME-APIS.md - HelmRelease patterns
-- S4-FLUXCD-GITOPS.md - FluxCD configuration
+## References
+
+- [Cert-manager Base Service](../../applications/base/services/cert-manager/) - Reference Helm-based service structure

@@ -262,7 +262,7 @@ If missing, create:
 
 ```bash
 kubectl create secret generic sops-age \
-  --from-file=age.agekey=${HOME}/.config/sops/age/k8s-sandbox_keys.txt \
+  --from-file=age.agekey=${HOME}/.config/sops/age/<cluster>_keys.txt \
   -n flux-system
 ```
 
@@ -583,7 +583,7 @@ flux uninstall --silent
 flux bootstrap git \
   --url=ssh://git@github.com/${GIT_REPO}.git \
   --branch=main \
-  --path=applications/overlays/${CLUSTER_NAME}
+  --path=<cluster-repo-bootstrap-path>
 ```
 
 ### Rollback to previous version
@@ -610,7 +610,7 @@ If Flux cannot recover:
 flux suspend kustomization my-service
 
 # Apply manually
-kubectl apply -f applications/overlays/k8s-sandbox/services/my-service/
+kubectl apply -f <cluster-service-overlay-path>/
 
 # Resume Flux
 flux resume kustomization my-service
@@ -622,11 +622,3 @@ flux resume kustomization my-service
 - Configure Flux notifications (Slack, PagerDuty)
 - Implement automated testing for Flux resources
 - Create runbooks for common Flux issues
-
-## Evidence
-
-**Sources:**
-- [llms.txt](../../llms.txt) lines 19-262 - Flux bootstrap and patterns
-- [docs/service-standards-and-lifecycle.md](../service-standards-and-lifecycle.md) lines 82-174 - GitOps architecture
-- S4-FLUXCD-GITOPS.md - FluxCD configuration and patterns
-- S1-APP-RUNTIME-APIS.md - HelmRelease patterns

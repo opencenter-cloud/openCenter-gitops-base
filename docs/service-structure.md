@@ -13,7 +13,7 @@ unlisted: true
 
 The detailed service layout guidance is now maintained in:
 
-- [Kustomize Patterns Reference](reference/kustomize-patterns.md)
+- [Directory Structure Reference](reference/directory-structure.md)
 
 For repo-level layout details, use:
 

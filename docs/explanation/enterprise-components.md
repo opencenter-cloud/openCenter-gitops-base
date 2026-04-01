@@ -205,10 +205,3 @@ In the current architecture:
 - enterprise components in the private repo patch the imported base to use private sources and enterprise values
 
 That is the correct mental model for how enterprise composition works today.
-
-## Evidence
-
-- Base service example:
-  [applications/base/services/cert-manager/](../../applications/base/services/cert-manager/)
-- Enterprise install overlay example in the private enterprise repository:
-  `applications/enterprise/services/cert-manager/overlays/install/kustomization.yaml`

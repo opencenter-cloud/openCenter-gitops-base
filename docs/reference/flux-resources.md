@@ -2,7 +2,7 @@
 id: flux-resources
 title: "FluxCD Resources Reference"
 sidebar_label: Flux Resources
-description: Complete reference for FluxCD resources used in openCenter-gitops-base.
+description: Reference for the FluxCD resource patterns used by openCenter cluster repositories when consuming openCenter-gitops-base.
 doc_type: reference
 audience: "platform engineers"
 tags: [fluxcd, gitops, kubernetes, resources]
@@ -12,25 +12,23 @@ tags: [fluxcd, gitops, kubernetes, resources]
 
 **Type:** Reference  
 **Audience:** Platform engineers  
-**Last Updated:** 2026-02-14
+**Last Updated:** 2026-04-01
 
-This document provides a complete reference for FluxCD resources used in openCenter-gitops-base.
+This document is a field-oriented reference for the main FluxCD resources used in the current openCenter delivery model.
 
----
+It does not try to re-explain the full GitOps workflow. For that, use [GitOps Workflow](../explanation/gitops-workflow.md).
 
-## FluxCD Version
+In the current architecture:
 
-**Version:** v2.7.0  
-**Installation:**
-```bash
-curl -s https://fluxcd.io/install.sh | sudo FLUX_VERSION=2.7.0 bash
-```
+- `openCenter-gitops-base` exports reusable install paths
+- cluster overlay repos create the Flux objects that point at those paths
+- Flux controllers in the cluster reconcile the selected sources and paths
 
 ---
 
 ## GitRepository
 
-Defines a Git repository as a source for Flux.
+Defines a Git source artifact for Flux.
 
 ### Specification
 
@@ -58,7 +56,7 @@ spec:
 | `ref.commit` | string | No | Specific commit SHA |
 | `secretRef.name` | string | No | Secret containing SSH key or credentials |
 
-### Common Patterns
+### Common Ref Patterns
 
 **Tag-based (recommended for stability):**
 ```yaml
@@ -82,7 +80,7 @@ ref:
 
 ## HelmRepository
 
-Defines a Helm chart repository as a source.
+Defines a Helm chart source used by a `HelmRelease`.
 
 ### Specification
 
@@ -91,7 +89,7 @@ apiVersion: source.toolkit.fluxcd.io/v1
 kind: HelmRepository
 metadata:
   name: jetstack
-  namespace: flux-system
+  namespace: cert-manager
 spec:
   interval: 1h
   url: https://charts.jetstack.io
@@ -122,8 +120,6 @@ metadata:
 spec:
   interval: 5m
   timeout: 10m
-  driftDetection:
-    mode: enabled
   chart:
     spec:
       chart: cert-manager
@@ -131,7 +127,9 @@ spec:
       sourceRef:
         kind: HelmRepository
         name: jetstack
-        namespace: flux-system
+        namespace: cert-manager
+  driftDetection:
+    mode: enabled
   install:
     remediation:
       retries: 3
@@ -166,25 +164,6 @@ spec:
 | `upgrade.remediation.remediateLastFailure` | bool | No | Retry last upgrade failure (default: false) |
 | `valuesFrom` | array | No | List of value sources (Secrets or ConfigMaps) |
 
-### Values Hierarchy
-
-openCenter commonly uses a layered values pattern:
-
-1. **Base values** (required): Core configuration from this repo
-2. **Override values** (optional): Cluster-specific overrides from the consuming repo
-3. **Enterprise values** (optional): Additional private-repo configuration when enterprise composition is used
-
-```yaml
-valuesFrom:
-  - kind: Secret
-    name: service-values-base
-    valuesKey: values.yaml
-  - kind: Secret
-    name: service-values-override
-    valuesKey: override.yaml
-    optional: true
-```
-
 ### Drift Detection
 
 When enabled, Flux detects configuration drift and automatically corrects it:
@@ -210,7 +189,7 @@ driftDetection:
 
 ## Kustomization
 
-Applies Kustomize manifests to the cluster.
+Applies a selected repository path to the cluster.
 
 ### Specification
 
@@ -221,9 +200,6 @@ metadata:
   name: cert-manager
   namespace: flux-system
 spec:
-  dependsOn:
-    - name: sources
-      namespace: flux-system
   interval: 5m
   retryInterval: 1m
   timeout: 10m
@@ -232,17 +208,12 @@ spec:
     name: opencenter-cert-manager
     namespace: flux-system
   path: applications/base/services/cert-manager
-  targetNamespace: cert-manager
   prune: true
   healthChecks:
     - apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease
       name: cert-manager
       namespace: cert-manager
-  decryption:
-    provider: sops
-    secretRef:
-      name: sops-age
 ```
 
 ### Fields
@@ -255,11 +226,8 @@ spec:
 | `timeout` | duration | Yes | Operation timeout |
 | `sourceRef` | object | Yes | Reference to GitRepository |
 | `path` | string | Yes | Path within repository |
-| `targetNamespace` | string | No | Override namespace for all resources |
 | `prune` | bool | No | Delete resources removed from Git (default: false) |
 | `healthChecks` | array | No | Resources to check before marking ready |
-| `decryption.provider` | string | No | `sops` for encrypted secrets |
-| `decryption.secretRef.name` | string | No | Secret containing decryption key |
 
 ### Dependencies
 
@@ -272,7 +240,7 @@ spec:
       namespace: flux-system
 ```
 
-This ensures CRDs and controllers are ready before dependent resources apply.
+This is commonly used in cluster repos to order source, install, and follow-on workload paths.
 
 ### Health Checks
 
@@ -290,50 +258,20 @@ healthChecks:
     namespace: cert-manager
 ```
 
-### SOPS Decryption
-
-Enable automatic secret decryption:
-
-```yaml
-decryption:
-  provider: sops
-  secretRef:
-    name: sops-age
-```
-
-Requires age key stored in Secret:
-```bash
-kubectl create secret generic sops-age \
-  --from-file=age.agekey=${HOME}/.config/sops/age/${CLUSTER_NAME}_keys.txt \
-  -n flux-system
-```
-
----
-
 ## Reconciliation Intervals
 
-Standard intervals used in openCenter:
+Common intervals used in this model:
 
 | Resource Type | Interval | Rationale |
 |---------------|----------|-----------|
-| GitRepository | 15m | Source changes are infrequent |
-| HelmRepository | 1h | Chart updates are infrequent |
-| HelmRelease | 5m | Fast drift detection |
-| Kustomization | 5m | Fast drift detection |
+| GitRepository | `15m` | Common cluster-repo source polling interval |
+| HelmRepository | `1h` | Common chart source polling interval |
+| HelmRelease | `5m` | Common service reconciliation interval |
+| Kustomization | `5m` | Common install reconciliation interval |
 
 ---
 
 ## Flux CLI Commands
-
-### Bootstrap
-
-```bash
-flux bootstrap git \
-  --url=ssh://git@github.com/${GIT_REPO}.git \
-  --branch=main \
-  --private-key-file=${HOME}/.ssh/${CLUSTER_NAME}_id_ed25519 \
-  --path=applications/overlays/${CLUSTER_NAME}
-```
 
 ### Reconcile
 
@@ -381,83 +319,6 @@ flux suspend helmrelease cert-manager -n cert-manager
 flux resume helmrelease cert-manager -n cert-manager
 ```
 
----
-
-## SOPS Configuration
-
-### Age Key Generation
-
-```bash
-# Generate age keypair
-age-keygen -o ${HOME}/.config/sops/age/${CLUSTER_NAME}_keys.txt
-
-# Extract public key
-grep "# public key:" ${HOME}/.config/sops/age/${CLUSTER_NAME}_keys.txt
-```
-
-### .sops.yaml Configuration
-
-```yaml
-creation_rules:
-  - path_regex: .*.yaml
-    encrypted_regex: ^(data|stringData)$
-    age: age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p
-```
-
-### Encrypt/Decrypt
-
-```bash
-# Encrypt in place
-sops -e -i secret.yaml
-
-# Decrypt to stdout
-sops -d secret.yaml
-
-# Edit encrypted file
-sops secret.yaml
-```
-
-### Create Kubernetes Secret with Age Key
-
-```bash
-kubectl create secret generic sops-age \
-  --from-file=age.agekey=${HOME}/.config/sops/age/${CLUSTER_NAME}_keys.txt \
-  -n flux-system
-```
-
----
-
-## Common Patterns
-
-### Service Onboarding
-
-1. Create GitRepository source
-2. Create Kustomization referencing source
-3. Kustomization applies service manifests
-4. Service manifests include HelmRelease
-5. HelmRelease deploys Helm chart
-
-### Dependency Chain
-
-```
-sources (Kustomization)
-  └─> cert-manager (Kustomization)
-      └─> cert-manager-certs (Kustomization)
-```
-
-### Multi-Component Service
-
-Services like Keycloak with multiple components:
-
-```
-keycloak-postgres (Kustomization)
-  └─> keycloak-operator (Kustomization)
-      └─> keycloak-instance (Kustomization)
-          └─> keycloak-oidc-rbac (Kustomization)
-```
-
----
-
 ## Troubleshooting
 
 ### Check Resource Status
@@ -490,14 +351,3 @@ kubectl logs -n flux-system deploy/source-controller
 kubectl logs -n flux-system deploy/helm-controller
 kubectl logs -n flux-system deploy/kustomize-controller
 ```
-
----
-
-## Source Material
-
-**Source Files:**
-- [docs/how-to/service-onboarding.md](../how-to/service-onboarding.md)
-- [docs/how-to/troubleshoot-flux.md](../how-to/troubleshoot-flux.md)
-- [docs/service-standards-and-lifecycle.md](../service-standards-and-lifecycle.md)
-- [applications/base/services/cert-manager/helmrelease.yaml](../../applications/base/services/cert-manager/helmrelease.yaml)
-- [applications/base/services/cert-manager/kustomization.yaml](../../applications/base/services/cert-manager/kustomization.yaml)
