@@ -28,6 +28,8 @@ If the operator is installed with Helm and the cluster overlay repo must create 
 
 ## Workflow Summary
 
+The path examples below use a common cluster-repo layout where service activation lives under `applications/overlays/<cluster>/services/`. If your cluster repository uses a different root, keep the same separation between `sources/`, `fluxcd/`, and `services/<service>/` in the equivalent location.
+
 1. Decide whether the cluster should consume the community repo or the enterprise repo
 2. Inspect the base service `HelmRelease` to understand how overrides are accepted
 3. Create the cluster overlay directory structure for the service
@@ -62,7 +64,7 @@ Do not assume every Helm service follows the exact `cert-manager` pattern. Some 
 
 ## Step 2: Create The Cluster Overlay Structure
 
-Create the service structure in the **cluster overlay repo**:
+Create the service structure in the **cluster overlay repo**. In the common layout used in these examples:
 
 ```text
 applications/overlays/<cluster>/services/
@@ -88,13 +90,13 @@ opencenter-<service>-enterprise.yaml
 
 ## Step 3: Add The Flux Source
 
-Create the `GitRepository` in:
+Create the `GitRepository` in the directory that holds shared source objects. In the common layout used in these examples:
 
 ```text
 applications/overlays/<cluster>/services/sources/
 ```
 
-Then register it from:
+Then register it from the matching `kustomization.yaml`:
 
 ```text
 applications/overlays/<cluster>/services/sources/kustomization.yaml
@@ -117,13 +119,13 @@ Store sensitive values with SOPS. See [Manage Secrets with SOPS](manage-secrets.
 
 ## Step 4: Add The Install Kustomization
 
-Create the install object in:
+Create the install object in the directory that holds Flux activation objects. In the common layout used in these examples:
 
 ```text
 applications/overlays/<cluster>/services/fluxcd/<service>.yaml
 ```
 
-Then register it from:
+Then register it from the matching `kustomization.yaml`:
 
 ```text
 applications/overlays/<cluster>/services/fluxcd/kustomization.yaml
@@ -147,7 +149,7 @@ Typical service paths:
 
 ## Step 5: Add Cluster-Local Overrides
 
-Create the cluster-local overlay in:
+Create the cluster-local overlay in the directory that holds service-specific overlay content. In the common layout used in these examples:
 
 ```text
 applications/overlays/<cluster>/services/<service>/
@@ -175,7 +177,7 @@ The cluster overlay can also contain additional manifests, Secrets, or service-s
 - Base values from `cert-manager-values-base`
 - Optional cluster-local overrides from `cert-manager-values-override`
 
-Typical cluster-local override structure:
+Typical cluster-local override structure in that layout:
 
 ```text
 applications/overlays/<cluster>/services/cert-manager/

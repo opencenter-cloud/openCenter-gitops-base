@@ -336,17 +336,3 @@ Examples include:
 - coordinated secret rotation with external systems
 
 For those cases, openCenter still uses imperative operational procedures alongside GitOps-managed configuration.
-
-## Source Material
-
-This explanation is based on the following repository sources:
-
-- [Architecture Explanation](architecture.md)
-- [Service Deployment Patterns](../how-to/service-deployment-patterns.md)
-- [Base, Override, and Enterprise Values](three-tier-values.md)
-- [Directory Structure Reference](../reference/directory-structure.md)
-- [applications/base/services/cert-manager/helmrelease.yaml](../../applications/base/services/cert-manager/helmrelease.yaml)
-- [applications/base/services/cert-manager/kustomization.yaml](../../applications/base/services/cert-manager/kustomization.yaml)
-- [applications/base/services/external-snapshotter/kustomization.yaml](../../applications/base/services/external-snapshotter/kustomization.yaml)
-- [applications/base/services/olm/kustomization.yaml](../../applications/base/services/olm/kustomization.yaml)
-- [applications/base/services/keycloak/10-operator/kustomization.yaml](../../applications/base/services/keycloak/10-operator/kustomization.yaml)

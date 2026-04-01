@@ -221,7 +221,7 @@ Located in `helm-values/values-v<chart-version>.yaml`.
 
 ### Override Values
 
-Create in cluster repo: `applications/overlays/<cluster>/services/my-service/override-values.yaml`
+Create in the cluster repo, for example `applications/overlays/<cluster>/services/my-service/helm-values/override-values.yaml` if your consumer layout keeps service overrides under `services/<service>/helm-values/`.
 
 ## Resources
 

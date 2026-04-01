@@ -474,7 +474,7 @@ echo "Please review base repo changes and test before committing"
 
 ## References
 
-- [Kustomize Patterns Reference](../reference/kustomize-patterns.md)
+- [Directory Structure Reference](../reference/directory-structure.md)
 - [Enterprise Components Pattern](../explanation/enterprise-components.md)
 - [FluxCD HelmRelease Documentation](https://fluxcd.io/flux/components/helm/helmreleases/)
 - [Helm Documentation](https://helm.sh/docs/)

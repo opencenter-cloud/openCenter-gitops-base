@@ -27,6 +27,8 @@ If the operator is installed with `HelmRelease` and the cluster overlay later cr
 
 ## Workflow Summary
 
+The path examples below use a common cluster-repo layout where service activation lives under `applications/overlays/<cluster>/services/`. If your cluster repository uses a different root, keep the same split between `sources/`, `fluxcd/`, and cluster-local service content in the equivalent location.
+
 1. Choose the source repo using [Service Deployment Patterns](service-deployment-patterns.md)
 2. Add the source object and install `Kustomization` in the cluster overlay repo
 3. Allow OLM to install and settle the operator
@@ -62,7 +64,7 @@ applications/base/services/keycloak/
 
 ## Step 2: Add The Source And Install Path
 
-In the cluster overlay repo:
+In the cluster overlay repo, using the common layout shown in these examples:
 
 1. Create the source object under `applications/overlays/<cluster>/services/sources/`
 2. Register it from `services/sources/kustomization.yaml`
@@ -94,7 +96,7 @@ Do not expect the service custom resources to become ready until the OLM install
 
 ## Step 4: Add Cluster-Local Resources
 
-Create the cluster-local overlay in:
+Create the cluster-local overlay in the directory that holds service-specific cluster content. In the common layout used in these examples:
 
 ```text
 applications/overlays/<cluster>/services/<service>/

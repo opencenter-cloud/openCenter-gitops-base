@@ -17,7 +17,7 @@ The `applications/` tree is managed with Flux CD and follows declarative, versio
 ## Repository Layout
 
 - `iac/` provisions infrastructure, renders Kubespray inputs, and initiates cluster bootstrap
-- `applications/` contains the reusable base service definitions, managed services, and policy resources
+- `applications/` contains the reusable base service definitions and policy resources
 - `docs/` contains tutorials, how-to guides, references, and architecture documentation
 
 For the complete directory layout, see [Directory Structure](docs/reference/directory-structure.md).
@@ -70,20 +70,13 @@ For the complete directory layout, see [Directory Structure](docs/reference/dire
 
 Use the documentation set under `docs/` together with the service README files for architecture, onboarding, configuration, and troubleshooting.
 
-### Start Here
-
-- [Infrastructure as Code](iac/README.md) - Cluster provisioning, Kubespray inventory generation, and Kubernetes bootstrap flow
-- [Documentation Index](docs/index.md) - Main entry point for tutorials, how-to guides, references, and explanations
-- [Getting Started Tutorial](docs/tutorials/getting-started.md) - Deploy a first service end to end
-- [Service Deployment Patterns](docs/how-to/service-deployment-patterns.md) - How cluster repos consume services from the community or enterprise repo
-- [Helm Service Onboarding](docs/how-to/helm-service-onboarding.md) - Onboard Helm-based services such as cert-manager, Harbor, Longhorn, MetalLB, and Loki
-- [OLM Service Onboarding](docs/how-to/olm-service-onboarding.md) - Onboard services whose operator is installed through OLM, such as Keycloak
-- [Operator CR Service Onboarding](docs/how-to/operator-cr-service-onboarding.md) - Onboard services where Helm installs the operator and the cluster overlay creates Kafka or PostgreSQL custom resources
-- [Add a Helm Service to the Community Repo](docs/how-to/add-helm-service-to-community-repo.md) - Add a new shared Helm-based service under `applications/base/services/`
-- [Service Catalog](docs/reference/service-catalog.md) - Service inventory, dependencies, and configuration surfaces
-
-### Service Docs
-
-- Service directories under `applications/base/services/` contain repo-local deployment context and links to supporting docs
-- [Service Reference Library](docs/reference/services/index.md) - Per-service overviews, integration points, examples, and upstream references
-- [Service Configuration Guides](docs/how-to/services/index.md) - Practical override patterns, validation steps, and troubleshooting guidance for selected services
+- [Infrastructure as Code](iac/README.md) - Provision clusters and bootstrap Kubernetes
+- [Documentation Index](docs/index.md) - Browse tutorials, how-to guides, references, and explanations
+- [Getting Started Tutorial](docs/tutorials/getting-started.md) - Deploy your first service
+- [Service Deployment Patterns](docs/how-to/service-deployment-patterns.md) - Choose community or enterprise sourcing
+- [Helm Service Onboarding](docs/how-to/helm-service-onboarding.md) - Onboard Helm-based services
+- [OLM Service Onboarding](docs/how-to/olm-service-onboarding.md) - Onboard OLM-based services
+- [Operator CR Service Onboarding](docs/how-to/operator-cr-service-onboarding.md) - Onboard operator-managed custom resources
+- [Add a Helm Service to the Community Repo](docs/how-to/add-helm-service-to-community-repo.md) - Add a shared Helm service to `applications/base/services/`
+- [Service Reference Library](docs/reference/services/index.md) - Per-service reference pages
+- [Service Configuration Guides](docs/how-to/services/index.md) - Configuration and troubleshooting for selected services

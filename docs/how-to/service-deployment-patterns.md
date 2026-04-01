@@ -204,23 +204,11 @@ Use this page for source selection, ownership boundaries, and cluster overlay re
 
 Use this when the service can be installed from public artifacts.
 
-For step-by-step onboarding after you choose the community source, continue with:
-
-- [Helm Service Onboarding](helm-service-onboarding.md) for Helm-based services
-- [OLM Service Onboarding](olm-service-onboarding.md) for OLM-based services
-- [Operator CR Service Onboarding](operator-cr-service-onboarding.md) for operator custom-resource workflows
-
 ---
 
 ## Enterprise Deployment
 
 Use this when private charts, private images, or enterprise deltas are required.
-
-For step-by-step onboarding after you choose the enterprise source, continue with:
-
-- [Helm Service Onboarding](helm-service-onboarding.md) for Helm-based services
-- [OLM Service Onboarding](olm-service-onboarding.md) for OLM-based services
-- [Operator CR Service Onboarding](operator-cr-service-onboarding.md) for operator custom-resource workflows
 
 The enterprise repo also requires cluster-specific access credentials when private Git, OCI charts, or private images are involved.
 
@@ -232,5 +220,4 @@ The enterprise repo also requires cluster-specific access credentials when priva
 - [OLM Service Onboarding](olm-service-onboarding.md)
 - [Operator CR Service Onboarding](operator-cr-service-onboarding.md)
 - [Enterprise Components Pattern](../explanation/enterprise-components.md)
-- [Kustomize Patterns Reference](../reference/kustomize-patterns.md)
 - [Directory Structure Reference](../reference/directory-structure.md)

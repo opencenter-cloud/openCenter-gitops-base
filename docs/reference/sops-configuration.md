@@ -102,15 +102,15 @@ creation_rules:
 
 ### Pattern 2: Fully Encrypt Helm Values
 
-Encrypt entire Helm values files:
+Encrypt entire override values files in a consuming cluster repo:
 
 ```yaml
 creation_rules:
-  - path_regex: '^services/.*/helm-values/.*\.ya?ml$'
+  - path_regex: '^helm-values/.*\.ya?ml$'
     age: age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p
 ```
 
-**Use case:** Helm values files containing sensitive configuration
+**Use case:** cluster-local Helm values files containing credentials or tokens
 
 ### Pattern 3: Multiple Rules for Different Paths
 
@@ -118,12 +118,12 @@ Different encryption rules for different directories:
 
 ```yaml
 creation_rules:
-  # Services helm values - fully encrypted
-  - path_regex: '^services/.*/helm-values/.*\.ya?ml$'
+  # Cluster-local override values - fully encrypted
+  - path_regex: '^helm-values/.*\.ya?ml$'
     age: age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p
   
-  # Services YAML - only specific fields
-  - path_regex: '^services/.*/.*\.ya?ml$'
+  # Kubernetes manifests - encrypt only selected fields
+  - path_regex: '^manifests/.*\.ya?ml$'
     age: age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p
     encrypted_regex: "^(data|stringData|credentials)$"
   
@@ -136,24 +136,24 @@ creation_rules:
 
 ### Pattern 4: Multiple Age Keys
 
-Use different keys for different clusters:
+Use different keys for different cluster repositories or environments. If a single consumer repo contains multiple environment roots, the rules can be path-based, for example:
 
 ```yaml
 creation_rules:
-  # Production cluster
-  - path_regex: '^applications/overlays/prod/.*\.ya?ml$'
+  # Production repository or environment
+  - path_regex: '^clusters/prod/.*\.ya?ml$'
     age: age1prod1234567890abcdefghijklmnopqrstuvwxyz1234567890abc
   
-  # Staging cluster
-  - path_regex: '^applications/overlays/stage/.*\.ya?ml$'
+  # Staging repository or environment
+  - path_regex: '^clusters/stage/.*\.ya?ml$'
     age: age1stage1234567890abcdefghijklmnopqrstuvwxyz1234567890ab
   
-  # Development cluster
-  - path_regex: '^applications/overlays/dev/.*\.ya?ml$'
+  # Development repository or environment
+  - path_regex: '^clusters/dev/.*\.ya?ml$'
     age: age1dev1234567890abcdefghijklmnopqrstuvwxyz1234567890abcd
 ```
 
-**Use case:** Multi-cluster repository with separate encryption keys per environment
+**Use case:** environment-specific repositories or cluster repos with separate encryption keys
 
 ---
 
@@ -226,8 +226,8 @@ spec:
   interval: 5m
   sourceRef:
     kind: GitRepository
-    name: platform-config
-  path: ./applications/overlays/prod/cert-manager
+    name: cluster-services
+  path: ./services/cert-manager
   prune: true
   decryption:
     provider: sops
@@ -504,13 +504,3 @@ openCenter also supports Bitnami Sealed Secrets as an alternative to SOPS.
 - Prefer cluster-managed keys
 - Don't need offline decryption
 - Want simpler key management
-
----
-
-## Source Material
-
-**Source Files:**
-- [Manage Secrets with SOPS](../how-to/manage-secrets.md)
-- [Service Deployment Patterns](../how-to/service-deployment-patterns.md)
-- [Security Model](../explanation/security-model.md)
-- [FluxCD Resources Reference](flux-resources.md)

@@ -48,6 +48,8 @@ sudo mv age/age-keygen /usr/local/bin/
 
 ## Steps
 
+The examples below use a common cluster-repo layout where service overlays live under `applications/overlays/<cluster>/services/`. If your consumer repo uses a different root, keep the same intent and apply the examples to the equivalent paths in that repo.
+
 ### 1. Generate age keypair
 
 ```bash
@@ -55,7 +57,7 @@ sudo mv age/age-keygen /usr/local/bin/
 mkdir -p ~/.config/sops/age/
 
 # Generate keypair for cluster
-age-keygen -o ~/.config/sops/age/k8s-sandbox_keys.txt
+age-keygen -o ~/.config/sops/age/<cluster>_keys.txt
 ```
 
 Output:
@@ -78,7 +80,7 @@ creation_rules:
     age: age1abc123def456ghi789jkl012mno345pqr678stu901vwx234yz567
   
   # Encrypt override values with sensitive data
-  - path_regex: applications/overlays/.*/.*override.*\.yaml$
+  - path_regex: .*/services/.*/helm-values/.*override.*\.ya?ml$
     encrypted_regex: ^(data|stringData|password|token|key|secret|cert|ca|tls)$
     age: age1abc123def456ghi789jkl012mno345pqr678stu901vwx234yz567
   
@@ -169,7 +171,7 @@ kubectl create namespace flux-system --dry-run=client -o yaml | kubectl apply -f
 
 # Create secret with age private key
 kubectl create secret generic sops-age \
-  --from-file=age.agekey=${HOME}/.config/sops/age/k8s-sandbox_keys.txt \
+  --from-file=age.agekey=${HOME}/.config/sops/age/<cluster>_keys.txt \
   -n flux-system
 ```
 
@@ -181,7 +183,7 @@ kubectl get secret sops-age -n flux-system
 
 ### 7. Configure FluxCD Kustomization for decryption
 
-In cluster repo path `applications/overlays/k8s-sandbox/kustomization.yaml`:
+In your cluster repo, update the `Kustomization` that reconciles the service overlay. In the common layout used in these examples, that is `applications/overlays/<cluster>/services/fluxcd/my-service.yaml`:
 
 ```yaml
 apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -191,7 +193,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 5m
-  path: ./applications/overlays/k8s-sandbox/services/my-service
+  path: ./applications/overlays/<cluster>/services/my-service
   prune: true
   sourceRef:
     kind: GitRepository
@@ -237,7 +239,7 @@ sops -d secrets/database-credentials.yaml > /tmp/decrypted.yaml
 ### 1. Generate new keypair
 
 ```bash
-age-keygen -o ~/.config/sops/age/k8s-sandbox_keys_new.txt
+age-keygen -o ~/.config/sops/age/<cluster>_keys_new.txt
 ```
 
 ### 2. Update .sops.yaml with new public key
@@ -264,7 +266,7 @@ sops rotate -i secrets/database-credentials.yaml
 kubectl delete secret sops-age -n flux-system
 
 kubectl create secret generic sops-age \
-  --from-file=age.agekey=${HOME}/.config/sops/age/k8s-sandbox_keys_new.txt \
+  --from-file=age.agekey=${HOME}/.config/sops/age/<cluster>_keys_new.txt \
   -n flux-system
 ```
 
@@ -283,7 +285,7 @@ Encrypt only specific fields using `encrypted_regex`:
 
 ```yaml
 creation_rules:
-  - path_regex: applications/overlays/.*/override-values\.yaml$
+  - path_regex: .*/services/.*/helm-values/override-values\.ya?ml$
     encrypted_regex: ^(password|token|apiKey|secret|privateKey)$
     age: age1abc123def456ghi789jkl012mno345pqr678stu901vwx234yz567
 ```
@@ -333,7 +335,7 @@ ls -la ~/.config/sops/age/
 Set SOPS_AGE_KEY_FILE environment variable:
 
 ```bash
-export SOPS_AGE_KEY_FILE=${HOME}/.config/sops/age/k8s-sandbox_keys.txt
+export SOPS_AGE_KEY_FILE=${HOME}/.config/sops/age/<cluster>_keys.txt
 sops -d secrets/database-credentials.yaml
 ```
 
@@ -406,11 +408,3 @@ Use Sealed Secrets when:
 - Configure Helm values with encrypted secrets (see [configure-helm-values.md](configure-helm-values.md))
 - Set up observability for secret rotation (see [setup-observability.md](setup-observability.md))
 - Implement secret rotation automation
-
-## Evidence
-
-**Sources:**
-- [llms.txt](../../llms.txt) lines 209-262 - SOPS workflow
-- [docs/service-standards-and-lifecycle.md](../service-standards-and-lifecycle.md) lines 48-55 - Security requirements
-- S4-FLUXCD-GITOPS.md - SOPS secret management
-- S7-SECURITY-GOVERNANCE.md - Dual secret management strategy

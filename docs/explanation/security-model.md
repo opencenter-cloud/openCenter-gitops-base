@@ -137,7 +137,7 @@ Code review identified critical security gaps that must be addressed before prod
 
 **Status:** Kyverno is installed but no ClusterPolicy resources exist.
 
-**Impact:** No automated policy enforcement. Non-compliant deployments are possible. Security standards documented in `docs/service-standards-and-lifecycle.md` are not enforced.
+**Impact:** No automated policy enforcement. Non-compliant deployments are possible. The repository documents the intended security model, but it does not currently ship the validating and enforcing policies needed to make that model effective by default.
 
 **Root cause:** Policy engine is present but policies were never implemented.
 
@@ -262,16 +262,3 @@ Based on code review findings:
 **Zero-retry upgrades** - HelmRelease upgrades don't retry automatically. This prevents repeated failed upgrades but requires manual intervention. The trade-off favors safety over automation.
 
 These decisions reflect openCenter's priorities: simplicity, maintainability, and safety over maximum flexibility and automation.
-
-## Source Material
-
-This explanation is based on the following repository sources:
-
-- SOPS encryption workflow: [Manage Secrets with SOPS](../how-to/manage-secrets.md) and [Service Deployment Patterns](../how-to/service-deployment-patterns.md)
-- SOPS configuration: `.sops.yaml` examples and [SOPS Configuration](../reference/sops-configuration.md)
-- Kyverno policy engine: [applications/base/services/kyverno/policy-engine/README.md](../../applications/base/services/kyverno/policy-engine/README.md)
-- Security requirements: [docs/service-standards-and-lifecycle.md](../service-standards-and-lifecycle.md)
-- Keycloak IAM: [applications/base/services/keycloak/](../../applications/base/services/keycloak/)
-- Network policy placeholders: [applications/policies/network-policies/](../../applications/policies/network-policies/)
-- Pod Security placeholders: [applications/policies/pod-security-policies/](../../applications/policies/pod-security-policies/)
-- RBAC placeholders: [applications/policies/rbac/](../../applications/policies/rbac/)

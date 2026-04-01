@@ -237,5 +237,5 @@ That is a consumer-repo concern, not a standard file layout inside `openCenter-g
 
 - [Helm Service Onboarding](helm-service-onboarding.md)
 - [Helm Values Schema](../reference/helm-values-schema.md)
-- [Kustomize Patterns](../reference/kustomize-patterns.md)
+- [Directory Structure](../reference/directory-structure.md)
 - [Enterprise Components](../explanation/enterprise-components.md)
