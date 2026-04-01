@@ -21,6 +21,8 @@ tags: [gateway-api, routing, ingress, tls]
 
 ## Steps
 
+The examples below assume a common consumer layout where cluster-local service manifests live under `applications/overlays/<cluster>/services/`. If your cluster repository uses a different root, apply the same resources from the equivalent service overlay path in that repo.
+
 ### 1. Verify Gateway API installation
 
 ```bash
@@ -130,7 +132,7 @@ kubectl get secret platform-gateway-tls -n envoy-gateway-system
 
 ### 4. Create HTTPRoute for service
 
-Create `applications/overlays/k8s-sandbox/services/my-service/httproute.yaml`:
+In your cluster repo, create an `HTTPRoute` in the service overlay path. In the common layout used in these examples, that file is `applications/overlays/<cluster>/services/my-service/httproute.yaml`:
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -162,7 +164,7 @@ spec:
 Apply:
 
 ```bash
-kubectl apply -f applications/overlays/k8s-sandbox/services/my-service/httproute.yaml
+kubectl apply -f applications/overlays/<cluster>/services/my-service/httproute.yaml
 ```
 
 ### 5. Create ReferenceGrant for cross-namespace access
@@ -514,12 +516,3 @@ curl -k https://my-service.example.com/health
 - Set up observability for Gateway metrics (see [setup-observability.md](setup-observability.md))
 - Implement mTLS with Istio for service-to-service communication
 - Add WAF policies for security
-
-## Evidence
-
-**Sources:**
-- [applications/base/services/gateway-api/README.md](../../applications/base/services/gateway-api/README.md) - Gateway API overview
-- [applications/base/services/gateway-api/helmrelease.yaml](../../applications/base/services/gateway-api/helmrelease.yaml) - Envoy Gateway deployment
-- [docs/how-to/services/cert-manager.md](services/cert-manager.md) - TLS certificate automation
-- S5-ENVOY-GATEWAY-TRAFFIC.md - Gateway API implementation
-- S1-APP-RUNTIME-APIS.md - API exposure patterns

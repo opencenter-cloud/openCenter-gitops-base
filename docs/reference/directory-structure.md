@@ -12,7 +12,7 @@ tags: [directory, structure, repository, reference]
 
 **Type:** Reference  
 **Audience:** All users  
-**Last Updated:** 2026-03-24
+**Last Updated:** 2026-04-01
 
 This document describes the directory structure of `openCenter-gitops-base`.
 
@@ -69,75 +69,22 @@ Examples currently present include:
 - `velero/`
 - `vsphere-csi/`
 
-### Common Service Shapes
+### Service Layout Notes
 
-#### Standard Helm-Based Service
+Deployable paths under `applications/base/services/` are not all shaped the same way.
 
-```text
-applications/base/services/<service-name>/
-├── kustomization.yaml
-├── namespace.yaml
-├── source.yaml
-├── helmrelease.yaml
-└── helm-values/
-    └── values-v<version>.yaml
-```
+In practice, you will see a mix of:
 
-#### Helm Service with Extra Resources
+- standard Helm-based service directories
+- Helm-based services with extra manifests
+- manifest-only service directories
+- staged services such as `keycloak/`
+- named multi-part services such as `istio/`
 
-```text
-applications/base/services/<service-name>/
-├── kustomization.yaml
-├── namespace.yaml
-├── source.yaml
-├── helmrelease.yaml
-├── helm-values/
-└── extra manifests...
-```
+The architectural rationale for those shapes is explained in:
 
-Examples:
-
-- `longhorn/`
-- `vsphere-csi/`
-
-#### Manifest-Only Service
-
-```text
-applications/base/services/<service-name>/
-├── kustomization.yaml
-├── namespace.yaml (optional)
-└── local or remote manifests
-```
-
-Examples:
-
-- `external-snapshotter/`
-- `olm/`
-
-#### Multi-Stage Service
-
-```text
-applications/base/services/<service-name>/
-├── 00-<stage>/
-├── 10-<stage>/
-├── 20-<stage>/
-└── 30-<stage>/
-```
-
-Examples:
-
-- `keycloak/`
-
-Some multi-part services use named stages instead of numbered directories. For example, `istio/` uses:
-
-```text
-applications/base/services/istio/
-├── base/
-├── gateway/
-├── istiod/
-├── namespace/
-└── sources/
-```
+- [Architecture Explanation](../explanation/architecture.md)
+- [GitOps Workflow](../explanation/gitops-workflow.md)
 
 ### Grouping Directories
 
@@ -146,7 +93,6 @@ Some directories group related services or shared resources and are not themselv
 Examples:
 
 - `applications/base/services/observability/`
-- `applications/base/services/global/`
 
 For example, `observability/` contains components such as:
 
@@ -188,7 +134,7 @@ Important references:
 
 - `docs/reference/services/` for per-service reference pages
 - `docs/explanation/enterprise-components.md` for the base-vs-enterprise repo relationship
-- `docs/reference/kustomize-patterns.md` for current base service layout patterns
+- this page for current base service layout
 
 ## IaC
 
@@ -244,6 +190,5 @@ Those belong in the private enterprise repository, which imports the base servic
 
 ## References
 
-- [Kustomize Patterns Reference](kustomize-patterns.md)
 - [Service Reference Library](services/index.md)
 - [Enterprise Components Pattern](../explanation/enterprise-components.md)

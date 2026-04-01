@@ -30,6 +30,8 @@ If the service is a standard Helm application such as `cert-manager`, `harbor`, 
 
 ## Workflow Summary
 
+The path examples below use a common cluster-repo layout where service activation lives under `applications/overlays/<cluster>/services/`. If your cluster repository uses a different root, keep the same split between `sources/`, `fluxcd/`, and cluster-local operator workload content in the equivalent location.
+
 1. Choose the source repo using [Service Deployment Patterns](service-deployment-patterns.md)
 2. Install the operator from the selected source repo
 3. Create a cluster-local overlay for the operator-managed custom resources
@@ -60,7 +62,7 @@ Typical operator services in this repo:
 
 ## Step 2: Install The Operator
 
-In the cluster overlay repo:
+In the cluster overlay repo, using the common layout shown in these examples:
 
 1. Create the source object under `applications/overlays/<cluster>/services/sources/`
 2. Register it from `services/sources/kustomization.yaml`
@@ -80,7 +82,7 @@ If `services/fluxcd/kustomization.yaml` does not include `<service>.yaml`, Flux 
 
 ## Step 3: Create The Custom-Resource Overlay
 
-Create a separate cluster-local overlay for the operator-managed workload:
+Create a separate cluster-local overlay for the operator-managed workload. In the common layout used in these examples:
 
 ```text
 applications/overlays/<cluster>/services/<service>/

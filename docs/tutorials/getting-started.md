@@ -14,6 +14,8 @@ tags: [tutorial, fluxcd, cert-manager, onboarding]
 
 This tutorial uses the current **community repo** onboarding pattern. For the broader decision flow and other deployment models, see [Service Deployment Patterns](../how-to/service-deployment-patterns.md) and [Helm Service Onboarding](../how-to/helm-service-onboarding.md).
 
+The cluster-repo examples below use a common consumer layout where service activation lives under `applications/overlays/<cluster>/services/`. If your cluster repository uses a different root, apply the same resource split under the equivalent paths in that repo.
+
 ## What You'll Accomplish
 
 By the end of this tutorial, you will:
@@ -138,7 +140,7 @@ secretGenerator:
 
 FluxCD needs to know where to find the openCenter service source you want to consume. Create a GitRepository resource in your cluster repo.
 
-**In your cluster repository** (for example `applications/overlays/<cluster>/services/sources/`):
+**In your cluster repository** create the source in the directory that holds shared Flux source objects. In the common layout used in these examples, that is `applications/overlays/<cluster>/services/sources/`.
 
 Create `opencenter-cert-manager-community.yaml`:
 
@@ -155,7 +157,7 @@ spec:
     tag: <release-tag>
 ```
 
-Register it from `applications/overlays/<cluster>/services/sources/kustomization.yaml`:
+Register it from the matching source `kustomization.yaml` in your cluster repo. In the common layout used here, that file is `applications/overlays/<cluster>/services/sources/kustomization.yaml`:
 
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
@@ -191,7 +193,7 @@ Expected: `READY` column shows `True`.
 
 Now tell FluxCD to deploy cert-manager from the base repository.
 
-**In your cluster overlay** (`services/fluxcd/`), create `cert-manager.yaml`:
+**In your cluster overlay** create the install `Kustomization` in the directory that holds service activation objects. In the common layout used here, that file is `applications/overlays/<cluster>/services/fluxcd/cert-manager.yaml`:
 
 ```yaml
 apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -214,7 +216,7 @@ spec:
       namespace: cert-manager
 ```
 
-Register it from `applications/overlays/<cluster>/services/fluxcd/kustomization.yaml`:
+Register it from the matching `services/fluxcd/kustomization.yaml` in your cluster repo. In the common layout used here, that file is `applications/overlays/<cluster>/services/fluxcd/kustomization.yaml`:
 
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
@@ -405,7 +407,7 @@ Now that you've deployed your first service, explore these topics:
 
 **Deploy More Services:**
 - [Add a Helm Service to the Community Repo](../how-to/add-helm-service-to-community-repo.md) - Add a new shared Helm-based service to the community repo
-- [Service Catalog](../reference/service-catalog.md) - Browse available services
+- [Available Applications](../../README.md#available-applications) - Browse available services and versions
 
 **Advanced Topics:**
 - [Configure Gateway API](../how-to/configure-gateway.md) - Set up ingress routing
@@ -416,12 +418,3 @@ Now that you've deployed your first service, explore these topics:
 - [GitOps Workflow](../explanation/gitops-workflow.md) - How FluxCD manages deployments
 - [Base, Override, and Enterprise Values](../explanation/three-tier-values.md) - Why we use this layering model
 - [Architecture Overview](../explanation/architecture.md) - System design decisions
-
-## Source Material
-
-This tutorial is based on:
-- [`applications/base/services/cert-manager/helmrelease.yaml`](../../applications/base/services/cert-manager/helmrelease.yaml)
-- [`applications/base/services/cert-manager/kustomization.yaml`](../../applications/base/services/cert-manager/kustomization.yaml)
-- [`applications/base/services/cert-manager/source.yaml`](../../applications/base/services/cert-manager/source.yaml)
-- [GitOps Workflow](../explanation/gitops-workflow.md)
-- [Service Deployment Patterns](../how-to/service-deployment-patterns.md)

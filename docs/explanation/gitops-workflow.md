@@ -1,7 +1,7 @@
 ---
 id: gitops-workflow
 sidebar_label: GitOps Workflow
-description: Explains the FluxCD GitOps workflow used by openCenter from GitRepository through Kustomization and HelmRelease reconciliation.
+description: Explains the current FluxCD GitOps workflow in openCenter, including cluster-repo activation, source selection, and service reconciliation patterns.
 doc_type: explanation
 title: "GitOps Workflow in openCenter"
 audience: "platform engineers, architects"
@@ -10,31 +10,78 @@ tags: [gitops, fluxcd, reconciliation, workflow]
 
 # GitOps Workflow in openCenter
 
-**Purpose:** For platform engineers and architects, explains how GitOps works in openCenter, covering the FluxCD reconciliation loop, source-to-deployment flow, drift detection, and remediation strategies.
+**Purpose:** For platform engineers and architects, explains how GitOps works in the current openCenter architecture, including repository roles, Flux reconciliation flow, deployment-model differences, drift correction, and remediation behavior.
 
-## What is GitOps
+## What GitOps Means Here
 
-GitOps treats Git as the single source of truth for infrastructure and application configuration. Every change to the cluster state happens through a Git commit. Controllers running in the cluster continuously reconcile the actual state with the desired state declared in Git.
+GitOps in openCenter does not mean that `openCenter-gitops-base` directly deploys itself into a cluster.
 
-In openCenter, FluxCD implements this pattern. When you commit a change to the repository, FluxCD detects it, validates it, and applies it to the cluster. If someone makes a manual change directly to the cluster (drift), FluxCD detects and corrects it.
+The current model is:
+
+- `openCenter-gitops-base` provides reusable service installation content
+- the private enterprise repo may import that base content and add enterprise-only deltas
+- the **cluster overlay repo** creates the Flux objects that decide what is actually deployed into a specific cluster
+
+So the cluster repo is the activation layer, and Flux is the reconciliation engine running inside the cluster.
+
+## Repository Roles in the Workflow
+
+The GitOps workflow spans three repository roles:
+
+| Repository | Role in the workflow |
+| --- | --- |
+| `openCenter-gitops-base` | exports reusable base service paths and base values |
+| `opencenter-gitops-enterprise` | imports base paths and applies enterprise-specific patches, sources, and values |
+| Cluster overlay repo | defines Flux source and install objects, cluster-local overrides, secrets, and extra manifests |
+
+This matters because a Git commit only affects a cluster if that cluster’s Flux configuration references the repo and path containing the changed content.
 
 ## The FluxCD Reconciliation Loop
 
-FluxCD runs three primary controllers that work together:
+FluxCD runs several controllers that coordinate through Kubernetes resources.
 
-**Source Controller** pulls content from Git repositories and Helm chart repositories. It checks for updates every 15 minutes by default. When it detects a change, it downloads the content and makes it available to other controllers.
+**Source Controller** fetches Git and chart content and stores the fetched artifact for the rest of Flux to consume.
 
-**Kustomize Controller** applies Kubernetes manifests to the cluster. It builds Kustomize overlays, decrypts SOPS-encrypted secrets, and applies the resulting manifests. It reconciles every 5 minutes.
+**Kustomize Controller** builds and applies Kustomize paths, including plain manifests and service directories that create `HelmRelease` objects.
 
-**Helm Controller** manages Helm releases. It watches HelmRelease resources, fetches charts from HelmRepository sources, merges values from multiple sources, and installs or upgrades releases. It also reconciles every 5 minutes.
+**Helm Controller** watches `HelmRelease` resources, fetches charts from their referenced sources, merges values, and installs or upgrades releases.
 
-These controllers run independently but coordinate through Kubernetes resources. A GitRepository resource tells the source controller where to pull code. A Kustomization resource tells the kustomize controller which path to apply. A HelmRelease resource tells the helm controller which chart to install.
+These controllers are independent, but the common flow is still:
 
-## Source → Kustomization → HelmRelease Flow
+```text
+source object -> Kustomization -> rendered resources -> optional HelmRelease reconciliation
+```
 
-The typical deployment flow in openCenter follows this pattern:
+For Helm-based services, that usually becomes:
 
-1. **GitRepository** defines the source repository. For `openCenter-gitops-base` services, cluster repositories create `GitRepository` resources pointing to specific tags:
+```text
+GitRepository -> Kustomization -> HelmRelease -> chart install or upgrade
+```
+
+For manifest-only and staged services, the last step may instead be plain manifests or operator resources rather than a `HelmRelease`.
+
+## Source Selection in the Current Architecture
+
+The first GitOps decision happens in the cluster overlay repo: which source repo should Flux use for a service?
+
+There are two supported patterns:
+
+1. **Community deployment**
+   The cluster repo points Flux directly at `openCenter-gitops-base//applications/base/services/<service>`.
+2. **Enterprise deployment**
+   The cluster repo points Flux at `opencenter-gitops-enterprise//applications/enterprise/services/<service>/overlays/install`, and that overlay imports the base service path from `openCenter-gitops-base`.
+
+So the GitOps workflow begins in the cluster repo, not in this repository alone.
+
+## Source -> Kustomization -> Deployment Flow
+
+The typical flow for a Helm-based service looks like this.
+
+### 1. Cluster Repo Defines the Source
+
+The cluster overlay repo creates a Flux source object for the selected repository and ref.
+
+Example pattern:
 
 ```yaml
 apiVersion: source.toolkit.fluxcd.io/v1
@@ -49,23 +96,30 @@ spec:
     tag: <release-tag>
 ```
 
-The source controller fetches this repository every 15 minutes and checks if the tag has changed. Using tags instead of branches provides stability - services only update when you explicitly change the tag reference.
+In community deployments, this source usually references `openCenter-gitops-base`.
 
-2. **Kustomization** applies manifests from the GitRepository. It specifies a path within the repository and can depend on other Kustomizations:
+In enterprise deployments, the source instead references the private enterprise repo, whose install overlay imports the base service.
+
+The important point is that the source object belongs to the **cluster repo**, because the cluster repo owns deployment intent.
+
+### 2. Cluster Repo Defines the Install Kustomization
+
+The cluster repo then creates a Flux `Kustomization` pointing at the chosen service path.
+
+Example pattern:
 
 ```yaml
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
   name: cert-manager
+  namespace: flux-system
 spec:
-  dependsOn:
-    - name: sources
   interval: 5m
   sourceRef:
     kind: GitRepository
     name: opencenter-cert-manager
-  path: applications/base/services/cert-manager
+  path: ./applications/base/services/cert-manager
   prune: true
   healthChecks:
     - apiVersion: helm.toolkit.fluxcd.io/v2
@@ -74,107 +128,211 @@ spec:
       namespace: cert-manager
 ```
 
-The `dependsOn` field ensures that source repositories are created before services that reference them. The `healthChecks` field tells FluxCD to wait for the HelmRelease to become ready before marking this Kustomization as ready.
+For enterprise deployments, the path would usually point to the enterprise install overlay instead.
 
-3. **HelmRelease** deploys the actual service. The Kustomization creates a HelmRelease resource, which the helm controller processes:
+This `Kustomization` is what causes Flux to apply the service path into the cluster.
+
+### 3. The Applied Path Creates the Service Resources
+
+What gets created depends on the service model.
+
+For a standard Helm-based service such as `cert-manager`, the path in this repo creates:
+
+- a namespace
+- a chart source such as a `HelmRepository`
+- a `HelmRelease`
+- a base values Secret generated by Kustomize
+
+For `cert-manager`, the base service `kustomization.yaml` generates the base values Secret:
 
 ```yaml
-apiVersion: helm.toolkit.fluxcd.io/v2
-kind: HelmRelease
-metadata:
-  name: cert-manager
-  namespace: cert-manager
+secretGenerator:
+  - name: cert-manager-values-base
+    namespace: cert-manager
+    files:
+      - values.yaml=helm-values/values-v1.18.2.yaml
+```
+
+The service `HelmRelease` then consumes both base and optional override values:
+
+```yaml
 spec:
-  interval: 5m
-  timeout: 10m
-  chart:
-    spec:
-      chart: cert-manager
-      version: 1.18.2
-      sourceRef:
-        kind: HelmRepository
-        name: jetstack
-  driftDetection:
-    mode: enabled
-  install:
-    remediation:
-      retries: 3
-  upgrade:
-    remediation:
-      retries: 0
   valuesFrom:
     - kind: Secret
       name: cert-manager-values-base
+      valuesKey: values.yaml
+    - kind: Secret
+      name: cert-manager-values-override
+      valuesKey: override.yaml
+      optional: true
 ```
 
-The helm controller fetches the chart from the HelmRepository, merges values from the referenced secrets, and installs or upgrades the release.
+### 4. Helm Controller Reconciles the Release
+
+When the `HelmRelease` exists, the Helm controller fetches the chart, merges referenced values, and performs install or upgrade actions.
+
+The current base pattern commonly includes:
+
+- `interval: 5m`
+- `driftDetection.mode: enabled`
+- install remediation retries
+- conservative upgrade remediation
+- optional override values supplied by the consuming cluster repo
+
+## Not Every Service Follows the HelmRelease Path
+
+One of the key points in the current architecture is that the GitOps workflow is not limited to Helm-based services.
+
+### Manifest-Only Services
+
+Some services are applied directly as manifests through Kustomize.
+
+Examples in this repo include:
+
+- `external-snapshotter`
+- `olm`
+
+For example, `external-snapshotter` applies upstream CRDs and controller manifests directly from the upstream repository, and `olm` applies release manifests from upstream URLs.
+
+In these cases, the flow is:
+
+```text
+GitRepository -> Kustomization -> manifests applied directly
+```
+
+There is no `HelmRelease` stage.
+
+### Staged and Operator-Driven Services
+
+Some services install in ordered stages instead of a single release.
+
+Example: `keycloak`
+
+Its service tree is split into:
+
+- `00-postgres`
+- `10-operator`
+- `20-keycloak`
+- `30-oidc-rbac`
+
+The operator stage applies an `OperatorGroup` and `Subscription`, and the workload stage applies the Keycloak custom resource afterward.
+
+That means the GitOps workflow for these services is better described as:
+
+```text
+GitRepository -> Kustomization -> staged manifests and operator resources
+```
+
+rather than as one direct Helm release chain.
+
+## Reconciliation Order and Dependencies
+
+Flux does not infer all ordering automatically. The workflow depends on explicit dependency management where needed.
+
+Typical ordering concerns include:
+
+- source objects must exist before install `Kustomization` objects that depend on them
+- operator or CRD providers must be ready before dependent custom resources are applied
+- cluster-local values or secrets may need to exist before a service can reconcile successfully
+
+That is why cluster repos commonly use `dependsOn` relationships between Flux `Kustomization` objects.
+
+In practice, the expected order is usually:
+
+1. apply the source object
+2. apply the install `Kustomization`
+3. apply cluster-local overlays, overrides, secrets, and workload custom resources
 
 ## Drift Detection and Remediation
 
-Drift occurs when the actual cluster state diverges from the desired state in Git. This happens when someone runs `kubectl apply` manually, when an operator modifies resources, or when a controller makes unexpected changes.
+Drift happens when the live cluster state differs from the Git-declared state. Common causes include:
 
-FluxCD detects drift through two mechanisms:
+- direct `kubectl apply` or `kubectl edit`
+- manual changes to Helm-managed resources
+- controller behavior that mutates managed resources outside the expected configuration
 
-**Periodic reconciliation** happens every 5 minutes for HelmRelease and Kustomization resources. FluxCD compares the current state with the desired state and corrects any differences.
+Flux corrects drift in two ways.
 
-**Drift detection mode** (enabled by default in openCenter) makes FluxCD actively watch for changes to resources it manages. When a resource changes outside of FluxCD, it triggers an immediate reconciliation instead of waiting for the next interval.
+**Periodic reconciliation** re-runs on the configured interval.
 
-Remediation behavior differs between install and upgrade operations:
+**Drift detection mode** on `HelmRelease` resources can trigger faster correction when managed resources change unexpectedly.
 
-**Install failures** retry 3 times with exponential backoff. If a service fails to install due to a transient issue (network timeout, temporary API server unavailability), FluxCD automatically retries. The `remediateLastFailure: true` setting means FluxCD will attempt to fix a failed installation even if the HelmRelease spec hasn't changed.
+For example, the current `cert-manager` base release uses:
 
-**Upgrade failures** do not retry automatically (`retries: 0`). This conservative approach prevents FluxCD from repeatedly attempting a broken upgrade. When an upgrade fails, FluxCD marks the HelmRelease as failed and waits for manual intervention. You must either fix the issue in Git and push a new commit, or manually trigger reconciliation with `flux reconcile helmrelease <name>`.
+```yaml
+driftDetection:
+  mode: enabled
+```
 
-This asymmetry exists because install failures are often transient (cluster not ready, network issues), while upgrade failures usually indicate a real problem (incompatible values, breaking changes, resource conflicts) that requires human judgment.
+## Install and Upgrade Remediation
 
-## Why This Pattern Works
+The current base Helm pattern uses different remediation behavior for install and upgrade.
 
-The source → kustomization → helmrelease flow provides several benefits:
+For `cert-manager`, the release currently uses:
 
-**Separation of concerns** - Source controller handles Git operations, kustomize controller handles manifest application, helm controller handles Helm-specific logic. Each controller does one thing well.
+```yaml
+install:
+  remediation:
+    retries: 3
+    remediateLastFailure: true
+upgrade:
+  remediation:
+    retries: 0
+    remediateLastFailure: false
+```
 
-**Dependency management** - The `dependsOn` field creates an explicit dependency graph. Services that require CRDs wait for the CRD controller to be ready. Services that need secrets wait for secret creation.
+This means:
 
-**Declarative configuration** - Everything is a Kubernetes resource. You can inspect the state with `kubectl get gitrepository,kustomization,helmrelease -A`. You can debug issues by checking resource status and events.
+- install failures are retried because they are often transient
+- upgrade failures are not retried automatically because they often need human review
 
-**Auditability** - Every change goes through Git. You can see who changed what, when, and why. You can revert changes by reverting commits.
+That asymmetric policy is consistent with the broader openCenter service patterns.
 
-**Consistency** - FluxCD ensures the cluster matches Git. Manual changes are corrected. Configuration drift is eliminated.
+## Why This Workflow Works
+
+The current GitOps workflow works because it keeps responsibilities separate:
+
+- the base repo owns reusable install content
+- the enterprise repo owns private additive deltas
+- the cluster repo owns deployment intent and local configuration
+- Flux owns reconciliation inside the cluster
+
+This gives the platform:
+
+- reusable base service definitions
+- clear ownership boundaries
+- support for both community and enterprise delivery
+- support for Helm-based, manifest-only, and staged operator-driven services
+- continuous correction of configuration drift
 
 ## Trade-offs and Limitations
 
-GitOps with FluxCD is not without constraints:
+This workflow has real costs.
 
-**Reconciliation delay** - Changes take up to 20 minutes to fully propagate (15 minutes for source sync + 5 minutes for kustomization/helmrelease reconciliation). You can force immediate reconciliation with `flux reconcile`, but the default intervals mean changes are not instant.
+**Multi-repo indirection**  
+Understanding final cluster state may require checking the cluster repo, the base repo, and sometimes the enterprise repo.
 
-**Complexity** - The three-layer architecture (GitRepository → Kustomization → HelmRelease) adds indirection. Debugging requires understanding how these resources interact. New users often struggle to understand why changing a file in Git doesn't immediately update the cluster.
+**Controller layering**  
+Debugging often means following source status, `Kustomization` status, and then `HelmRelease` status.
 
-**Upgrade conservatism** - The zero-retry policy for upgrades means failed upgrades require manual intervention. This is safer than automatic retries but increases operational burden.
+**Reconciliation delay**  
+Changes are not instant. Source refresh intervals and later reconciliation intervals add delay unless operators force reconciliation manually.
 
-**Secret management overhead** - SOPS encryption adds steps to the workflow. You must encrypt secrets before committing, manage age keys, and ensure FluxCD has the decryption key. This is more secure than plaintext secrets but more complex than storing secrets directly in the cluster.
+**Dependency sensitivity**  
+Staged or operator-driven installs can fail if prerequisites such as CRDs, secrets, or source objects are not ready yet.
 
-**Dependency chains** - Long dependency chains slow deployment. If service A depends on B, which depends on C, which depends on D, the entire chain must reconcile sequentially. Each step takes at least one reconciliation interval (5 minutes), so a four-level dependency takes 20+ minutes.
+**Operational exceptions remain**  
+Some tasks still do not fit GitOps cleanly, such as emergency fixes, one-time operational procedures, or external secret rotation workflows.
 
-## When GitOps Doesn't Fit
+## When GitOps Does Not Fit Cleanly
 
-GitOps works well for declarative configuration but has limitations:
+GitOps is strong for declarative desired state, but it is not the right tool for every action.
 
-**Imperative operations** - Tasks like database migrations, one-time jobs, or manual interventions don't fit the GitOps model. You can't declare "run this migration once" in a way that's safe to reconcile repeatedly.
+Examples include:
 
-**Secrets rotation** - Rotating secrets requires updating both Git and external systems (databases, APIs). The GitOps workflow doesn't help with the external coordination.
+- one-time migrations
+- imperative recovery steps during outages
+- node operations such as drain or cordon
+- coordinated secret rotation with external systems
 
-**Emergency fixes** - In an outage, waiting 20 minutes for GitOps reconciliation may be unacceptable. You may need to apply changes directly with `kubectl` and reconcile with Git later.
-
-**Stateful operations** - Scaling a StatefulSet, draining a node, or cordoning nodes are operational tasks that don't belong in Git. GitOps manages desired state, not operational procedures.
-
-For these cases, openCenter uses a hybrid approach: GitOps for configuration, imperative tools for operations.
-
-## Source Material
-
-This explanation is based on the following repository sources:
-
-- FluxCD bootstrap and reconciliation patterns: [docs/how-to/service-deployment-patterns.md](../how-to/service-deployment-patterns.md)
-- GitRepository configuration: [docs/reference/flux-resources.md](../reference/flux-resources.md)
-- HelmRelease drift detection: [applications/base/services/cert-manager/helmrelease.yaml](../../applications/base/services/cert-manager/helmrelease.yaml)
-- GitOps architecture and promotion workflow: [docs/service-standards-and-lifecycle.md](../service-standards-and-lifecycle.md)
-- Cluster-repo consumption model: [docs/how-to/service-deployment-patterns.md](../how-to/service-deployment-patterns.md)
+For those cases, openCenter still uses imperative operational procedures alongside GitOps-managed configuration.

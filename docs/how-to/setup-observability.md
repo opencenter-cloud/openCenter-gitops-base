@@ -31,11 +31,13 @@ All platform services must provide:
 
 ## Steps
 
+The examples below assume a common consumer layout where cluster-local service manifests live under `applications/overlays/<cluster>/services/`. If your cluster repository uses a different root, apply the same resources from the equivalent service overlay path in that repo.
+
 ### 1. Configure Prometheus metrics scraping
 
-Create ServiceMonitor for automatic scraping:
+Create ServiceMonitor for automatic scraping.
 
-Create `applications/overlays/k8s-sandbox/services/my-service/servicemonitor.yaml`:
+In your cluster repo, create the manifest in the service overlay path. In the common layout used in these examples, that file is `applications/overlays/<cluster>/services/my-service/servicemonitor.yaml`:
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -76,7 +78,7 @@ endpoints:
 Apply:
 
 ```bash
-kubectl apply -f applications/overlays/k8s-sandbox/services/my-service/servicemonitor.yaml
+kubectl apply -f applications/overlays/<cluster>/services/my-service/servicemonitor.yaml
 ```
 
 Verify scraping:
@@ -235,7 +237,7 @@ Verify traces in Grafana:
 
 Export dashboard JSON and commit to repository:
 
-Create `applications/overlays/k8s-sandbox/services/my-service/dashboard.json`:
+Store the dashboard JSON in the service overlay path in your cluster repo. In the common layout used in these examples, that file is `applications/overlays/<cluster>/services/my-service/dashboard.json`:
 
 ```json
 {
@@ -296,7 +298,7 @@ data:
 
 ### 6. Create Prometheus alert rules
 
-Create `applications/overlays/k8s-sandbox/services/my-service/prometheusrule.yaml`:
+In your cluster repo, create the alert rule manifest in the service overlay path. In the common layout used in these examples, that file is `applications/overlays/<cluster>/services/my-service/prometheusrule.yaml`:
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -354,7 +356,7 @@ spec:
 Apply:
 
 ```bash
-kubectl apply -f applications/overlays/k8s-sandbox/services/my-service/prometheusrule.yaml
+kubectl apply -f applications/overlays/<cluster>/services/my-service/prometheusrule.yaml
 ```
 
 Verify:
@@ -553,13 +555,3 @@ kubectl get secret alertmanager-kube-prometheus-stack-alertmanager -n observabil
 - Set up synthetic monitoring with blackbox exporter
 - Configure long-term metrics storage with Mimir
 - Implement distributed tracing across all services
-
-## Evidence
-
-**Sources:**
-- [applications/base/services/observability/kube-prometheus-stack/README.md](../../applications/base/services/observability/kube-prometheus-stack/README.md) - Prometheus stack
-- [applications/base/services/observability/loki/README.md](../../applications/base/services/observability/loki/README.md) - Log aggregation
-- [applications/base/services/observability/tempo/README.md](../../applications/base/services/observability/tempo/README.md) - Distributed tracing
-- [applications/base/services/observability/opentelemetry-kube-stack/README.md](../../applications/base/services/observability/opentelemetry-kube-stack/README.md) - Unified telemetry
-- [docs/service-standards-and-lifecycle.md](../service-standards-and-lifecycle.md) lines 56-60 - Observability requirements
-- S6-OBSERVABILITY.md - Observability stack architecture

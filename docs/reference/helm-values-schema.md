@@ -12,9 +12,9 @@ tags: [helm, values, schema, kubernetes, configuration]
 
 **Type:** Reference  
 **Audience:** Platform engineers  
-**Last Updated:** 2026-03-24
+**Last Updated:** 2026-04-01
 
-This document describes the Helm values patterns used in `openCenter-gitops-base`.
+This document describes the Helm values mechanics used in `openCenter-gitops-base`.
 
 This base repository primarily carries:
 
@@ -25,34 +25,35 @@ Enterprise-specific values may exist in the private enterprise repository, but t
 
 ---
 
-## Values Architecture
-
-In the base repo, the common pattern is:
-
-1. **Base values** - Core service configuration (required)
-2. **Override values** - Cluster-specific customization (optional)
-
-Some deployments may add a third layer from an external repository:
-
-3. **Enterprise values** - Enterprise-only values supplied by the private enterprise repo (optional)
-
----
-
 ## Values File Naming Convention
 
 ```text
 applications/base/services/<service-name>/helm-values/
-└── values-<chart-version>.yaml
+└── values-v<chart-version>.yaml
 ```
 
-**Examples:**
-- `values-v<chart-version>.yaml`
+Examples:
+
+- `values-v1.18.2.yaml`
+- `values-v6.45.2.yaml`
 
 Override and enterprise values are generally not stored as versioned files in the base repo. They are expected to come from consuming overlays when needed.
 
 ---
 
-## Tier 1: Base Values
+## Value Sources
+
+The current model uses up to three value sources:
+
+1. base values from this repo
+2. optional override values from the consuming cluster repo
+3. optional enterprise values from the private enterprise repo
+
+This page focuses on how those sources appear in manifests. For the ownership model and rationale, use [Base, Override, and Enterprise Values](../explanation/three-tier-values.md).
+
+---
+
+## Base Values
 
 **Purpose:** Core service configuration that applies to all deployments
 
@@ -99,7 +100,7 @@ commonLabels:
 
 ---
 
-## Tier 2: Override Values
+## Override Values
 
 **Purpose:** Cluster-specific customization without modifying base
 
@@ -139,7 +140,7 @@ externalDNS:
 
 ---
 
-## Optional Tier 3: Enterprise Values
+## Optional Enterprise Values
 
 **Purpose:** Enterprise edition features and hardening supplied by the private enterprise repo
 
@@ -199,18 +200,13 @@ spec:
       chart: cert-manager
       version: v<chart-version>
   valuesFrom:
-    # Tier 1: Base (required)
     - kind: Secret
       name: cert-manager-values-base
       valuesKey: values.yaml
-    
-    # Tier 2: Override (optional)
     - kind: Secret
       name: cert-manager-values-override
       valuesKey: override.yaml
       optional: true
-    
-    # Optional enterprise tier may be added by an external enterprise overlay
 ```
 
 ---
@@ -234,18 +230,18 @@ secretGenerator:
       disableNameSuffixHash: true
 ```
 
-In this base repo, the optional `*-values-override` Secret is usually referenced by `HelmRelease.valuesFrom`, but is expected to be created by the consuming repository rather than generated here.
+In this base repo, the optional `*-values-override` Secret is usually referenced by `HelmRelease.valuesFrom`, but is expected to be created by the consuming cluster repo rather than generated here.
 
 ---
 
-## Values Merge Behavior
+## Merge Behavior
 
 Helm merges values in order, with later values overriding earlier ones:
 
-1. Chart default values
-2. Base values (Tier 1)
-3. Override values (Tier 2)
-4. Enterprise values (optional external Tier 3)
+1. chart defaults
+2. base values
+3. override values
+4. optional enterprise values
 
 **Example merge:**
 
@@ -539,15 +535,3 @@ Validate YAML syntax:
 ```bash
 yamllint helm-values/values-v<chart-version>.yaml
 ```
-
----
-
-## Evidence
-
-**Source Files:**
-- [applications/base/services/cert-manager/helmrelease.yaml](../../applications/base/services/cert-manager/helmrelease.yaml) (valuesFrom pattern)
-- [applications/base/services/cert-manager/kustomization.yaml](../../applications/base/services/cert-manager/kustomization.yaml) (secretGenerator)
-- [applications/base/services/cert-manager/helm-values/](../../applications/base/services/cert-manager/helm-values/) (values files)
-- [docs/service-standards-and-lifecycle.md](../service-standards-and-lifecycle.md) (service standards)
-- [docs/explanation/enterprise-components.md](../explanation/enterprise-components.md) (enterprise repo composition model)
-- [llms.txt](../../llms.txt) lines 95-125 (HelmRelease patterns)
