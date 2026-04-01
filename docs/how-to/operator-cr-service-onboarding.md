@@ -109,6 +109,45 @@ Use `dependsOn` so the custom-resource overlay reconciles after the operator ins
 
 The operator install is not the final application state. The actual Kafka service appears only after the cluster overlay applies those custom resources.
 
+The Kafka workload activation is separate and usually comes from the cluster repo bootstrap source. In one real cluster overlay:
+
+```yaml
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: kafka-cluster
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: strimzi-kafka-operator-base
+      namespace: flux-system
+  interval: 15m
+  retryInterval: 1m
+  timeout: 10m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  path: ./applications/overlays/<cluster>/services/kafka-cluster
+  targetNamespace: kafka-system
+  prune: true
+  wait: true
+  commonMetadata:
+    labels:
+      app.kubernetes.io/part-of: kafka-cluster
+      app.kubernetes.io/managed-by: flux
+      opencenter/managed-by: opencenter
+```
+
+This shows the expected operator custom-resource pattern:
+
+- the operator install and the Kafka workload are reconciled separately
+- the Kafka workload depends on the Strimzi operator install
+- the workload `Kustomization` in this example uses the cluster repo bootstrap source `flux-system`
+- the workload manifests come from the cluster repo rather than the base service path
+
+The `applications/overlays/<cluster>/services/kafka-cluster/` path would then contain the actual `Kafka`, `KafkaTopic`, `KafkaUser`, and supporting Secret manifests.
+
 ---
 
 ## Example: PostgreSQL With Postgres Operator

@@ -177,14 +177,114 @@ The cluster overlay can also contain additional manifests, Secrets, or service-s
 - Base values from `cert-manager-values-base`
 - Optional cluster-local overrides from `cert-manager-values-override`
 
-Typical cluster-local override structure in that layout:
+One real cluster pattern uses a service source plus a separate override reconciliation. For a community-based example, the cluster repo can define:
 
-```text
-applications/overlays/<cluster>/services/cert-manager/
-├── kustomization.yaml
-├── helm-values/override-values.yaml
-└── letsencrypt-issuer.yaml
+Example `sources/opencenter-cert-manager-community.yaml`:
+
+```yaml
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: opencenter-cert-manager-community
+  namespace: flux-system
+spec:
+  interval: 15m
+  url: https://github.com/opencenter-cloud/openCenter-gitops-base
+  ref:
+    tag: <release-tag>
 ```
+
+Example `sources/kustomization.yaml`:
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./opencenter-cert-manager-community.yaml
+```
+
+Example `fluxcd/cert-manager.yaml`:
+
+```yaml
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cert-manager-base
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: sources
+      namespace: flux-system
+  interval: 15m
+  retryInterval: 1m
+  timeout: 10m
+  sourceRef:
+    kind: GitRepository
+    name: opencenter-cert-manager-community
+    namespace: flux-system
+  path: ./applications/base/services/cert-manager
+  targetNamespace: cert-manager
+  prune: true
+  healthChecks:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: cert-manager
+      namespace: cert-manager
+  commonMetadata:
+    labels:
+      app.kubernetes.io/part-of: cert-manager
+      app.kubernetes.io/managed-by: flux
+      opencenter/managed-by: opencenter
+```
+
+This `Kustomization` activates the selected install path. In this example it points directly at the community base service.
+
+Example override `Kustomization` in the same `fluxcd/cert-manager.yaml` file:
+
+```yaml
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cert-manager-override
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: sources
+      namespace: flux-system
+  interval: 15m
+  retryInterval: 1m
+  timeout: 10m
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  path: ./applications/overlays/<cluster>/services/cert-manager
+  targetNamespace: cert-manager
+  prune: true
+  wait: true
+  commonMetadata:
+    labels:
+      app.kubernetes.io/part-of: cert-manager
+      app.kubernetes.io/managed-by: flux
+      opencenter/managed-by: opencenter
+```
+
+This second `Kustomization` reconciles the cluster-local override Secret and supporting manifests such as issuers or certificates from the cluster repo.
+
+Example `fluxcd/kustomization.yaml`:
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./cert-manager.yaml
+```
+
+The source file points Flux at the selected repo, and the `fluxcd/cert-manager.yaml` file defines both the install `Kustomization` and the cluster-local override `Kustomization`.
 
 Example `kustomization.yaml`:
 
