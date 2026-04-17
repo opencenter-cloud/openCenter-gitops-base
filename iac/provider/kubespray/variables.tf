@@ -141,6 +141,18 @@ variable "kube_pod_security_exemptions_namespaces" {
   default = []
 }
 
+variable "kube_feature_gates" {
+  type        = list(string)
+  default     = []
+  description = "List of feature gates for the Control Plane (API Server, Controller Manager, Scheduler). Format: [\"FeatureName=true\"]"
+}
+
+variable "kubelet_feature_gates" {
+  type        = list(string)
+  default     = []
+  description = "List of feature gates for Kubelets on all nodes. Format: [\"FeatureName=true\"]"
+}
+
 variable "master_nodes" {
   type = list(object({
     id           = string

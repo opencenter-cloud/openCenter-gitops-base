@@ -53,6 +53,20 @@ kube_oidc_username_prefix: '${kube_oidc_username_prefix}'
 kube_oidc_groups_claim: ${kube_oidc_groups_claim}  
 kube_oidc_groups_prefix: '${kube_oidc_groups_prefix}'
 %{ endif }
+%{ if length(kube_feature_gates) > 0 ~}
+# Enable for the Control Plane (API Server, Controller Manager, Scheduler)
+kube_feature_gates:
+%{ for gate in kube_feature_gates ~}
+  - ${gate}
+%{ endfor ~}
+%{ endif ~}
+%{ if length(kubelet_feature_gates) > 0 ~}
+# Enable for Kubelets (on all nodes)
+kubelet_feature_gates:
+%{ for gate in kubelet_feature_gates ~}
+  - ${gate}
+%{ endfor ~}
+%{ endif ~}
 ## Variables to control webhook authn/authz
 # kube_webhook_token_auth: false
 # kube_webhook_token_auth_url: https://...

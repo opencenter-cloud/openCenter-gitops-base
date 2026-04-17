@@ -51,6 +51,8 @@ resource "local_file" "k8s_cluster" {
       kube_oidc_username_prefix = var.kube_oidc_username_prefix
       kube_oidc_groups_claim    = var.kube_oidc_groups_claim
       kube_oidc_groups_prefix   = var.kube_oidc_groups_prefix
+      kube_feature_gates        = var.kube_feature_gates
+      kubelet_feature_gates     = var.kubelet_feature_gates
   })
 
   filename        = "./inventory/group_vars/k8s_cluster/k8s-cluster.yml"
