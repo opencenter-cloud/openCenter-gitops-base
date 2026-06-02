@@ -10,6 +10,8 @@ tags: [harbor, registry, images]
 
 # Harbor
 
+**Purpose:** For platform engineers, operators, security teams, documents the Harbor service in openCenter-gitops-base.
+
 `harbor` provides a private OCI registry for container images and Helm charts. In this repository it is packaged as a Helm release in the `harbor` namespace.
 
 ## What This Repo Deploys
@@ -51,7 +53,7 @@ docker push harbor.example.com/platform/myapp:1.0
 
 ## Related Docs
 
-- [Harbor Configuration Guide](../../how-to/services/harbor.md)
+- [Harbor Configuration Guide](../../operations/services/harbor.md)
 
 ## Upstream References
 

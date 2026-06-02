@@ -10,6 +10,8 @@ tags: [longhorn, storage, csi]
 
 # Longhorn
 
+**Purpose:** For platform engineers, operators, documents the Longhorn storage service in openCenter-gitops-base.
+
 `longhorn` provides distributed block storage for Kubernetes clusters. In this repository it is installed as a Helm release in `longhorn-system` together with additional storage classes.
 
 ## What This Repo Deploys
@@ -60,7 +62,7 @@ spec:
 
 ## Related Docs
 
-- [Longhorn Configuration Guide](../../how-to/services/longhorn.md)
+- [Longhorn Configuration Guide](../../operations/services/longhorn.md)
 
 ## Upstream References
 

@@ -10,6 +10,8 @@ tags: [secrets, gitops, encryption]
 
 # Sealed Secrets
 
+**Purpose:** For platform engineers, operators, documents the Sealed Secrets service in openCenter-gitops-base.
+
 `sealed-secrets` allows encrypted secret manifests to be committed to Git while only being decryptable by the controller running inside the target cluster.
 
 ## What This Repo Deploys
@@ -49,7 +51,7 @@ kubectl create secret generic app-creds \
 
 ## Related Docs
 
-- [Sealed Secrets Configuration Guide](../../how-to/services/sealed-secrets.md)
+- [Sealed Secrets Configuration Guide](../../operations/services/sealed-secrets.md)
 
 ## Upstream References
 

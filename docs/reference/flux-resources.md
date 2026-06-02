@@ -10,13 +10,15 @@ tags: [fluxcd, gitops, kubernetes, resources]
 
 # FluxCD Resources Reference
 
+**Purpose:** For platform engineers, documents the FluxCD resource patterns used by openCenter cluster repositories when consuming openCenter-gitops-base.
+
 **Type:** Reference  
 **Audience:** Platform engineers  
 **Last Updated:** 2026-04-01
 
 This document is a field-oriented reference for the main FluxCD resources used in the current openCenter delivery model.
 
-It does not try to re-explain the full GitOps workflow. For that, use [GitOps Workflow](../explanation/gitops-workflow.md).
+It does not try to re-explain the full GitOps workflow. For that, use [GitOps Workflow](../concepts/gitops-workflow.md).
 
 In the current architecture:
 

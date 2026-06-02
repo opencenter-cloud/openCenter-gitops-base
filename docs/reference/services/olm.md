@@ -10,6 +10,8 @@ tags: [olm, operators, lifecycle]
 
 # OLM
 
+**Purpose:** For platform engineers, operators, documents the Operator Lifecycle Manager service in openCenter-gitops-base.
+
 `olm` installs Operator Lifecycle Manager so cluster operators can manage other operators using `CatalogSource`, `Subscription`, and `OperatorGroup` resources.
 
 ## What This Repo Deploys

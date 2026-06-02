@@ -10,6 +10,8 @@ tags: [metallb, networking, loadbalancer]
 
 # MetalLB
 
+**Purpose:** For platform engineers, network engineers, documents the MetalLB service in openCenter-gitops-base.
+
 `metallb` provides `LoadBalancer` service support on clusters that do not have a native cloud load balancer. In this repository it is deployed as a Helm release in `metallb-system`.
 
 ## What This Repo Deploys
@@ -53,7 +55,7 @@ spec:
 
 ## Related Docs
 
-- [MetalLB Configuration Guide](../../how-to/services/metallb.md)
+- [MetalLB Configuration Guide](../../operations/services/metallb.md)
 
 ## Upstream References
 

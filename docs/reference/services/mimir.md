@@ -10,6 +10,8 @@ tags: [mimir, metrics, observability]
 
 # Mimir
 
+**Purpose:** For platform engineers, operators, SREs, documents the Grafana Mimir service in openCenter-gitops-base.
+
 `mimir` is the long-term and horizontally scalable metrics backend for the observability stack.
 
 ## What This Repo Deploys

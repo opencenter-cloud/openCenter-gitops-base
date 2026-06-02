@@ -10,6 +10,8 @@ tags: [gateway-api, ingress, envoy]
 
 # Gateway API
 
+**Purpose:** For platform engineers, operators, application teams, documents the Envoy Gateway based gateway-api service in openCenter-gitops-base.
+
 The `gateway-api` service deploys Envoy Gateway as the implementation for Kubernetes Gateway API resources.
 
 ## What This Repo Deploys

@@ -10,6 +10,8 @@ tags: [istio, service-mesh, traffic-management]
 
 # Istio
 
+**Purpose:** For platform engineers, operators, service owners, documents the Istio service mesh deployment in openCenter-gitops-base.
+
 `istio` deploys a service mesh control plane in three parts: base CRDs, `istiod`, and an ingress gateway.
 
 ## What This Repo Deploys

@@ -71,12 +71,12 @@ For the complete directory layout, see [Directory Structure](docs/reference/dire
 Use the documentation set under `docs/` together with the service README files for architecture, onboarding, configuration, and troubleshooting.
 
 - [Infrastructure as Code](iac/README.md) - Provision clusters and bootstrap Kubernetes
-- [Documentation Index](docs/index.md) - Browse tutorials, how-to guides, references, and explanations
-- [Getting Started Tutorial](docs/tutorials/getting-started.md) - Deploy your first service
-- [Service Deployment Patterns](docs/how-to/service-deployment-patterns.md) - Choose community or enterprise sourcing
-- [Helm Service Onboarding](docs/how-to/helm-service-onboarding.md) - Onboard Helm-based services
-- [OLM Service Onboarding](docs/how-to/olm-service-onboarding.md) - Onboard OLM-based services
-- [Operator CR Service Onboarding](docs/how-to/operator-cr-service-onboarding.md) - Onboard operator-managed custom resources
-- [Add a Helm Service to the Community Repo](docs/how-to/add-helm-service-to-community-repo.md) - Add a shared Helm service to `applications/base/services/`
+- [Documentation Index](docs/index.md) - Lifecycle layout: getting-started, operations, reference, concepts, release, contributing
+- [Getting Started](docs/getting-started/getting-started.md) - Deploy your first service
+- [Service Deployment Patterns](docs/operations/service-deployment-patterns.md) - Choose community or enterprise sourcing
+- [Helm Service Onboarding](docs/operations/helm-service-onboarding.md) - Onboard Helm-based services
+- [OLM Service Onboarding](docs/operations/olm-service-onboarding.md) - Onboard OLM-based services
+- [Operator CR Service Onboarding](docs/operations/operator-cr-service-onboarding.md) - Onboard operator-managed custom resources
+- [Add a Helm Service to the Community Repo](docs/operations/add-helm-service-to-community-repo.md) - Add a shared Helm service to `applications/base/services/`
 - [Service Reference Library](docs/reference/services/index.md) - Per-service reference pages
-- [Service Configuration Guides](docs/how-to/services/index.md) - Configuration and troubleshooting for selected services
+- [Service Configuration Guides](docs/operations/services/index.md) - Configuration and troubleshooting for selected services

@@ -10,6 +10,8 @@ tags: [vsphere, csi, storage]
 
 # vSphere CSI
 
+**Purpose:** For platform engineers, virtualization teams, documents the vSphere CSI service in openCenter-gitops-base.
+
 `vsphere-csi` provides Kubernetes persistent storage integration for VMware vSphere. In this repository it is installed as a Helm release in `vmware-system-csi`.
 
 ## What This Repo Deploys
@@ -52,8 +54,8 @@ allowVolumeExpansion: true
 
 ## Related Docs
 
-- [vSphere CSI Configuration Guide](../../how-to/services/vsphere-csi.md)
-- [Velero with Swift and vSphere CSI](../../how-to/services/velero-with-swift-vsphere-csi.md)
+- [vSphere CSI Configuration Guide](../../operations/services/vsphere-csi.md)
+- [Velero with Swift and vSphere CSI](../../operations/services/velero-with-swift-vsphere-csi.md)
 
 ## Upstream References
 

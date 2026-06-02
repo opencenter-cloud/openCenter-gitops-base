@@ -10,6 +10,8 @@ tags: [headlamp, dashboard, kubernetes-ui]
 
 # Headlamp
 
+**Purpose:** For platform engineers, operators, developers, documents the Headlamp service in openCenter-gitops-base.
+
 `headlamp` is a web UI for browsing and operating Kubernetes clusters. In this repository it is packaged as a Helm release and commonly paired with OIDC and RBAC.
 
 ## What This Repo Deploys

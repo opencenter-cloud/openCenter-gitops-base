@@ -10,6 +10,8 @@ tags: [prometheus, grafana, alertmanager, observability]
 
 # Kube Prometheus Stack
 
+**Purpose:** For platform engineers, operators, SREs, documents the kube-prometheus-stack service in openCenter-gitops-base.
+
 `kube-prometheus-stack` is the repository’s core metrics and alerting service. It packages Prometheus, Alertmanager, Grafana, and the Prometheus Operator into one deployment in the `observability` namespace.
 
 ## What This Repo Deploys
@@ -57,7 +59,7 @@ spec:
 
 ## Related Docs
 
-- [kube-prometheus-stack Configuration Guide](../../how-to/services/kube-prometheus-stack.md)
+- [kube-prometheus-stack Configuration Guide](../../operations/services/kube-prometheus-stack.md)
 - [Mimir Reference](mimir.md)
 
 ## Upstream References

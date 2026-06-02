@@ -10,6 +10,8 @@ tags: [kafka, strimzi, operator]
 
 # Strimzi Kafka Operator
 
+**Purpose:** For platform engineers, data platform teams, documents the Strimzi Kafka Operator service in openCenter-gitops-base.
+
 `strimzi-kafka-operator` deploys the Strimzi operator so Kafka clusters, topics, and users can be managed declaratively in Kubernetes.
 
 ## What This Repo Deploys

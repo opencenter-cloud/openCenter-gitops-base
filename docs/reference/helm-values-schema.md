@@ -10,6 +10,8 @@ tags: [helm, values, schema, kubernetes, configuration]
 
 # Helm Values Schema Reference
 
+**Purpose:** For platform engineers, documents helm values patterns and schema conventions used in openCenter-gitops-base and its consuming overlays.
+
 **Type:** Reference  
 **Audience:** Platform engineers  
 **Last Updated:** 2026-04-01
@@ -49,7 +51,7 @@ The current model uses up to three value sources:
 2. optional override values from the consuming cluster repo
 3. optional enterprise values from the private enterprise repo
 
-This page focuses on how those sources appear in manifests. For the ownership model and rationale, use [Base, Override, and Enterprise Values](../explanation/three-tier-values.md).
+This page focuses on how those sources appear in manifests. For the ownership model and rationale, use [Base, Override, and Enterprise Values](../concepts/three-tier-values.md).
 
 ---
 
