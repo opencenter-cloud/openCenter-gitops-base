@@ -16,5 +16,6 @@ Maintenance utilities for the `openCenter-gitops-base` repository.
 ```bash
 python3 hack/scripts/refresh_docs.py
 python3 hack/scripts/add_purpose_line.py
+python3 hack/scripts/convert_adoc_to_md.py
 python3 hack/scripts/audit_doc_frontmatter.py
 ```
