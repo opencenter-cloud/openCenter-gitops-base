@@ -99,5 +99,4 @@ A declarative service catalog is proposed to replace the four separate represent
 `iac/` has its own documentation set; start with the [`iac/` README](../iac/README.md) for cluster provisioning, Kubespray inventory generation, and the bootstrap flow.
 
 ## Contributing
-
 Templates for new service documentation live in [`contributing/templates/`](contributing/templates/).
