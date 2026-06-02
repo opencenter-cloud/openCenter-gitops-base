@@ -1,0 +1,5 @@
+name: opencenter-platform
+title: Platform Services
+version: '1.0'
+nav:
+  - modules/ROOT/nav.adoc
