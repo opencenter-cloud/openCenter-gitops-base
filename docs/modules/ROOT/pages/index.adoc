@@ -1,0 +1,114 @@
+= openCenter-gitops-base Documentation
+:audience: platform engineers, operators, architects
+:description: Documentation index for the openCenter-gitops-base repository.
+:doc_type: explanation
+:id: docs-index
+:sidebar_label: Documentation
+:tags: ["docs", "index", "navigation"]
+:page-type: concept
+:category: getting-started
+
+*Purpose:* For platform engineers, operators, and architects, explains how the openCenter-gitops-base documentation set is organized and where to look for each kind of task, covering getting started, day-2 operations, reference material, and concepts.
+
+== What openCenter-gitops-base Provides
+
+`openCenter-gitops-base` is a shared library of platform services deployed via FluxCD. It is consumed in two ways:
+
+* Directly by cluster repositories that apply cluster-specific overrides.
+* Indirectly by the private enterprise repository, which imports this base and applies private source, image, and values rewrites.
+
+The repository covers two parts of the cluster lifecycle:
+
+* `iac/` provisions the underlying infrastructure, renders Kubespray inventory and group variables, and initiates cluster bootstrap.
+* `applications/` defines the reusable GitOps base for in-cluster platform services, observability components, and policy resources.
+
+The authoritative service inventory and version table is maintained in the top-level repository README. For per-service detail, use the xref:reference/services/index.adoc[Service Reference Library].
+
+== Documentation Layout
+
+Documentation is organized by what the reader is trying to do, not by document genre. Each AsciiDoc page declares `:page-type:` (`task`, `reference`, or `concept`) and `:category:` matching its directory.
+
+[cols="1,1,2"]
+|===
+| Directory | Lifecycle stage | What lives here
+
+| `getting-started/`
+| Onboarding
+| First-deployment tutorial
+
+| `operations/`
+| Day-1 and day-2 tasks
+| Service onboarding, configuration, secrets, troubleshooting
+
+| `reference/`
+| Lookup
+| Directory layout, Flux resources, values schema, per-service reference
+
+| `concepts/`
+| Understanding
+| Architecture, GitOps workflow, values layering, security model
+
+| `release/`
+| Release notes
+| Per-release notes
+
+| `contributing/`
+| Authoring
+| Templates for new service docs
+|===
+
+== Start Here
+
+* xref:getting-started/getting-started.adoc[Getting Started with openCenter-gitops-base] -- Deploy your first service end-to-end with FluxCD.
+* xref:concepts/architecture.adoc[Architecture] -- How `iac/` and `applications/` fit together and what this repository is not.
+* xref:concepts/gitops-workflow.adoc[GitOps Workflow] -- How FluxCD reconciles base content into a cluster.
+
+== Operations
+
+Service onboarding:
+
+* xref:operations/service-deployment-patterns.adoc[Service Deployment Patterns]
+* xref:operations/helm-service-onboarding.adoc[Helm Service Onboarding]
+* xref:operations/olm-service-onboarding.adoc[OLM Service Onboarding]
+* xref:operations/operator-cr-service-onboarding.adoc[Operator CR Service Onboarding]
+* xref:operations/add-helm-service-to-community-repo.adoc[Add a Helm Service to the Community Repo]
+
+Cluster configuration and day-2:
+
+* xref:operations/configure-helm-values.adoc[Configure Helm Values]
+* xref:operations/manage-secrets.adoc[Manage Secrets with SOPS]
+* xref:operations/configure-gateway.adoc[Configure Gateway API]
+* xref:operations/setup-observability.adoc[Set Up Observability]
+* xref:operations/troubleshoot-flux.adoc[Troubleshoot FluxCD]
+* xref:operations/version-upgrade-guide.adoc[Service Version Upgrade Guide]
+* xref:operations/add-disks-to-vms.adoc[Add Disks to VMs]
+* xref:operations/add-windows-nodes.adoc[Add Windows Worker Nodes]
+* xref:operations/replace-control-plane-node.adoc[Replace a Control Plane Node]
+* xref:operations/resize-control-plane-nodes.adoc[Resize Control Plane Nodes]
+
+Per-service operational guides live under xref:operations/services/index.adoc[operations/services/].
+
+== Reference
+
+* xref:reference/directory-structure.adoc[Directory Structure]
+* xref:reference/flux-resources.adoc[Flux Resources]
+* xref:reference/helm-values-schema.adoc[Helm Values Schema]
+* xref:reference/sops-configuration.adoc[SOPS Configuration]
+* xref:reference/services/index.adoc[Service Reference Library]
+
+== Concepts
+
+* xref:concepts/architecture.adoc[Architecture]
+* xref:concepts/gitops-workflow.adoc[GitOps Workflow]
+* xref:concepts/three-tier-values.adoc[Base, Override, and Enterprise Values]
+* xref:concepts/enterprise-components.adoc[Enterprise Components Pattern]
+* xref:concepts/security-model.adoc[Security Model]
+* xref:concepts/opentelemetry-architecture.adoc[OpenTelemetry Architecture]
+
+== Infrastructure as Code
+
+`iac/` has its own documentation set; see the `iac/` README for cluster provisioning, Kubespray inventory generation, and the bootstrap flow.
+
+== Contributing
+
+Templates for new service documentation live in xref:contributing/templates/service-readme-template.adoc[contributing/templates/].

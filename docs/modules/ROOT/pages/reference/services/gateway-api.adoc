@@ -1,0 +1,59 @@
+= Gateway API
+:audience: platform engineers, operators, application teams
+:description: Reference for the Envoy Gateway based gateway-api service in openCenter-gitops-base.
+:doc_type: reference
+:id: service-gateway-api
+:sidebar_label: gateway-api
+:tags: ["gateway-api", "ingress", "envoy"]
+:page-type: reference
+:category: reference
+
+The `gateway-api` service deploys Envoy Gateway as the implementation for Kubernetes Gateway API resources.
+
+== What This Repo Deploys
+
+* `Namespace/envoy-gateway-system`
+* `HelmRelease/envoy-gateway-api`
+* Base values Secret: `envoy-gateway-api-values-base`
+* Optional override Secret: `envoy-gateway-api-values-override`
+
+== When to Use It
+
+* You want Gateway API rather than legacy ingress-only routing.
+* You need shared edge infrastructure with delegated route ownership.
+
+== Key Integration Points
+
+* `cert-manager` usually provides TLS automation.
+* MetalLB or a cloud load balancer provides external IPs.
+
+== Example
+
+[,yaml]
+----
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: app
+spec:
+  parentRefs:
+    - name: public
+      namespace: envoy-gateway-system
+  rules:
+    - backendRefs:
+        - name: app
+          port: 80
+----
+
+== Configuration Surfaces
+
+* Service path: `applications/base/services/gateway-api/`
+* Namespace: `envoy-gateway-system`
+* Flux object: `HelmRelease/envoy-gateway-api`
+* Source: `oci://docker.io/envoyproxy`
+
+== Upstream References
+
+* https://gateway-api.sigs.k8s.io/[Gateway API project docs]
+* https://gateway.envoyproxy.io/docs/[Envoy Gateway docs]
+* https://artifacthub.io/packages/helm/envoyproxy/gateway-helm[Envoy Gateway Helm chart]

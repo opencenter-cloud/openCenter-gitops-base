@@ -1,0 +1,41 @@
+= Service Reference Library
+:audience: platform engineers, operators, architects
+:description: Per-service reference pages for all deployable platform services in openCenter-gitops-base.
+:doc_type: reference
+:id: service-reference-library
+:sidebar_label: Service References
+:tags: ["services", "reference", "catalog", "kubernetes"]
+:page-type: reference
+:category: reference
+
+This section provides one reference page per deployable service in `applications/base/services/`. Each page summarizes what the service does, when to use it, how it is laid out in this repository, a small example, and links to upstream documentation.
+
+== Core Services
+
+* xref:reference/services/cert-manager.adoc[cert-manager]
+* xref:reference/services/external-snapshotter.adoc[external-snapshotter]
+* xref:reference/services/gateway-api.adoc[gateway-api]
+* xref:reference/services/harbor.adoc[harbor]
+* xref:reference/services/headlamp.adoc[headlamp]
+* xref:reference/services/istio.adoc[istio]
+* xref:reference/services/keycloak.adoc[keycloak]
+* xref:reference/services/kyverno.adoc[kyverno]
+* xref:reference/services/longhorn.adoc[longhorn]
+* xref:reference/services/metallb.adoc[metallb]
+* xref:reference/services/olm.adoc[olm]
+* xref:reference/services/openstack-ccm.adoc[openstack-ccm]
+* xref:reference/services/openstack-csi.adoc[openstack-csi]
+* xref:reference/services/postgres-operator.adoc[postgres-operator]
+* xref:reference/services/rbac-manager.adoc[rbac-manager]
+* xref:reference/services/sealed-secrets.adoc[sealed-secrets]
+* xref:reference/services/strimzi-kafka-operator.adoc[strimzi-kafka-operator]
+* xref:reference/services/velero.adoc[velero]
+* xref:reference/services/vsphere-csi.adoc[vsphere-csi]
+
+== Observability Services
+
+* xref:reference/services/kube-prometheus-stack.adoc[kube-prometheus-stack]
+* xref:reference/services/loki.adoc[loki]
+* xref:reference/services/mimir.adoc[mimir]
+* xref:reference/services/opentelemetry-kube-stack.adoc[opentelemetry-kube-stack]
+* xref:reference/services/tempo.adoc[tempo]
