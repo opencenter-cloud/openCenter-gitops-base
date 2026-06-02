@@ -2,10 +2,10 @@
 id: service-configuration-guides
 title: "Service Configuration Guides"
 sidebar_label: Service Guides
-description: Index of service-specific configuration guides maintained under docs/how-to/services.
+description: Index of service-specific configuration guides under operations/services.
 doc_type: how-to
 audience: "platform engineers, operators"
-tags: [services, configuration, how-to]
+tags: [services, configuration, operations]
 ---
 
 # Service Configuration Guides

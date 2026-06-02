@@ -49,7 +49,7 @@ The current model uses up to three value sources:
 2. optional override values from the consuming cluster repo
 3. optional enterprise values from the private enterprise repo
 
-This page focuses on how those sources appear in manifests. For the ownership model and rationale, use [Base, Override, and Enterprise Values](../explanation/three-tier-values.md).
+This page focuses on how those sources appear in manifests. For the ownership model and rationale, use [Base, Override, and Enterprise Values](../concepts/three-tier-values.md).
 
 ---
 

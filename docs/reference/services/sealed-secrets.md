@@ -49,7 +49,7 @@ kubectl create secret generic app-creds \
 
 ## Related Docs
 
-- [Sealed Secrets Configuration Guide](../../how-to/services/sealed-secrets.md)
+- [Sealed Secrets Configuration Guide](../../operations/services/sealed-secrets.md)
 
 ## Upstream References
 

@@ -150,6 +150,6 @@ The more accurate model is:
 
 ## Related References
 
-- [Configure Helm Values](../how-to/configure-helm-values.md)
+- [Configure Helm Values](../operations/configure-helm-values.md)
 - [Helm Values Schema](../reference/helm-values-schema.md)
 - [Enterprise Components](enterprise-components.md)

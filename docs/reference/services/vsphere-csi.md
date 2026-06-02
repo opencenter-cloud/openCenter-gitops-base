@@ -52,8 +52,8 @@ allowVolumeExpansion: true
 
 ## Related Docs
 
-- [vSphere CSI Configuration Guide](../../how-to/services/vsphere-csi.md)
-- [Velero with Swift and vSphere CSI](../../how-to/services/velero-with-swift-vsphere-csi.md)
+- [vSphere CSI Configuration Guide](../../operations/services/vsphere-csi.md)
+- [Velero with Swift and vSphere CSI](../../operations/services/velero-with-swift-vsphere-csi.md)
 
 ## Upstream References
 

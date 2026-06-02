@@ -62,7 +62,7 @@ spec:
 
 ## Related Docs
 
-- [Cert-manager Configuration Guide](../../how-to/services/cert-manager.md)
+- [Cert-manager Configuration Guide](../../operations/services/cert-manager.md)
 - [Gateway API Reference](gateway-api.md)
 
 ## Upstream References

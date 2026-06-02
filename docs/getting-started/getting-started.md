@@ -12,7 +12,7 @@ tags: [tutorial, fluxcd, cert-manager, onboarding]
 
 **Purpose:** For platform engineers new to openCenter, shows how to deploy your first platform service (cert-manager) end-to-end using FluxCD GitOps, covering repository structure, configuration, and verification.
 
-This tutorial uses the current **community repo** onboarding pattern. For the broader decision flow and other deployment models, see [Service Deployment Patterns](../how-to/service-deployment-patterns.md) and [Helm Service Onboarding](../how-to/helm-service-onboarding.md).
+This tutorial uses the current **community repo** onboarding pattern. For the broader decision flow and other deployment models, see [Service Deployment Patterns](../operations/service-deployment-patterns.md) and [Helm Service Onboarding](../operations/helm-service-onboarding.md).
 
 The cluster-repo examples below use a common consumer layout where service activation lives under `applications/overlays/<cluster>/services/`. If your cluster repository uses a different root, apply the same resource split under the equivalent paths in that repo.
 
@@ -402,19 +402,19 @@ kubectl describe helmrelease -n cert-manager cert-manager
 Now that you've deployed your first service, explore these topics:
 
 **Customize Configuration:**
-- [Configure Helm Values](../how-to/configure-helm-values.md) - Override base values for your cluster
-- [Manage Secrets with SOPS](../how-to/manage-secrets.md) - Encrypt sensitive configuration
+- [Configure Helm Values](../operations/configure-helm-values.md) - Override base values for your cluster
+- [Manage Secrets with SOPS](../operations/manage-secrets.md) - Encrypt sensitive configuration
 
 **Deploy More Services:**
-- [Add a Helm Service to the Community Repo](../how-to/add-helm-service-to-community-repo.md) - Add a new shared Helm-based service to the community repo
+- [Add a Helm Service to the Community Repo](../operations/add-helm-service-to-community-repo.md) - Add a new shared Helm-based service to the community repo
 - [Available Applications](../../README.md#available-applications) - Browse available services and versions
 
 **Advanced Topics:**
-- [Configure Gateway API](../how-to/configure-gateway.md) - Set up ingress routing
-- [Setup Observability](../how-to/setup-observability.md) - Deploy monitoring stack
-- [Troubleshoot Flux](../how-to/troubleshoot-flux.md) - Debug reconciliation issues
+- [Configure Gateway API](../operations/configure-gateway.md) - Set up ingress routing
+- [Setup Observability](../operations/setup-observability.md) - Deploy monitoring stack
+- [Troubleshoot Flux](../operations/troubleshoot-flux.md) - Debug reconciliation issues
 
 **Understand the Architecture:**
-- [GitOps Workflow](../explanation/gitops-workflow.md) - How FluxCD manages deployments
-- [Base, Override, and Enterprise Values](../explanation/three-tier-values.md) - Why we use this layering model
-- [Architecture Overview](../explanation/architecture.md) - System design decisions
+- [GitOps Workflow](../concepts/gitops-workflow.md) - How FluxCD manages deployments
+- [Base, Override, and Enterprise Values](../concepts/three-tier-values.md) - Why we use this layering model
+- [Architecture Overview](../concepts/architecture.md) - System design decisions

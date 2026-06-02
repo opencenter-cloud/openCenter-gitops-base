@@ -48,7 +48,7 @@ exporters:
 
 ## Related Docs
 
-- [Tempo Configuration Guide](../../how-to/services/tempo.md)
+- [Tempo Configuration Guide](../../operations/services/tempo.md)
 
 ## Upstream References
 

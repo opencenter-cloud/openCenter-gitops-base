@@ -51,7 +51,7 @@ spec:
 
 ## Related Docs
 
-- [Kyverno Configuration Guide](../../how-to/services/kyverno.md)
+- [Kyverno Configuration Guide](../../operations/services/kyverno.md)
 
 ## Upstream References
 

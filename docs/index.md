@@ -1,118 +1,93 @@
 ---
 id: docs-index
-sidebar_label: Documentation
-description: Primary documentation index for openCenter-gitops-base.
-doc_type: overview
 title: "openCenter-gitops-base Documentation"
+sidebar_label: Documentation
+description: Documentation index for the openCenter-gitops-base repository.
+doc_type: explanation
 audience: "platform engineers, operators, architects"
 tags: [docs, index, navigation]
 ---
 
 # openCenter-gitops-base Documentation
 
-**Purpose:** For all audiences, provides navigation to documentation for deploying and managing production-ready Kubernetes platform services using FluxCD GitOps.
+**Purpose:** For platform engineers, operators, and architects, explains how the openCenter-gitops-base documentation set is organized and where to look for each kind of task, covering getting started, day-2 operations, reference material, and concepts.
 
-## What is openCenter-gitops-base?
+## What openCenter-gitops-base Provides
 
-openCenter-gitops-base is a centralized library of production-ready, security-hardened Kubernetes platform services deployed via GitOps. It provides 22+ core services and a complete observability stack that form the foundation of openCenter Kubernetes clusters.
+`openCenter-gitops-base` is a shared library of platform services deployed via FluxCD. It is consumed in two ways:
 
-**Key characteristics:**
-- **GitOps-native:** All services deployed and managed via FluxCD
-- **Security-hardened:** Production-ready configurations with security best practices
-- **Standardized:** Consistent deployment patterns across all services
-- **Customizable:** Base values in this repo with optional overrides supplied by consuming overlays
-- **Observable:** Complete monitoring, logging, and tracing stack included
-- **Provisionable:** `iac/` provisions infrastructure, renders Kubespray inputs, and triggers Kubernetes installation through Kubespray
+- Directly by cluster repositories that apply cluster-specific overrides.
+- Indirectly by the private enterprise repository, which imports this base and applies private source, image, and values rewrites.
 
-The authoritative service and version inventory is maintained in the top-level [README](../README.md). For deeper per-service documentation, use the [Service Reference Library](reference/services/index.md).
+The repository covers two parts of the cluster lifecycle:
 
-## Infrastructure and Services
+- `iac/` provisions the underlying infrastructure, renders Kubespray inventory and group variables, and initiates cluster bootstrap.
+- `applications/` defines the reusable GitOps base for in-cluster platform services, observability components, and policy resources.
 
-This repository supports both parts of the openCenter cluster lifecycle:
+The authoritative service inventory and version table is maintained in the top-level [README](../README.md). For per-service detail, use the [Service Reference Library](reference/services/index.md).
 
-- **Infrastructure as Code** under [`iac/`](../iac/README.md) provisions the underlying infrastructure, renders Kubespray inventory and group variables, and initiates Kubernetes cluster deployment through Kubespray
-- **GitOps base services** under `applications/` provide the reusable service definitions that cluster repositories can consume directly, or that the private enterprise repo can import and extend
+## Documentation Layout
 
-## How This Repository Fits in the Ecosystem
+Documentation is organized by what the reader is trying to do, not by document genre. Each Markdown source has frontmatter declaring its `doc_type` (`tutorial`, `how-to`, `reference`, or `explanation`).
 
-openCenter-gitops-base is one component of the larger openCenter platform:
+| Directory | Lifecycle stage | What lives here |
+|-----------|-----------------|-----------------|
+| [`getting-started/`](getting-started/) | Onboarding | First-deployment tutorial |
+| [`operations/`](operations/) | Day-1 and day-2 tasks | Service onboarding, configuration, secrets, troubleshooting |
+| [`reference/`](reference/) | Lookup | Directory layout, Flux resources, values schema, per-service reference |
+| [`concepts/`](concepts/) | Understanding | Architecture, GitOps workflow, values layering, security model |
+| [`release/`](release/) | Release notes | Per-release notes |
+| [`contributing/`](contributing/) | Authoring | Templates for new service docs |
 
-- **openCenter-cli** generates cluster repositories that reference this base repository
-- **Cluster deployments** install services by pointing FluxCD at specific paths in this repository or in the private enterprise repo that imports it
-- **Base configurations** are customized via overlays in cluster repositories
-- **Infrastructure as Code** under `iac/` provisions the underlying cluster hosts and runs Kubespray
-- **Private enterprise repositories** can import this base and apply enterprise-specific source and image overrides
-- **Version pinning** via Git tags ensures reproducible deployments
+## Start Here
 
-For the complete repo architecture described here, see [Architecture Overview](explanation/architecture.md).
+- [Getting Started with openCenter-gitops-base](getting-started/getting-started.md) – Deploy your first service end-to-end with FluxCD.
+- [Architecture](concepts/architecture.md) – How `iac/` and `applications/` fit together and what this repository is not.
+- [GitOps Workflow](concepts/gitops-workflow.md) – How FluxCD reconciles base content into a cluster.
 
-## Quick Start by Role
+## Operations
 
-### New to openCenter?
+Service onboarding paths:
 
-- [Infrastructure as Code](../iac/README.md)
-- [Getting Started Tutorial](tutorials/getting-started.md)
+- [Service Deployment Patterns](operations/service-deployment-patterns.md) – Choose between community and enterprise sourcing.
+- [Helm Service Onboarding](operations/helm-service-onboarding.md) – Onboard a Helm-based service.
+- [OLM Service Onboarding](operations/olm-service-onboarding.md) – Onboard a service whose operator is installed through OLM.
+- [Operator CR Service Onboarding](operations/operator-cr-service-onboarding.md) – Onboard services where Helm installs the operator and the cluster overlay creates the workload custom resources.
+- [Add a Helm Service to the Community Repo](operations/add-helm-service-to-community-repo.md) – Add a shared service to `applications/base/services/`.
 
-Use the IaC guide to build a cluster, then follow the tutorial to deploy your first service (cert-manager) and understand the GitOps workflow.
+Cluster configuration and day-2:
 
-### Platform Engineers
+- [Configure Helm Values](operations/configure-helm-values.md) – Combine base and override values.
+- [Manage Secrets with SOPS](operations/manage-secrets.md) – Encrypt secrets for FluxCD reconciliation.
+- [Configure Gateway API](operations/configure-gateway.md) – Set up ingress routing.
+- [Set Up Observability](operations/setup-observability.md) – Deploy the monitoring stack.
+- [Troubleshoot FluxCD](operations/troubleshoot-flux.md) – Debug reconciliation failures.
+- [Service Version Upgrade Guide](operations/version-upgrade-guide.md) – Upgrade in-cluster services.
+- [Add Disks to VMs](operations/add-disks-to-vms.md), [Add Windows Worker Nodes](operations/add-windows-nodes.md), [Replace a Control Plane Node](operations/replace-control-plane-node.md), [Resize Control Plane Nodes](operations/resize-control-plane-nodes.md).
 
-- [Add a Helm Service to the Community Repo](how-to/add-helm-service-to-community-repo.md) - Add a new shared Helm-based service to the community repo
-- [Service Deployment Patterns](how-to/service-deployment-patterns.md) - Choose community versus enterprise sourcing and the right deployment model
-- [Helm Service Onboarding](how-to/helm-service-onboarding.md) - Onboard Helm-based services into a cluster overlay repo
-- [OLM Service Onboarding](how-to/olm-service-onboarding.md) - Onboard services whose operator is installed through OLM
-- [Operator CR Service Onboarding](how-to/operator-cr-service-onboarding.md) - Onboard services where Helm installs the operator and the cluster overlay creates the workload custom resources
-- [Configure Helm Values](how-to/configure-helm-values.md) - Customize service configuration
-- [Manage Secrets with SOPS](how-to/manage-secrets.md) - Encrypt sensitive data
-- [Troubleshoot Flux](how-to/troubleshoot-flux.md) - Debug reconciliation issues
-- [Configure Gateway API](how-to/configure-gateway.md) - Set up ingress routing
-- [Setup Observability](how-to/setup-observability.md) - Deploy monitoring stack
+Per-service operational guides live under [`operations/services/`](operations/services/index.md).
 
-Reference:
-- [iac/ README](../iac/README.md) - Cluster provisioning, Kubespray inventory generation, and bootstrap flow
-- [Service Reference Library](reference/services/index.md) - Per-service reference pages
-- [Directory Structure](reference/directory-structure.md) - Repository layout
-- [Flux Resources](reference/flux-resources.md) - GitRepository, HelmRelease, Kustomization specs
-- [Helm Values Schema](reference/helm-values-schema.md) - Base values, override values, and merge behavior
-- [SOPS Configuration](reference/sops-configuration.md) - Secret encryption
+## Reference
 
-### Architects and Decision Makers
+- [Directory Structure](reference/directory-structure.md) – Repository layout.
+- [Flux Resources](reference/flux-resources.md) – `GitRepository`, `HelmRelease`, `Kustomization` specs in this repo.
+- [Helm Values Schema](reference/helm-values-schema.md) – Base values, override values, and merge behavior.
+- [SOPS Configuration](reference/sops-configuration.md) – Secret encryption.
+- [Service Reference Library](reference/services/index.md) – Per-service reference pages.
 
-- [Architecture Overview](explanation/architecture.md) - System design and decisions
-- [GitOps Workflow](explanation/gitops-workflow.md) - How FluxCD manages deployments
-- [Base, Override, and Enterprise Values](explanation/three-tier-values.md) - Configuration layering rationale
-- [Enterprise Components](explanation/enterprise-components.md) - How the private enterprise repo composes on top of base
-- [Security Model](explanation/security-model.md) - Security controls and gaps
+## Concepts
 
-## Documentation Structure
+- [Architecture](concepts/architecture.md) – Repository boundaries and deployment flow.
+- [GitOps Workflow](concepts/gitops-workflow.md) – Reconciliation model.
+- [Base, Override, and Enterprise Values](concepts/three-tier-values.md) – Values layering rationale.
+- [Enterprise Components Pattern](concepts/enterprise-components.md) – How the private enterprise repository composes on top of this base.
+- [Security Model](concepts/security-model.md) – Security controls and known gaps.
+- [OpenTelemetry Architecture](concepts/opentelemetry-architecture.md) – Telemetry pipeline overview.
 
-Use these sections based on what you need:
+## Infrastructure as Code
 
-### Tutorials
-- [Getting Started](tutorials/getting-started.md) - Deploy your first service
+`iac/` has its own documentation set; start with the [`iac/` README](../iac/README.md) for cluster provisioning, Kubespray inventory generation, and the bootstrap flow.
 
-### How-To Guides
-- [Add a Helm Service to the Community Repo](how-to/add-helm-service-to-community-repo.md)
-- [Service Deployment Patterns](how-to/service-deployment-patterns.md)
-- [Helm Service Onboarding](how-to/helm-service-onboarding.md)
-- [OLM Service Onboarding](how-to/olm-service-onboarding.md)
-- [Operator CR Service Onboarding](how-to/operator-cr-service-onboarding.md)
-- [Configure Helm Values](how-to/configure-helm-values.md)
-- [Manage Secrets with SOPS](how-to/manage-secrets.md)
-- [Configure Gateway API](how-to/configure-gateway.md)
-- [Setup Observability](how-to/setup-observability.md)
-- [Troubleshoot Flux](how-to/troubleshoot-flux.md)
+## Contributing
 
-### Reference
-- [Directory Structure](reference/directory-structure.md)
-- [Service References](reference/services/index.md)
-- [Flux Resources](reference/flux-resources.md)
-- [Helm Values Schema](reference/helm-values-schema.md)
-- [SOPS Configuration](reference/sops-configuration.md)
-
-### Explanation
-- [Architecture Overview](explanation/architecture.md)
-- [GitOps Workflow](explanation/gitops-workflow.md)
-- [Base, Override, and Enterprise Values](explanation/three-tier-values.md)
-- [Enterprise Components](explanation/enterprise-components.md)
-- [Security Model](explanation/security-model.md)
+Templates for new service documentation live in [`contributing/templates/`](contributing/templates/).

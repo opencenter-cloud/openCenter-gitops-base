@@ -83,8 +83,8 @@ In practice, you will see a mix of:
 
 The architectural rationale for those shapes is explained in:
 
-- [Architecture Explanation](../explanation/architecture.md)
-- [GitOps Workflow](../explanation/gitops-workflow.md)
+- [Architecture Explanation](../concepts/architecture.md)
+- [GitOps Workflow](../concepts/gitops-workflow.md)
 
 ### Grouping Directories
 
@@ -122,18 +122,18 @@ Managed services are not part of the public base repository layout. They belong 
 
 ```text
 docs/
-├── explanation/
-├── how-to/
+├── concepts/
+├── operations/
 ├── reference/
-├── templates/
-├── tutorials/
+├── contributing/templates/
+├── getting-started/
 └── *.md
 ```
 
 Important references:
 
 - `docs/reference/services/` for per-service reference pages
-- `docs/explanation/enterprise-components.md` for the base-vs-enterprise repo relationship
+- `docs/concepts/enterprise-components.md` for the base-vs-enterprise repo relationship
 - this page for current base service layout
 
 ## IaC
@@ -191,4 +191,4 @@ Those belong in the private enterprise repository, which imports the base servic
 ## References
 
 - [Service Reference Library](services/index.md)
-- [Enterprise Components Pattern](../explanation/enterprise-components.md)
+- [Enterprise Components Pattern](../concepts/enterprise-components.md)

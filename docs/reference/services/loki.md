@@ -47,7 +47,7 @@ tags: [loki, logs, observability]
 
 ## Related Docs
 
-- [Loki Configuration Guide](../../how-to/services/loki.md)
+- [Loki Configuration Guide](../../operations/services/loki.md)
 
 ## Upstream References
 

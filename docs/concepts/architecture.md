@@ -434,5 +434,5 @@ That gives openCenter a model that is:
 - [GitOps Workflow](gitops-workflow.md)
 - [Base, Override, and Enterprise Values](three-tier-values.md)
 - [Enterprise Components Pattern](enterprise-components.md)
-- [Service Deployment Patterns](../how-to/service-deployment-patterns.md)
+- [Service Deployment Patterns](../operations/service-deployment-patterns.md)
 - [Directory Structure Reference](../reference/directory-structure.md)

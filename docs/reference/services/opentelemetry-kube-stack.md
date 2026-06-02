@@ -51,8 +51,8 @@ spec:
 
 ## Related Docs
 
-- [OpenTelemetry Kube Stack Configuration Guide](../../how-to/services/opentelemetry-kube-stack.md)
-- [OpenTelemetry Notes](../../opentelemetry.md)
+- [OpenTelemetry Kube Stack Configuration Guide](../../operations/services/opentelemetry-kube-stack.md)
+- [OpenTelemetry Notes](../../concepts/opentelemetry-architecture.md)
 
 ## Upstream References
 

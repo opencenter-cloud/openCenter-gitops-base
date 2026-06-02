@@ -219,5 +219,5 @@ The enterprise repo also requires cluster-specific access credentials when priva
 - [Helm Service Onboarding](helm-service-onboarding.md)
 - [OLM Service Onboarding](olm-service-onboarding.md)
 - [Operator CR Service Onboarding](operator-cr-service-onboarding.md)
-- [Enterprise Components Pattern](../explanation/enterprise-components.md)
+- [Enterprise Components Pattern](../concepts/enterprise-components.md)
 - [Directory Structure Reference](../reference/directory-structure.md)

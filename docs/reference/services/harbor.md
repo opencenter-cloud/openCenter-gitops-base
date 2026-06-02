@@ -51,7 +51,7 @@ docker push harbor.example.com/platform/myapp:1.0
 
 ## Related Docs
 
-- [Harbor Configuration Guide](../../how-to/services/harbor.md)
+- [Harbor Configuration Guide](../../operations/services/harbor.md)
 
 ## Upstream References
 

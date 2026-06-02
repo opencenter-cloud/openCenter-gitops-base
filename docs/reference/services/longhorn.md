@@ -60,7 +60,7 @@ spec:
 
 ## Related Docs
 
-- [Longhorn Configuration Guide](../../how-to/services/longhorn.md)
+- [Longhorn Configuration Guide](../../operations/services/longhorn.md)
 
 ## Upstream References
 

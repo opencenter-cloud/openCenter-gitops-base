@@ -53,7 +53,7 @@ spec:
 
 ## Related Docs
 
-- [MetalLB Configuration Guide](../../how-to/services/metallb.md)
+- [MetalLB Configuration Guide](../../operations/services/metallb.md)
 
 ## Upstream References
 

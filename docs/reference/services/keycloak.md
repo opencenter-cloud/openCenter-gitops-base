@@ -49,7 +49,7 @@ spec:
 
 ## Related Docs
 
-- [Keycloak Configuration Guide](../../how-to/services/keycloak.md)
+- [Keycloak Configuration Guide](../../operations/services/keycloak.md)
 
 ## Upstream References
 
