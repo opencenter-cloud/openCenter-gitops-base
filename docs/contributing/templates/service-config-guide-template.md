@@ -10,6 +10,8 @@ tags: [template, configuration, services, documentation]
 
 # [Service Name] Configuration Guide
 
+**Purpose:** For platform engineers, documents template for creating standardized configuration guides for platform services.
+
 ## Overview
 [Brief description of what the service provides and its role in the Kubernetes cluster]
 

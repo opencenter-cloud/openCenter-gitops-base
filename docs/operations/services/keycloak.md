@@ -10,6 +10,8 @@ tags: [keycloak, authentication, iam, kubernetes]
 
 # Keycloak Configuration Guide
 
+**Purpose:** For platform engineers, operators, shows how to configure the staged Keycloak deployment in cluster repositories that consume the openCenter base.
+
 Use this guide when a cluster repo needs to adapt the staged Keycloak deployment in `applications/base/services/keycloak/`.
 
 ## Service Layout in This Repo

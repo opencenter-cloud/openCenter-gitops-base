@@ -10,6 +10,8 @@ tags: [services, configuration, operations]
 
 # Service Configuration Guides
 
+**Purpose:** For platform engineers, operators, shows how to index of service-specific configuration guides under operations/services.
+
 Use these guides when you need service-specific configuration patterns, override examples, or operational notes beyond the service README.
 
 This section is intentionally selective. It contains configuration guides for services that currently need extra operational or override guidance.

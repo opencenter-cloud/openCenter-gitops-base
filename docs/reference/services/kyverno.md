@@ -10,6 +10,8 @@ tags: [kyverno, policy, security]
 
 # Kyverno
 
+**Purpose:** For platform engineers, operators, security teams, documents the Kyverno policy engine service in openCenter-gitops-base.
+
 `kyverno` is the Kubernetes-native policy engine used in this repository for validation, mutation, generation, and policy reporting. The service is split into a controller deployment and a default ruleset bundle.
 
 ## What This Repo Deploys

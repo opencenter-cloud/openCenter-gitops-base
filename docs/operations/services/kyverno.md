@@ -10,6 +10,8 @@ tags: [kyverno, policy, security, kubernetes]
 
 # Kyverno Configuration Guide
 
+**Purpose:** For platform engineers, operators, shows how to configure Kyverno policy-engine and ruleset layers in cluster repositories that consume the openCenter base.
+
 Use this guide when a cluster repo needs to tune the Kyverno controller or layer additional policies on top of the base service.
 
 ## Service Layout in This Repo

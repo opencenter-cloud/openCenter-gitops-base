@@ -10,6 +10,8 @@ tags: [snapshot, csi, storage]
 
 # External Snapshotter
 
+**Purpose:** For platform engineers, operators, documents the external-snapshotter service in openCenter-gitops-base.
+
 `external-snapshotter` installs the CSI snapshot controller and CRDs behind the Kubernetes `VolumeSnapshot` APIs.
 
 ## What This Repo Deploys

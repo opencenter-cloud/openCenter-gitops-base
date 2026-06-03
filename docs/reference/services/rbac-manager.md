@@ -10,6 +10,8 @@ tags: [rbac, access-control, operator]
 
 # RBAC Manager
 
+**Purpose:** For platform engineers, security teams, documents the RBAC Manager service in openCenter-gitops-base.
+
 `rbac-manager` turns Kubernetes RBAC into a higher-level declarative workflow by reconciling `RBACDefinition` resources into bindings.
 
 ## What This Repo Deploys

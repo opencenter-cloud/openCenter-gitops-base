@@ -10,6 +10,8 @@ tags: [velero, backup, disaster-recovery]
 
 # Velero
 
+**Purpose:** For platform engineers, operators, disaster-recovery teams, documents the Velero service in openCenter-gitops-base.
+
 `velero` provides backup, restore, and migration capabilities for Kubernetes resources and persistent volume data. It is the repository’s primary disaster recovery service.
 
 ## What This Repo Deploys

@@ -10,6 +10,8 @@ tags: [prometheus, grafana, monitoring, observability, kubernetes]
 
 # Kube-Prometheus-Stack Configuration Guide
 
+**Purpose:** For platform engineers, operators, shows how to configure kube-prometheus-stack in cluster repositories that consume the openCenter base.
+
 Use this guide when a cluster repo needs to tune the monitoring stack deployed from `applications/base/services/observability/kube-prometheus-stack/`.
 
 ## What the Base Deploys

@@ -10,6 +10,8 @@ tags: [cert-manager, tls, certificates, kubernetes]
 
 # Cert-manager Configuration Guide
 
+**Purpose:** For platform engineers, operators, shows how to configure cert-manager in cluster repositories that consume the openCenter base.
+
 Use this guide when a cluster repo needs to customize `cert-manager` beyond the base deployment shipped in `applications/base/services/cert-manager/`.
 
 ## What the Base Deploys

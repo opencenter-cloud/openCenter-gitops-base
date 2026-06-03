@@ -10,6 +10,8 @@ tags: [opentelemetry, telemetry, observability]
 
 # OpenTelemetry Kube Stack
 
+**Purpose:** For platform engineers, operators, SREs, documents the OpenTelemetry Kube Stack service in openCenter-gitops-base.
+
 `opentelemetry-kube-stack` provides collectors, operator support, and telemetry pipelines for traces and logs. It is the primary ingestion and processing layer for the observability stack in this repository.
 
 ## What This Repo Deploys

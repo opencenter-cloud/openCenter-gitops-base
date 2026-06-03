@@ -7,6 +7,9 @@ doc_type: how-to
 audience: "platform engineers, operators"
 tags: [kubernetes, control-plane, etcd, kubespray, cluster-recovery]
 ---
+# Replace a Failed Control Plane Node
+
+**Purpose:** For platform engineers, operators, shows how to replace a failed or rebuilt control plane node in a Kubespray-managed Kubernetes cluster.
 
 **Article ID:** KB00003 
 **Last Modified:** 2025-09-29  
@@ -114,6 +117,12 @@ SSH into one of the healthy control plane nodes and list the current etcd member
 ```bash
 # SSH to a healthy control plane node
 ssh ubuntu@<healthy-control-plane-node>
+
+**Purpose:** For platform engineers, operators, shows how to replace a failed or rebuilt control plane node in a Kubespray-managed Kubernetes cluster.
+
+**Purpose:** For platform engineers, operators, shows how to replace a failed or rebuilt control plane node in a Kubespray-managed Kubernetes cluster.
+
+**Purpose:** For platform engineers, operators, shows how to replace a failed or rebuilt control plane node in a Kubespray-managed Kubernetes cluster.
 
 # List etcd members
 sudo ETCDCTL_API=3 etcdctl \

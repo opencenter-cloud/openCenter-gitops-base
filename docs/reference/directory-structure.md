@@ -10,6 +10,8 @@ tags: [directory, structure, repository, reference]
 
 # Directory Structure Reference
 
+**Purpose:** For platform engineers, operators, architects, documents directory structure of the openCenter-gitops-base repository and what each area is responsible for.
+
 **Type:** Reference  
 **Audience:** All users  
 **Last Updated:** 2026-04-01

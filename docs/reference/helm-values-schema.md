@@ -10,6 +10,8 @@ tags: [helm, values, schema, kubernetes, configuration]
 
 # Helm Values Schema Reference
 
+**Purpose:** For platform engineers, documents helm values patterns and schema conventions used in openCenter-gitops-base and its consuming overlays.
+
 **Type:** Reference  
 **Audience:** Platform engineers  
 **Last Updated:** 2026-04-01

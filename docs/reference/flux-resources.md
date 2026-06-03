@@ -10,6 +10,8 @@ tags: [fluxcd, gitops, kubernetes, resources]
 
 # FluxCD Resources Reference
 
+**Purpose:** For platform engineers, documents the FluxCD resource patterns used by openCenter cluster repositories when consuming openCenter-gitops-base.
+
 **Type:** Reference  
 **Audience:** Platform engineers  
 **Last Updated:** 2026-04-01

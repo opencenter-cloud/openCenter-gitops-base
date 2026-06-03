@@ -10,6 +10,8 @@ tags: [template, readme, services, documentation]
 
 # [Service Name] – Base Configuration
 
+**Purpose:** For platform engineers, documents template for creating standardized README files for base service configurations.
+
 This directory contains the **base manifests** for deploying [Service Name](https://[service-url]), [brief description of what the service does].  
 It can be consumed directly by cluster repositories or imported by the private enterprise repository for enterprise-specific overrides.
 

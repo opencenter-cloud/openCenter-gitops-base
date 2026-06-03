@@ -10,6 +10,8 @@ tags: [velero, backup, swift, vsphere, csi, openstack]
 
 # Velero Backup with Swift and vSphere CSI
 
+**Purpose:** For platform engineers, operators, shows how to practical configuration notes for running Velero with OpenStack Swift object storage and vSphere CSI snapshots.
+
 This guide documents one concrete platform pattern: using Velero with the OpenStack plugin for Swift object storage and CSI snapshots from the vSphere CSI driver.
 
 ## When This Pattern Fits

@@ -10,6 +10,8 @@ tags: [loki, logs, observability, kubernetes]
 
 # Loki Configuration Guide
 
+**Purpose:** For platform engineers, operators, shows how to configure Loki in cluster repositories that consume the openCenter base.
+
 Use this guide when a cluster repo needs to tune Loki or wire log collection into the observability stack.
 
 ## What the Base Deploys

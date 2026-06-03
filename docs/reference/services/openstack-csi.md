@@ -10,6 +10,8 @@ tags: [openstack, csi, cinder, storage]
 
 # OpenStack CSI
 
+**Purpose:** For platform engineers, operators, documents the OpenStack Cinder CSI service in openCenter-gitops-base.
+
 `openstack-csi` deploys the OpenStack Cinder CSI driver so Kubernetes workloads can provision and manage block storage through Cinder.
 
 ## What This Repo Deploys

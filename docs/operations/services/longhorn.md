@@ -10,6 +10,8 @@ tags: [longhorn, storage, kubernetes]
 
 # Longhorn Configuration Guide
 
+**Purpose:** For platform engineers, operators, shows how to configure Longhorn in cluster repositories that consume the openCenter base.
+
 Use this guide when a cluster repo needs to adapt the Longhorn deployment or the storage classes shipped by the base repo.
 
 ## What the Base Deploys

@@ -10,6 +10,8 @@ tags: [cert-manager, tls, certificates]
 
 # cert-manager
 
+**Purpose:** For platform engineers, operators, documents the cert-manager service in openCenter-gitops-base.
+
 `cert-manager` automates certificate issuance and renewal for Kubernetes workloads. In this repository it is deployed as a Flux-managed Helm release in the `cert-manager` namespace.
 
 ## What This Repo Deploys

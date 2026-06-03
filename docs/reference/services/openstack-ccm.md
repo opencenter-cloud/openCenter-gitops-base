@@ -10,6 +10,8 @@ tags: [openstack, ccm, cloud-provider]
 
 # OpenStack CCM
 
+**Purpose:** For platform engineers, operators, documents the OpenStack Cloud Controller Manager service in openCenter-gitops-base.
+
 `openstack-ccm` integrates Kubernetes with OpenStack APIs for node metadata, routes, and load balancer services.
 
 ## What This Repo Deploys

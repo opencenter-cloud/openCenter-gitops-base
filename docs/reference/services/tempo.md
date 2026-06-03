@@ -10,6 +10,8 @@ tags: [tempo, tracing, observability]
 
 # Tempo
 
+**Purpose:** For platform engineers, operators, SREs, documents the Tempo service in openCenter-gitops-base.
+
 `tempo` is the distributed tracing backend in the observability stack. In this repository it is deployed as a Helm release in `observability` and is typically fed by OpenTelemetry collectors over OTLP.
 
 ## What This Repo Deploys

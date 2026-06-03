@@ -10,6 +10,8 @@ tags: [tempo, tracing, observability, kubernetes]
 
 # Tempo Configuration Guide
 
+**Purpose:** For platform engineers, operators, shows how to configure Tempo in cluster repositories that consume the openCenter base.
+
 Use this guide when a cluster repo needs to tune the Tempo deployment or provide object storage configuration.
 
 ## What the Base Deploys

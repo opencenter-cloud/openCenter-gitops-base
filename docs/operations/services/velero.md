@@ -10,6 +10,8 @@ tags: [velero, backup, disaster-recovery, kubernetes]
 
 # Velero Configuration Guide
 
+**Purpose:** For platform engineers, operators, shows how to configure Velero in cluster repositories that consume the openCenter base.
+
 Use this guide when a cluster repo needs to add the storage backend, snapshot behavior, or restore strategy for the Velero deployment shipped by the base repo.
 
 ## What the Base Deploys

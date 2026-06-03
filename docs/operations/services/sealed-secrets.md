@@ -10,6 +10,8 @@ tags: [sealed-secrets, encryption, secrets, kubernetes]
 
 # Sealed Secrets Configuration Guide
 
+**Purpose:** For platform engineers, operators, shows how to use and configure Sealed Secrets in cluster repositories that consume the openCenter base.
+
 Use this guide when a cluster repo needs to manage encrypted secrets through the Sealed Secrets controller deployed from the base repo.
 
 ## What the Base Deploys

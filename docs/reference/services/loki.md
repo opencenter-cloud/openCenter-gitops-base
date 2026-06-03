@@ -10,6 +10,8 @@ tags: [loki, logs, observability]
 
 # Loki
 
+**Purpose:** For platform engineers, operators, SREs, documents the Loki service in openCenter-gitops-base.
+
 `loki` is the centralized log store in the observability stack. In this repository it is deployed as a Helm release in the `observability` namespace.
 
 ## What This Repo Deploys

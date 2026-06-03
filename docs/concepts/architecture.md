@@ -10,6 +10,8 @@ tags: [architecture, gitops, fluxcd, kubespray, design]
 
 # Architecture Explanation
 
+**Purpose:** For architects, platform engineers, explains architectural design, repository boundaries, and deployment flow behind the openCenter-gitops-base platform.
+
 **Type:** Explanation  
 **Audience:** Architects, platform engineers  
 **Last Updated:** 2026-03-31

@@ -10,6 +10,8 @@ tags: [sops, encryption, secrets, age, kubernetes]
 
 # SOPS Configuration Reference
 
+**Purpose:** For platform engineers, documents SOPS secrets encryption configuration and usage in openCenter-gitops-base.
+
 **Type:** Reference  
 **Audience:** Platform engineers  
 **Last Updated:** 2026-02-14

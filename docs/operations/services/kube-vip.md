@@ -10,6 +10,8 @@ tags: [kube-vip, high-availability, networking, kubernetes]
 
 # Kube-VIP Configuration Guide
 
+**Purpose:** For platform engineers, operators, shows how to configure Kube-VIP for highly available Kubernetes API endpoints in openCenter cluster builds.
+
 ## Overview
 
 Kube-VIP provides a highly available Virtual IP (VIP) for the Kubernetes control plane API server. It uses ARP (Address Resolution Protocol) to advertise the VIP across control plane nodes, ensuring that the Kubernetes API remains accessible even if individual control plane nodes fail.

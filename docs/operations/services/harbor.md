@@ -10,6 +10,8 @@ tags: [harbor, registry, containers, kubernetes]
 
 # Harbor Configuration Guide
 
+**Purpose:** For platform engineers, operators, shows how to configure Harbor in cluster repositories that consume the openCenter base.
+
 Use this guide when a cluster repo needs to customize the Harbor deployment shipped in `applications/base/services/harbor/`.
 
 ## What the Base Deploys

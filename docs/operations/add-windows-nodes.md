@@ -10,6 +10,8 @@ tags: [windows, kubernetes, worker-nodes, openstack, ansible]
 
 # Adding Windows Worker nodes to an openCenter Kubernetes cluster
 
+**Purpose:** For platform engineers, operators, shows how to configure and add Windows Server worker nodes to an existing openCenter Kubernetes cluster.
+
 ## Requirements
 * A working openCenter cluster with at least 1 linux worker node.
 * Windows servers added to the oc_windows_workers group in the ansible inventory. Must be accessible via `SSH`. Yes SSH.

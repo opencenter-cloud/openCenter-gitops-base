@@ -10,6 +10,8 @@ tags: [metallb, networking, loadbalancer, kubernetes]
 
 # MetalLB Configuration Guide
 
+**Purpose:** For platform engineers, operators, shows how to configure MetalLB in cluster repositories that consume the openCenter base.
+
 Use this guide when a cluster repo needs to add IP pools, advertisements, or controller tuning on top of the base MetalLB deployment.
 
 ## What the Base Deploys

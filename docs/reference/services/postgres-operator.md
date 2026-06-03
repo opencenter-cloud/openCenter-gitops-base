@@ -10,6 +10,8 @@ tags: [postgres, operator, database]
 
 # Postgres Operator
 
+**Purpose:** For platform engineers, operators, documents the Zalando Postgres Operator service in openCenter-gitops-base.
+
 `postgres-operator` deploys the Zalando Postgres Operator for declarative PostgreSQL cluster management.
 
 ## What This Repo Deploys

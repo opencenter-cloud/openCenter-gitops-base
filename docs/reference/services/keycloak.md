@@ -10,6 +10,8 @@ tags: [keycloak, oidc, iam]
 
 # Keycloak
 
+**Purpose:** For platform engineers, operators, security teams, documents the Keycloak service in openCenter-gitops-base.
+
 `keycloak` provides identity and access management for the platform. In this repository it is modeled as staged manifests for the PostgreSQL backing store, operator installation, Keycloak custom resource, and optional default OIDC RBAC.
 
 ## What This Repo Deploys

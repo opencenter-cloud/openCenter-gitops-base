@@ -10,6 +10,8 @@ tags: [opentelemetry, observability, telemetry, kubernetes]
 
 # OpenTelemetry Kube Stack Configuration Guide
 
+**Purpose:** For platform engineers, operators, shows how to configure the OpenTelemetry kube stack in cluster repositories that consume the openCenter base.
+
 Use this guide when a cluster repo needs to tune collector behavior or backend routing for the OpenTelemetry stack.
 
 ## What the Base Deploys

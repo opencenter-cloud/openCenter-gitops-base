@@ -10,6 +10,8 @@ tags: [vsphere, csi, storage, snapshots, kubernetes]
 
 # vSphere CSI Driver Configuration
 
+**Purpose:** For platform engineers, operators, shows how to configure the vSphere CSI driver in cluster repositories that consume the openCenter base.
+
 Use this guide when a cluster repo needs to provide vCenter credentials, storage policies, snapshot support, or topology settings for the base vSphere CSI deployment.
 
 ## What the Base Deploys
