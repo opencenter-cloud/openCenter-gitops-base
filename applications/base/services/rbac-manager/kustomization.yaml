@@ -9,6 +9,6 @@ secretGenerator:
       namespace: rbac-system
       type: Opaque
       files:
-        - values.yaml=helm-values/values-1.21.1.yaml
+        - values.yaml=helm-values/values-1.21.5.yaml
       options:
         disableNameSuffixHash: true
