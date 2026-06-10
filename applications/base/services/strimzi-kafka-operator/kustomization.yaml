@@ -9,6 +9,6 @@ secretGenerator:
       namespace: kafka-system
       type: Opaque
       files:
-        - values.yaml=helm-values/values-0.50.0.yaml
+        - values.yaml=helm-values/values-0.51.0.yaml
       options:
         disableNameSuffixHash: true
