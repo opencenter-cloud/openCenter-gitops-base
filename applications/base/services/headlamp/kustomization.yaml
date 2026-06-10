@@ -9,6 +9,6 @@ secretGenerator:
       namespace: headlamp
       type: Opaque
       files:
-        - values.yaml=helm-values/values-0.35.0.yaml
+        - values.yaml=helm-values/values-0.42.0.yaml
       options:
         disableNameSuffixHash: true
