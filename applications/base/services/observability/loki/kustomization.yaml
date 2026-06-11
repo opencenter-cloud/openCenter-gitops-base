@@ -8,6 +8,6 @@ secretGenerator:
     namespace: observability
     type: Opaque
     files:
-      - values.yaml=helm-values/values-v6.45.2.yaml
+      - values.yaml=helm-values/values-v6.55.0.yaml
     options:
       disableNameSuffixHash: true
