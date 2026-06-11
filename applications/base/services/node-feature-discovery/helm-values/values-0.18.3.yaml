@@ -1,0 +1,13 @@
+# Node Feature Discovery – Base Values (0.18.3)
+# Reference: https://kubernetes-sigs.github.io/node-feature-discovery/
+
+# NFD Master configuration
+master:
+  replicaCount: 1
+
+# NFD Worker configuration
+worker: {}
+
+# NFD Garbage Collector
+gc:
+  enable: true

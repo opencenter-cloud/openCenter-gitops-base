@@ -1,0 +1,22 @@
+# Kueue – Base Values (0.18.0)
+# Reference: https://kueue.sigs.k8s.io/docs/getting-started/installation/
+
+# Kueue controller manager configuration
+controllerManager:
+  manager:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+
+# Internal cert management (disable if using external cert-manager)
+internalCertManagement:
+  enable: true
+
+# Manage batch/jobs without explicit queue name annotation
+manageJobsWithoutQueueName: true
+
+# Integrations with supported job frameworks
+integrations:
+  frameworks:
+    - "batch/job"

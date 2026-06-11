@@ -1,0 +1,36 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kueue
+  namespace: kueue-system
+spec:
+  releaseName: kueue
+  interval: 5m
+  timeout: 10m
+  driftDetection:
+    mode: enabled
+  install:
+    remediation:
+      retries: 3
+      remediateLastFailure: true
+  upgrade:
+    remediation:
+      retries: 0
+      remediateLastFailure: false
+  targetNamespace: kueue-system
+  chart:
+    spec:
+      chart: kueue
+      version: 0.18.0
+      sourceRef:
+        kind: HelmRepository
+        name: kueue
+        namespace: kueue-system
+  valuesFrom:
+    - kind: Secret
+      name: kueue-values-base
+      valuesKey: values.yaml
+    - kind: Secret
+      name: kueue-values-override
+      valuesKey: override.yaml
+      optional: true

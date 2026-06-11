@@ -1,0 +1,36 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kuberay-operator
+  namespace: kuberay-system
+spec:
+  releaseName: kuberay-operator
+  interval: 5m
+  timeout: 10m
+  driftDetection:
+    mode: enabled
+  install:
+    remediation:
+      retries: 3
+      remediateLastFailure: true
+  upgrade:
+    remediation:
+      retries: 0
+      remediateLastFailure: false
+  targetNamespace: kuberay-system
+  chart:
+    spec:
+      chart: kuberay-operator
+      version: 1.6.1
+      sourceRef:
+        kind: HelmRepository
+        name: kuberay
+        namespace: kuberay-system
+  valuesFrom:
+    - kind: Secret
+      name: kuberay-operator-values-base
+      valuesKey: values.yaml
+    - kind: Secret
+      name: kuberay-operator-values-override
+      valuesKey: override.yaml
+      optional: true

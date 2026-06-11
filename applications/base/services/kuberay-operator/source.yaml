@@ -1,0 +1,7 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: kuberay
+spec:
+  url: https://ray-project.github.io/kuberay-helm/
+  interval: 1h
