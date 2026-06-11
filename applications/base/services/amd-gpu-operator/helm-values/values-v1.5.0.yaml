@@ -1,0 +1,20 @@
+# AMD GPU Operator – Base Values (v1.5.0)
+# Reference: https://instinct.docs.amd.com/projects/gpu-operator
+
+# Node Feature Discovery sub-chart; set to false if NFD already deployed.
+node-feature-discovery:
+  enabled: true
+
+# Kernel Module Management; set enabled=false if KMM already deployed.
+kmm:
+  enabled: true
+  watch: true
+
+# Automatic node remediation for GPU driver issues.
+remediation:
+  enabled: true
+
+# Default DeviceConfig custom resource.
+crds:
+  defaultCR:
+    install: true

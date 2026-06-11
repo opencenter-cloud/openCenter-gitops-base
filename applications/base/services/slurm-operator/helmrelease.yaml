@@ -1,0 +1,38 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: slurm-operator
+  namespace: slinky
+spec:
+  releaseName: slurm-operator
+  interval: 5m
+  timeout: 10m
+  dependsOn:
+    - name: slurm-operator-crds
+  driftDetection:
+    mode: enabled
+  install:
+    remediation:
+      retries: 3
+      remediateLastFailure: true
+  upgrade:
+    remediation:
+      retries: 0
+      remediateLastFailure: false
+  targetNamespace: slinky
+  chart:
+    spec:
+      chart: slurm-operator
+      version: v1.1.1
+      sourceRef:
+        kind: HelmRepository
+        name: slinkyproject
+        namespace: slinky
+  valuesFrom:
+    - kind: Secret
+      name: slurm-operator-values-base
+      valuesKey: values.yaml
+    - kind: Secret
+      name: slurm-operator-values-override
+      valuesKey: override.yaml
+      optional: true
