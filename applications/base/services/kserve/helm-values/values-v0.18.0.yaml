@@ -1,0 +1,6 @@
+# KServe – Base Values (v0.18.0)
+# Reference: https://kserve.github.io/website/docs/install/kserve-install
+
+kserve:
+  controller:
+    deploymentMode: Standard

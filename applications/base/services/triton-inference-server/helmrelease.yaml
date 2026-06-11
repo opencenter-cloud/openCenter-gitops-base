@@ -1,0 +1,36 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: triton-inference-server
+  namespace: triton-inference-server
+spec:
+  releaseName: triton-inference-server
+  interval: 5m
+  timeout: 10m
+  driftDetection:
+    mode: enabled
+  install:
+    remediation:
+      retries: 3
+      remediateLastFailure: true
+  upgrade:
+    remediation:
+      retries: 0
+      remediateLastFailure: false
+  targetNamespace: triton-inference-server
+  chart:
+    spec:
+      chart: deploy/k8s-onprem
+      sourceRef:
+        kind: GitRepository
+        name: triton-inference-server
+        namespace: triton-inference-server
+  valuesFrom:
+    - kind: Secret
+      name: triton-inference-server-values-base
+      valuesKey: values.yaml
+    - kind: Secret
+      name: triton-inference-server-values-override
+      valuesKey: override.yaml
+      optional: true

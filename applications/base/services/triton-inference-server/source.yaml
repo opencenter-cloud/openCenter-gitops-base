@@ -1,0 +1,10 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: triton-inference-server
+spec:
+  url: https://github.com/triton-inference-server/server
+  interval: 1h
+  ref:
+    tag: "v2.69.0"

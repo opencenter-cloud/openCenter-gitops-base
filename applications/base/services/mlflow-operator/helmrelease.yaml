@@ -1,0 +1,35 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: mlflow-operator
+  namespace: opendatahub
+spec:
+  releaseName: mlflow-operator
+  interval: 5m
+  timeout: 10m
+  driftDetection:
+    mode: enabled
+  install:
+    remediation:
+      retries: 3
+      remediateLastFailure: true
+  upgrade:
+    remediation:
+      retries: 0
+      remediateLastFailure: false
+  targetNamespace: opendatahub
+  chart:
+    spec:
+      chart: charts/mlflow
+      sourceRef:
+        kind: GitRepository
+        name: mlflow-operator
+        namespace: opendatahub
+  valuesFrom:
+    - kind: Secret
+      name: mlflow-operator-values-base
+      valuesKey: values.yaml
+    - kind: Secret
+      name: mlflow-operator-values-override
+      valuesKey: override.yaml
+      optional: true

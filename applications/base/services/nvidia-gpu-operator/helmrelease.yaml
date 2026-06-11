@@ -1,0 +1,36 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: gpu-operator
+  namespace: gpu-operator
+spec:
+  releaseName: gpu-operator
+  interval: 5m
+  timeout: 10m
+  driftDetection:
+    mode: enabled
+  install:
+    remediation:
+      retries: 3
+      remediateLastFailure: true
+  upgrade:
+    remediation:
+      retries: 0
+      remediateLastFailure: false
+  targetNamespace: gpu-operator
+  chart:
+    spec:
+      chart: gpu-operator
+      version: v26.3.2
+      sourceRef:
+        kind: HelmRepository
+        name: nvidia
+        namespace: gpu-operator
+  valuesFrom:
+    - kind: Secret
+      name: gpu-operator-values-base
+      valuesKey: values.yaml
+    - kind: Secret
+      name: gpu-operator-values-override
+      valuesKey: override.yaml
+      optional: true
