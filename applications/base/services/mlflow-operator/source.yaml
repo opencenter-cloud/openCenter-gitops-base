@@ -1,0 +1,9 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: mlflow-operator
+spec:
+  url: https://github.com/opendatahub-io/mlflow-operator
+  interval: 1h
+  ref:
+    tag: "1.1.0"

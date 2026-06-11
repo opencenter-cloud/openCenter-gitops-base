@@ -1,0 +1,9 @@
+# MLflow Operator (OpenDataHub) – Base Values (1.1.0)
+# Reference: https://github.com/opendatahub-io/mlflow-operator
+
+storage:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi

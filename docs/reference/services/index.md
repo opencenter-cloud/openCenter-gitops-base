@@ -17,15 +17,20 @@ This section provides one reference page per deployable service in `applications
 ## Core Services
 
 - [cert-manager](cert-manager.md)
+- [ceph-csi](ceph-csi.md)
 - [external-snapshotter](external-snapshotter.md)
 - [gateway-api](gateway-api.md)
 - [harbor](harbor.md)
 - [headlamp](headlamp.md)
 - [istio](istio.md)
 - [keycloak](keycloak.md)
+- [kserve](kserve.md)
 - [kyverno](kyverno.md)
 - [longhorn](longhorn.md)
 - [metallb](metallb.md)
+- [mlflow-operator](mlflow-operator.md)
+- [nodelocaldns](nodelocaldns.md)
+- [nvidia-gpu-operator](nvidia-gpu-operator.md)
 - [olm](olm.md)
 - [openstack-ccm](openstack-ccm.md)
 - [openstack-csi](openstack-csi.md)
@@ -33,6 +38,7 @@ This section provides one reference page per deployable service in `applications
 - [rbac-manager](rbac-manager.md)
 - [sealed-secrets](sealed-secrets.md)
 - [strimzi-kafka-operator](strimzi-kafka-operator.md)
+- [triton-inference-server](triton-inference-server.md)
 - [velero](velero.md)
 - [vsphere-csi](vsphere-csi.md)
 

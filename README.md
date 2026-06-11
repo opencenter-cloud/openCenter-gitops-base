@@ -29,15 +29,20 @@ For the complete directory layout, see [Directory Structure](docs/reference/dire
 | Service | Namespace | Version | Purpose | Documentation |
 |---------|-----------|---------|---------|---------------|
 | **[cert-manager](applications/base/services/cert-manager/)** | `cert-manager` | `v1.18.2` | Automated TLS certificate management | [README](applications/base/services/cert-manager/README.md) |
+| **[ceph-csi](applications/base/services/ceph-csi/)** | `ceph-csi` | `3.17.0` | Ceph RBD CSI storage driver | [README](applications/base/services/ceph-csi/README.md) |
 | **[external-snapshotter](applications/base/services/external-snapshotter/)** | `external-snapshotter` | `v8.2.1` | Volume snapshot management | [README](applications/base/services/external-snapshotter/README.md) |
 | **[gateway-api](applications/base/services/gateway-api/)** | `envoy-gateway-system` | `v0.0.0-latest` | Next-generation ingress API | [README](applications/base/services/gateway-api/README.md) |
 | **[harbor](applications/base/services/harbor/)** | `harbor` | `1.17.2` | Container registry with security scanning | [README](applications/base/services/harbor/README.md) |
 | **[headlamp](applications/base/services/headlamp/)** | `headlamp` | `0.35.0` | Modern Kubernetes dashboard | [README](applications/base/services/headlamp/README.md) |
 | **[istio](applications/base/services/istio/)** | `istio-system` | `1.28.3` | Service mesh for traffic management, security, and observability | [README](applications/base/services/istio/README.md) |
 | **[keycloak](applications/base/services/keycloak/)** | `keycloak` | `26.4.2` | Identity and access management | [README](applications/base/services/keycloak/README.md) |
+| **[kserve](applications/base/services/kserve/)** | `kserve` | `v0.18.0` | AI/ML model inference serving | [README](applications/base/services/kserve/README.md) |
 | **[kyverno](applications/base/services/kyverno/)** | `kyverno` | `3.6.0` | Kubernetes-native policy engine | [README](applications/base/services/kyverno/README.md) |
 | **[longhorn](applications/base/services/longhorn/)** | `longhorn-system` | `1.11.0` | Distributed block storage | [README](applications/base/services/longhorn/README.md) |
 | **[metallb](applications/base/services/metallb/)** | `metallb-system` | `0.15.2` | Load balancer for bare-metal clusters | [README](applications/base/services/metallb/README.md) |
+| **[mlflow-operator](applications/base/services/mlflow-operator/)** | `opendatahub` | `1.1.0` | MLflow lifecycle management operator | [README](applications/base/services/mlflow-operator/README.md) |
+| **[nodelocaldns](applications/base/services/nodelocaldns/)** | `nodelocaldns` | `2.4.0` | Per-node DNS caching agent | [README](applications/base/services/nodelocaldns/README.md) |
+| **[nvidia-gpu-operator](applications/base/services/nvidia-gpu-operator/)** | `gpu-operator` | `v26.3.2` | NVIDIA GPU lifecycle management with MIG support | [README](applications/base/services/nvidia-gpu-operator/README.md) |
 | **[olm](applications/base/services/olm/)** | `olm` | `v0.34.0` | Operator Lifecycle Manager | [README](applications/base/services/olm/README.md) |
 | **[openstack-ccm](applications/base/services/openstack-ccm/)** | `openstack-ccm` | `2.33.1` | OpenStack Cloud Controller Manager | [README](applications/base/services/openstack-ccm/README.md) |
 | **[openstack-csi](applications/base/services/openstack-csi/)** | `openstack-csi` | `2.33.1` | OpenStack Cinder CSI driver | [README](applications/base/services/openstack-csi/README.md) |
@@ -45,6 +50,7 @@ For the complete directory layout, see [Directory Structure](docs/reference/dire
 | **[rbac-manager](applications/base/services/rbac-manager/)** | `rbac-manager` | `1.21.1` | RBAC management automation | [README](applications/base/services/rbac-manager/README.md) |
 | **[sealed-secrets](applications/base/services/sealed-secrets/)** | `sealed-secrets` | `2.17.3` | GitOps-friendly secret management | [README](applications/base/services/sealed-secrets/README.md) |
 | **[strimzi-kafka-operator](applications/base/services/strimzi-kafka-operator/)** | `kafka-system` | `0.50.0` | Kubernetes operator for Apache Kafka | [README](applications/base/services/strimzi-kafka-operator/README.md) |
+| **[triton-inference-server](applications/base/services/triton-inference-server/)** | `triton-inference-server` | `v2.69.0` | NVIDIA high-performance model inference server | [README](applications/base/services/triton-inference-server/README.md) |
 | **[velero](applications/base/services/velero/)** | `velero` | `10.1.1` | Backup and disaster recovery | [README](applications/base/services/velero/README.md) |
 | **[vsphere-csi](applications/base/services/vsphere-csi/)** | `vmware-system-csi` | `3.8.1` | vSphere storage integration | [README](applications/base/services/vsphere-csi/README.md) |
 

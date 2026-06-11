@@ -1,0 +1,34 @@
+# NVIDIA GPU Operator – MIG-Enabled Values (v26.3.2)
+# Reference: https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/gpu-operator-mig.html
+#
+# This values file enables Multi-Instance GPU (MIG) support.
+# Use this instead of the base values file for clusters with MIG-capable GPUs
+# (A100, A30, H100, H200).
+#
+# MIG strategy options:
+#   single - All GPUs on a node use MIG mode
+#   mixed  - Only some GPUs on a node use MIG mode
+
+nfd:
+  enabled: true
+
+driver:
+  enabled: true
+
+toolkit:
+  enabled: true
+
+cdi:
+  enabled: true
+
+dcgmExporter:
+  enabled: true
+
+mig:
+  strategy: mixed
+
+migManager:
+  enabled: true
+  # env:
+  #   - name: WITH_REBOOT
+  #     value: "true"  # Required for CSP environments (e.g. GCP)

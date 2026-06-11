@@ -1,0 +1,14 @@
+# NodeLocal DNS Cache – Base Values (2.4.0)
+# Reference: https://github.com/lablabs/k8s-nodelocaldns-helm
+
+image:
+  repository: registry.k8s.io/dns/k8s-dns-node-cache
+  tag: "1.23.1"
+
+config:
+  localDnsIp: 169.254.20.11
+
+resources:
+  requests:
+    cpu: 30m
+    memory: 50Mi

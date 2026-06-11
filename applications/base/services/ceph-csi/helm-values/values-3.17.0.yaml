@@ -1,0 +1,21 @@
+# Ceph CSI RBD – Base Values (3.17.0)
+# Reference: https://github.com/ceph/ceph-csi
+
+# csiConfig must be provided per-cluster via override secret
+# Example:
+# csiConfig:
+#   - clusterID: "cluster-id"
+#     monitors:
+#       - "mon1:6789"
+#       - "mon2:6789"
+#       - "mon3:6789"
+csiConfig: []
+
+nodeplugin:
+  plugin:
+    image:
+      repository: quay.io/cephcsi/cephcsi
+      tag: v3.17.0
+
+provisioner:
+  replicaCount: 2

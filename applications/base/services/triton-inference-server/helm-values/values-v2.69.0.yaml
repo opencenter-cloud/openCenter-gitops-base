@@ -1,0 +1,24 @@
+# Triton Inference Server – Base Values (v2.69.0)
+# Reference: https://github.com/triton-inference-server/server/tree/main/deploy/k8s-onprem
+
+tags:
+  autoscaling: false
+  loadBalancing: false
+  openshift: false
+
+image:
+  imageName: nvcr.io/nvidia/tritonserver:26.05-py3
+  pullPolicy: IfNotPresent
+
+# Model repository must be provided per-cluster via override secret
+# modelRepositoryServer: <NFS server IP or hostname>
+# modelRepositoryPath: /srv/models
+
+numGpus: 1
+
+serverArgs:
+  - '--model-repository=/models'
+
+autoscaling:
+  minReplicas: 1
+  maxReplicas: 3
