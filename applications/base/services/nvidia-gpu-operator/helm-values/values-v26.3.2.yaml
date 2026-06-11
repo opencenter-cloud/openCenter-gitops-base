@@ -1,0 +1,40 @@
+# NVIDIA GPU Operator – Base Values (v26.3.2)
+# Reference: https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/getting-started.html
+
+# Deploy NFD as a sub-chart; set to false if NFD is already deployed in your cluster.
+nfd:
+  enabled: true
+
+# GPU driver deployed as a container on worker nodes.
+# Set to false if drivers are pre-installed on the host.
+driver:
+  enabled: true
+
+# NVIDIA Container Toolkit for CDI-based GPU injection.
+toolkit:
+  enabled: true
+
+# Container Device Interface (CDI) is enabled by default since v25.10.
+cdi:
+  enabled: true
+
+# DCGM Exporter for GPU telemetry (Prometheus metrics).
+dcgmExporter:
+  enabled: true
+
+# Device Plugin configuration (time-slicing, MIG, etc.) applied post-install.
+devicePlugin: {}
+
+# MIG: Multi-Instance GPU support (A100, A30, H100, H200).
+# For MIG-enabled clusters, use values-v26.3.2-mig.yaml instead.
+# mig:
+#   strategy: mixed  # or "single"
+# migManager:
+#   enabled: true
+
+# Node tolerations for GPU operator pods (e.g., for dedicated GPU node taints).
+# daemonsets:
+#   tolerations:
+#     - key: nvidia.com/gpu
+#       operator: Exists
+#       effect: NoSchedule
