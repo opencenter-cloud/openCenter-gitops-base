@@ -1,0 +1,44 @@
+---
+# Base values for local-path-provisioner v0.0.36
+# Source: https://github.com/rancher/local-path-provisioner
+
+replicaCount: 1
+
+image:
+  repository: docker.io/rancher/local-path-provisioner
+  tag: v0.0.36
+  pullPolicy: IfNotPresent
+
+helperImage:
+  repository: docker.io/library/busybox
+  tag: latest
+
+storageClass:
+  create: true
+  defaultClass: false
+  defaultVolumeType: hostPath
+  name: local-path
+  reclaimPolicy: Delete
+  volumeBindingMode: WaitForFirstConsumer
+
+nodePathMap:
+  - node: DEFAULT_PATH_FOR_NON_LISTED_NODES
+    paths:
+      - /opt/local-path-provisioner
+
+rbac:
+  create: true
+
+serviceAccount:
+  create: true
+
+configmap:
+  name: local-path-config
+  setup: |-
+    #!/bin/sh
+    set -eu
+    mkdir -m 0777 -p "$VOL_DIR"
+  teardown: |-
+    #!/bin/sh
+    set -eu
+    rm -rf "$VOL_DIR"
