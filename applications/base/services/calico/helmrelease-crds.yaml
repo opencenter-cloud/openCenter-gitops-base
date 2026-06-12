@@ -1,0 +1,31 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: calico-crds
+  namespace: tigera-operator
+spec:
+  releaseName: calico-crds
+  interval: 5m
+  timeout: 10m
+  driftDetection:
+    mode: enabled
+  install:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+      remediateLastFailure: true
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 0
+      remediateLastFailure: false
+  targetNamespace: tigera-operator
+  chart:
+    spec:
+      chart: crd.projectcalico.org.v1
+      version: v3.32.0
+      sourceRef:
+        kind: HelmRepository
+        name: projectcalico
+        namespace: tigera-operator

@@ -1,0 +1,11 @@
+# Calico tigera-operator default values
+# Reference: https://docs.tigera.io/calico/latest/getting-started/kubernetes/helm
+---
+installation:
+  enabled: true
+  kubernetesProvider: ""
+  calicoNetwork:
+    ipPools:
+      - cidr: 10.244.0.0/16
+        encapsulation: VXLANCrossSubnet
+        natOutgoing: Enabled
