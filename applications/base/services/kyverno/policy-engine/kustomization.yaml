@@ -9,6 +9,6 @@ secretGenerator:
       namespace: kyverno
       type: Opaque
       files:
-        - values.yaml=helm-values/values-3.6.0.yaml
+        - values.yaml=helm-values/values-3.8.1.yaml
       options:
         disableNameSuffixHash: true
