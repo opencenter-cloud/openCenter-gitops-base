@@ -1,0 +1,7 @@
+# Cilium base values for kubeadm-based clusters
+# Reference: https://docs.cilium.io/en/stable/installation/k8s-install-kubeadm/
+---
+ipam:
+  operator:
+    clusterPoolIPv4PodCIDRList:
+      - 10.244.0.0/16
