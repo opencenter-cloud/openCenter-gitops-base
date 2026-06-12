@@ -42,6 +42,12 @@ This section provides one reference page per deployable service in `applications
 - [velero](velero.md)
 - [vsphere-csi](vsphere-csi.md)
 
+## CNI Services
+
+- [calico](calico.md)
+- [cilium](cilium.md)
+- [kube-ovn](kube-ovn.md)
+
 ## Observability Services
 
 - [kube-prometheus-stack](kube-prometheus-stack.md)
