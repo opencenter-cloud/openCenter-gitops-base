@@ -8,7 +8,7 @@ secretGenerator:
       namespace: observability
       type: Opaque
       files:
-        - values.yaml=helm-values/values-77.6.0.yaml
+        - values.yaml=helm-values/values-85.1.3.yaml
         - alertmanager-overrides.yaml=helm-values/alertmanager-overrides.yaml
         - prometheus-overrides.yaml=helm-values/prometheus-overrides.yaml
       options:
