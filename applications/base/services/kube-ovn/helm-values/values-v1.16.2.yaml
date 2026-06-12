@@ -1,0 +1,16 @@
+# Kube-OVN base values
+# Reference: https://kubeovn.github.io/docs/stable/en/start/one-step-install/
+---
+MASTER_NODES: ""
+replicaCount: 3
+networking:
+  POD_CIDR: "10.16.0.0/16"
+  SVC_CIDR: "10.96.0.0/12"
+  JOIN_CIDR: "100.64.0.0/16"
+  NETWORK_TYPE: "geneve"
+  TUNNEL_TYPE: "geneve"
+  IFACE: ""
+func:
+  ENABLE_LB: true
+  ENABLE_NP: true
+  ENABLE_EIP_SNAT: true
