@@ -1,0 +1,11 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: data-science-pipelines-operator
+  namespace: opendatahub
+spec:
+  name: data-science-pipelines-operator
+  source: operatorhubio-catalog
+  sourceNamespace: olm
+  channel: alpha
+  installPlanApproval: Manual

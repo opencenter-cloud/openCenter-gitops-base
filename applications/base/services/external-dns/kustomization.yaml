@@ -5,10 +5,10 @@ resources:
     - source.yaml
     - helmrelease.yaml
 secretGenerator:
-    - name: kuberay-operator-values-base
-      namespace: kuberay-system
+    - name: external-dns-values-base
+      namespace: external-dns
       type: Opaque
       files:
-        - values.yaml=helm-values/values-1.4.2.yaml
+        - values.yaml=helm-values/values-1.20.0.yaml
       options:
         disableNameSuffixHash: true

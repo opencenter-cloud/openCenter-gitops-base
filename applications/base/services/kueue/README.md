@@ -1,6 +1,6 @@
 # Kueue – Base Configuration
 
-This directory contains the **base manifests** for deploying [Kueue](https://kueue.sigs.k8s.io/). It can be consumed directly by cluster repositories or imported by the private enterprise repository for enterprise-specific overrides.
+This directory contains the **base manifests** for deploying [Kueue](https://kueue.sigs.k8s.io/), the Kubernetes-native job queueing system.
 
 ## Public Repository Scope
 
@@ -9,22 +9,20 @@ This directory contains the **base manifests** for deploying [Kueue](https://kue
 
 ## Kueue
 
-- Kubernetes-native job queueing system for managing batch workloads, ML training jobs, and GPU-intensive applications.
-- Implements fair sharing, resource quotas, preemption, and priority-based scheduling across namespaces.
-- Supports batch/job, JobSets, Kubeflow training jobs, RayJobs, Argo Workflows, and more.
-- Provides topology-aware scheduling for GPU/accelerator locality.
-- Uses internal cert management by default; can integrate with external cert-manager.
+- Manages job queueing with quotas and priorities on Kubernetes.
+- Determines when jobs should be admitted (pods created) or preempted (pods deleted) based on resource availability.
+- Integrates with Ray, Kubeflow Training Operator, Spark, and plain batch Jobs.
+- Part of the Open Data Hub AI/ML training and compute stack.
 
 ## Prerequisites
 
 - Kubernetes v1.29+.
-- Optional: cert-manager if disabling internal cert management.
-- Optional: prometheus-operator for metrics scraping.
+- cert-manager (optional, for webhook TLS — Kueue has internal cert management by default).
 
 ## Common Overrides
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `manageJobsWithoutQueueName` | Auto-manage jobs without queue annotation | `true` |
-| `internalCertManagement.enable` | Use built-in cert management | `true` |
-| `integrations.frameworks` | Enabled job framework integrations | `["batch/job"]` |
+| `controller.manager.resources.limits.memory` | Memory limit | `512Mi` |
+| `enablePlainPod` | Enable plain Pod integration | `false` |
+| `integrations.frameworks` | Enabled job frameworks | batch/job |
