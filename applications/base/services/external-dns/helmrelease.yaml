@@ -1,11 +1,10 @@
----
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: kueue
-  namespace: kueue-system
+  name: external-dns
+  namespace: external-dns
 spec:
-  releaseName: kueue
+  releaseName: external-dns
   interval: 5m
   timeout: 10m
   driftDetection:
@@ -18,20 +17,20 @@ spec:
     remediation:
       retries: 0
       remediateLastFailure: false
-  targetNamespace: kueue-system
+  targetNamespace: external-dns
   chart:
     spec:
-      chart: kueue
-      version: 0.18.0
+      chart: external-dns
+      version: 1.20.0
       sourceRef:
         kind: HelmRepository
-        name: kueue
-        namespace: kueue-system
+        name: external-dns
+        namespace: external-dns
   valuesFrom:
     - kind: Secret
-      name: kueue-values-base
+      name: external-dns-values-base
       valuesKey: values.yaml
     - kind: Secret
-      name: kueue-values-override
+      name: external-dns-values-override
       valuesKey: override.yaml
       optional: true

@@ -30,17 +30,22 @@ For the complete directory layout, see [Directory Structure](docs/reference/dire
 |---------|-----------|---------|---------|---------------|
 | **[cert-manager](applications/base/services/cert-manager/)** | `cert-manager` | `v1.18.2` | Automated TLS certificate management | [README](applications/base/services/cert-manager/README.md) |
 | **[ceph-csi](applications/base/services/ceph-csi/)** | `ceph-csi` | `3.17.0` | Ceph RBD CSI storage driver | [README](applications/base/services/ceph-csi/README.md) |
+| **[data-science-pipelines-operator](applications/base/services/data-science-pipelines-operator/)** | `opendatahub` | `OLM` | ML pipeline orchestration (Kubeflow Pipelines) | [README](applications/base/services/data-science-pipelines-operator/README.md) |
 | **[external-snapshotter](applications/base/services/external-snapshotter/)** | `external-snapshotter` | `v8.2.1` | Volume snapshot management | [README](applications/base/services/external-snapshotter/README.md) |
+| **[feast-operator](applications/base/services/feast-operator/)** | `opendatahub` | `OLM` | Feature store for consistent feature serving | [README](applications/base/services/feast-operator/README.md) |
 | **[gateway-api](applications/base/services/gateway-api/)** | `envoy-gateway-system` | `v0.0.0-latest` | Next-generation ingress API | [README](applications/base/services/gateway-api/README.md) |
 | **[harbor](applications/base/services/harbor/)** | `harbor` | `1.17.2` | Container registry with security scanning | [README](applications/base/services/harbor/README.md) |
 | **[headlamp](applications/base/services/headlamp/)** | `headlamp` | `0.35.0` | Modern Kubernetes dashboard | [README](applications/base/services/headlamp/README.md) |
 | **[istio](applications/base/services/istio/)** | `istio-system` | `1.28.3` | Service mesh for traffic management, security, and observability | [README](applications/base/services/istio/README.md) |
 | **[keycloak](applications/base/services/keycloak/)** | `keycloak` | `26.4.2` | Identity and access management | [README](applications/base/services/keycloak/README.md) |
 | **[kserve](applications/base/services/kserve/)** | `kserve` | `v0.18.0` | AI/ML model inference serving | [README](applications/base/services/kserve/README.md) |
+| **[kuberay-operator](applications/base/services/kuberay-operator/)** | `kuberay-system` | `1.4.2` | Distributed computing framework (Ray) | [README](applications/base/services/kuberay-operator/README.md) |
+| **[kueue](applications/base/services/kueue/)** | `kueue-system` | `0.18.0` | Job queueing and GPU resource management | [README](applications/base/services/kueue/README.md) |
 | **[kyverno](applications/base/services/kyverno/)** | `kyverno` | `3.6.0` | Kubernetes-native policy engine | [README](applications/base/services/kyverno/README.md) |
 | **[longhorn](applications/base/services/longhorn/)** | `longhorn-system` | `1.11.0` | Distributed block storage | [README](applications/base/services/longhorn/README.md) |
 | **[metallb](applications/base/services/metallb/)** | `metallb-system` | `0.15.2` | Load balancer for bare-metal clusters | [README](applications/base/services/metallb/README.md) |
 | **[mlflow-operator](applications/base/services/mlflow-operator/)** | `opendatahub` | `1.1.0` | MLflow lifecycle management operator | [README](applications/base/services/mlflow-operator/README.md) |
+| **[model-registry-operator](applications/base/services/model-registry-operator/)** | `opendatahub` | `OLM` | Model versioning and lifecycle management | [README](applications/base/services/model-registry-operator/README.md) |
 | **[nodelocaldns](applications/base/services/nodelocaldns/)** | `nodelocaldns` | `2.4.0` | Per-node DNS caching agent | [README](applications/base/services/nodelocaldns/README.md) |
 | **[nvidia-gpu-operator](applications/base/services/nvidia-gpu-operator/)** | `gpu-operator` | `v26.3.2` | NVIDIA GPU lifecycle management with MIG support | [README](applications/base/services/nvidia-gpu-operator/README.md) |
 | **[olm](applications/base/services/olm/)** | `olm` | `v0.34.0` | Operator Lifecycle Manager | [README](applications/base/services/olm/README.md) |
@@ -50,9 +55,13 @@ For the complete directory layout, see [Directory Structure](docs/reference/dire
 | **[rbac-manager](applications/base/services/rbac-manager/)** | `rbac-manager` | `1.21.1` | RBAC management automation | [README](applications/base/services/rbac-manager/README.md) |
 | **[sealed-secrets](applications/base/services/sealed-secrets/)** | `sealed-secrets` | `2.17.3` | GitOps-friendly secret management | [README](applications/base/services/sealed-secrets/README.md) |
 | **[strimzi-kafka-operator](applications/base/services/strimzi-kafka-operator/)** | `kafka-system` | `0.50.0` | Kubernetes operator for Apache Kafka | [README](applications/base/services/strimzi-kafka-operator/README.md) |
+| **[training-operator](applications/base/services/training-operator/)** | `kubeflow-system` | `0.0.1` | Distributed ML training (PyTorch, TensorFlow, XGBoost) | [README](applications/base/services/training-operator/README.md) |
 | **[triton-inference-server](applications/base/services/triton-inference-server/)** | `triton-inference-server` | `v2.69.0` | NVIDIA high-performance model inference server | [README](applications/base/services/triton-inference-server/README.md) |
+| **[trustyai-service-operator](applications/base/services/trustyai-service-operator/)** | `opendatahub` | `OLM` | AI explainability, fairness, and governance | [README](applications/base/services/trustyai-service-operator/README.md) |
 | **[velero](applications/base/services/velero/)** | `velero` | `10.1.1` | Backup and disaster recovery | [README](applications/base/services/velero/README.md) |
 | **[vsphere-csi](applications/base/services/vsphere-csi/)** | `vmware-system-csi` | `3.8.1` | vSphere storage integration | [README](applications/base/services/vsphere-csi/README.md) |
+
+> **Note:** Open Data Hub Dashboard and Workbenches (Jupyter notebook environments) are not included. Both are tightly coupled to OpenShift APIs (Routes, OAuth proxy, ImageStreams) and are not practical for non-OpenShift clusters.
 
 ### Observability Stack
 

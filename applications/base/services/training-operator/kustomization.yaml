@@ -5,10 +5,10 @@ resources:
     - source.yaml
     - helmrelease.yaml
 secretGenerator:
-    - name: kuberay-operator-values-base
-      namespace: kuberay-system
+    - name: training-operator-values-base
+      namespace: kubeflow-system
       type: Opaque
       files:
-        - values.yaml=helm-values/values-1.4.2.yaml
+        - values.yaml=helm-values/values-0.0.1.yaml
       options:
         disableNameSuffixHash: true

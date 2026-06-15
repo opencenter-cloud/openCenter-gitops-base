@@ -2,10 +2,10 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: kueue
-  namespace: kueue-system
+  name: training-operator
+  namespace: kubeflow-system
 spec:
-  releaseName: kueue
+  releaseName: training-operator
   interval: 5m
   timeout: 10m
   driftDetection:
@@ -18,20 +18,20 @@ spec:
     remediation:
       retries: 0
       remediateLastFailure: false
-  targetNamespace: kueue-system
+  targetNamespace: kubeflow-system
   chart:
     spec:
-      chart: kueue
-      version: 0.18.0
+      chart: kubeflow-trainer
+      version: 0.0.1
       sourceRef:
         kind: HelmRepository
-        name: kueue
-        namespace: kueue-system
+        name: kubeflow
+        namespace: kubeflow-system
   valuesFrom:
     - kind: Secret
-      name: kueue-values-base
+      name: training-operator-values-base
       valuesKey: values.yaml
     - kind: Secret
-      name: kueue-values-override
+      name: training-operator-values-override
       valuesKey: override.yaml
       optional: true
