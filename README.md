@@ -29,6 +29,7 @@ For the complete directory layout, see [Directory Structure](docs/reference/dire
 | Service | Namespace | Version | Purpose | Documentation |
 |---------|-----------|---------|---------|---------------|
 | **[cert-manager](applications/base/services/cert-manager/)** | `cert-manager` | `v1.18.2` | Automated TLS certificate management | [README](applications/base/services/cert-manager/README.md) |
+| **[cilium](applications/base/services/cilium/)** | `kube-system` | `1.19.4` | eBPF-based networking, observability, and security | [README](applications/base/services/cilium/README.md) |
 | **[external-snapshotter](applications/base/services/external-snapshotter/)** | `external-snapshotter` | `v8.2.1` | Volume snapshot management | [README](applications/base/services/external-snapshotter/README.md) |
 | **[gateway-api](applications/base/services/gateway-api/)** | `envoy-gateway-system` | `v0.0.0-latest` | Next-generation ingress API | [README](applications/base/services/gateway-api/README.md) |
 | **[harbor](applications/base/services/harbor/)** | `harbor` | `1.17.2` | Container registry with security scanning | [README](applications/base/services/harbor/README.md) |
