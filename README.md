@@ -40,6 +40,7 @@ For the complete directory layout, see [Directory Structure](docs/reference/dire
 | **[kyverno](applications/base/services/kyverno/)** | `kyverno` | `3.6.0` | Kubernetes-native policy engine | [README](applications/base/services/kyverno/README.md) |
 | **[longhorn](applications/base/services/longhorn/)** | `longhorn-system` | `1.11.0` | Distributed block storage | [README](applications/base/services/longhorn/README.md) |
 | **[metallb](applications/base/services/metallb/)** | `metallb-system` | `0.15.2` | Load balancer for bare-metal clusters | [README](applications/base/services/metallb/README.md) |
+| **[nodelocaldns](applications/base/services/nodelocaldns/)** | `kube-system` | `2.4.0` | Node-local DNS caching agent | [README](applications/base/services/nodelocaldns/README.md) |
 | **[olm](applications/base/services/olm/)** | `olm` | `v0.34.0` | Operator Lifecycle Manager | [README](applications/base/services/olm/README.md) |
 | **[openstack-ccm](applications/base/services/openstack-ccm/)** | `openstack-ccm` | `2.33.1` | OpenStack Cloud Controller Manager | [README](applications/base/services/openstack-ccm/README.md) |
 | **[openstack-csi](applications/base/services/openstack-csi/)** | `openstack-csi` | `2.33.1` | OpenStack Cinder CSI driver | [README](applications/base/services/openstack-csi/README.md) |

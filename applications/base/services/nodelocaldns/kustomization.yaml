@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - source.yaml
+  - helmrelease.yaml
+secretGenerator:
+  - name: nodelocaldns-values-base
+    namespace: kube-system
+    type: Opaque
+    files:
+      - values.yaml=helm-values/values-2.4.0.yaml
+    options:
+      disableNameSuffixHash: true
