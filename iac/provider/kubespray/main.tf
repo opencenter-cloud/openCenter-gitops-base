@@ -98,6 +98,20 @@ resource "local_file" "k8s_hardening" {
   depends_on      = [local_file.ansible_inventory]
 }
 
+resource "local_file" "kube_node_kubelet" {
+  content = templatefile("${path.module}/templates/kube_node_kubelet.tpl",
+    {
+      kubelet_cpu_manager_policy      = var.kubelet_cpu_manager_policy
+      kubelet_topology_manager_policy = var.kubelet_topology_manager_policy
+      kubelet_reserved_system_cpus    = var.kubelet_reserved_system_cpus
+      kubelet_config_extra_args       = var.kubelet_config_extra_args
+    })
+
+  filename        = "./inventory/group_vars/kube_node/kubelet.yaml"
+  file_permission = "0644"
+  depends_on      = [local_file.ansible_inventory]
+}
+
 resource "null_resource" "clone_kubespray" {
   count = var.deploy_cluster ? 1 : 0
   provisioner "local-exec" {

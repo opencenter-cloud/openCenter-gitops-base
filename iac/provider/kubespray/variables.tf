@@ -235,3 +235,27 @@ variable "use_octavia" {
   type    = bool
   default = true
 }
+
+variable "kubelet_cpu_manager_policy" {
+  type        = string
+  default     = ""
+  description = "CPU manager policy for worker nodes (none or static)"
+}
+
+variable "kubelet_topology_manager_policy" {
+  type        = string
+  default     = ""
+  description = "Topology manager policy (none, best-effort, restricted, single-numa-node)"
+}
+
+variable "kubelet_reserved_system_cpus" {
+  type        = string
+  default     = ""
+  description = "CPU set reserved for system daemons (e.g., 0,1 or 0-3)"
+}
+
+variable "kubelet_config_extra_args" {
+  type        = map(string)
+  default     = {}
+  description = "Arbitrary extra kubelet config args"
+}
