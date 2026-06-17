@@ -489,4 +489,3 @@ resource "local_file" "containerd" {
   file_permission = "0644"
   depends_on      = [local_file.ansible_inventory]
 }
-
