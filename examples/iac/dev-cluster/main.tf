@@ -107,6 +107,15 @@ locals {
   calico_encapsulation_type               = "VXLAN"
   calico_nat_outgoing                     = true
 
+  # ## Kube-proxy Removal (for Cilium or similar CNI that replaces kube-proxy)
+  # kube_proxy_remove                       = true
+
+  # ## Kubelet Worker Node Settings
+  # kubelet_cpu_manager_policy              = "static"
+  # kubelet_topology_manager_policy         = "restricted"
+  # kubelet_reserved_system_cpus            = "0,1"
+  # kubelet_config_extra_args               = { "maxPods" = "200" }
+
   # ## Windows settings
   # windows_user                            = "Administrator"
   # windows_admin_password                  = ""
@@ -199,6 +208,11 @@ module "kubespray-cluster" {
   kube_vip_enabled                        = local.kube_vip_enabled
   kube_pod_security_exemptions_namespaces = local.kube_pod_security_exemptions_namespaces
   kubelet_rotate_server_certificates      = local.kubelet_rotate_server_certificates
+  # kubelet_cpu_manager_policy              = local.kubelet_cpu_manager_policy
+  # kubelet_topology_manager_policy         = local.kubelet_topology_manager_policy
+  # kubelet_reserved_system_cpus            = local.kubelet_reserved_system_cpus
+  # kubelet_config_extra_args               = local.kubelet_config_extra_args
+  # kube_proxy_remove                       = local.kube_proxy_remove
   worker_nodes                            = module.openstack-nova.worker_nodes
   k8s_api_ip                              = module.openstack-nova.k8s_api_ip
   k8s_api_port                            = local.k8s_api_port

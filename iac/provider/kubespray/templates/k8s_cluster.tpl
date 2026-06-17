@@ -135,6 +135,9 @@ kube_proxy_mode: ipvs
 # configure arp_ignore and arp_announce to avoid answering ARP queries from kube-ipvs0 interface
 # must be set to true for MetalLB, kube-vip(ARP enabled) to work
 kube_proxy_strict_arp: true
+%{~ if kube_proxy_remove == true }
+kube_proxy_remove: true
+%{~ endif }
 
 # A string slice of values which specify the addresses to use for NodePorts.
 # Values may be valid IP blocks (e.g. 1.2.3.0/24, 1.2.3.4/32).
@@ -187,12 +190,32 @@ dns_mode: coredns
 # manual_dns_server: 10.x.x.x
 # Enable nodelocal dns cache
 enable_nodelocaldns: ${enable_nodelocaldns}
-enable_nodelocaldns_secondary: false
-nodelocaldns_ip: 169.254.25.10
-nodelocaldns_health_port: 9254
-nodelocaldns_second_health_port: 9256
-nodelocaldns_bind_metrics_host_ip: false
-nodelocaldns_secondary_skew_seconds: 5
+enable_nodelocaldns_secondary: ${enable_nodelocaldns_secondary}
+nodelocaldns_ip: ${nodelocaldns_ip}
+nodelocaldns_health_port: ${nodelocaldns_health_port}
+nodelocaldns_second_health_port: ${nodelocaldns_second_health_port}
+nodelocaldns_bind_metrics_host_ip: ${nodelocaldns_bind_metrics_host_ip}
+nodelocaldns_secondary_skew_seconds: ${nodelocaldns_secondary_skew_seconds}
+%{ if length(nodelocaldns_external_zones) > 0 ~}
+nodelocaldns_external_zones:
+%{ for zone in nodelocaldns_external_zones ~}
+- zones:
+%{ for z in zone.zones ~}
+  - ${z}
+%{ endfor ~}
+  nameservers:
+%{ for ns in zone.nameservers ~}
+  - ${ns}
+%{ endfor ~}
+  cache: ${zone.cache}
+%{ if length(zone.rewrite) > 0 ~}
+  rewrite:
+%{ for rw in zone.rewrite ~}
+  - ${rw}
+%{ endfor ~}
+%{ endif ~}
+%{ endfor ~}
+%{ else ~}
 # nodelocaldns_external_zones:
 # - zones:
 #   - example.com
@@ -201,18 +224,7 @@ nodelocaldns_secondary_skew_seconds: 5
 #   - 1.1.1.1
 #   - 2.2.2.2
 #   cache: 5
-# - zones:
-#   - https://mycompany.local:4453
-#   nameservers:
-#   - 192.168.0.53
-#   cache: 0
-# - zones:
-#   - mydomain.tld
-#   nameservers:
-#   - 10.233.0.3
-#   cache: 5
-#   rewrite:
-#   - name website.tld website.namespace.svc.cluster.local
+%{ endif ~}
 # Enable k8s_external plugin for CoreDNS
 enable_coredns_k8s_external: false
 coredns_k8s_external_zone: k8s_external.local

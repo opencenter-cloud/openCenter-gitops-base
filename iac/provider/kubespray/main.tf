@@ -39,8 +39,15 @@ resource "local_file" "k8s_cluster" {
       network_plugin            = var.network_plugin
       subnet_pods               = var.subnet_pods
       subnet_services           = var.subnet_services
-      enable_nodelocaldns       = var.enable_nodelocaldns
-      vrrp_ip                   = var.vrrp_ip
+      enable_nodelocaldns                = var.enable_nodelocaldns
+      enable_nodelocaldns_secondary      = var.enable_nodelocaldns_secondary
+      nodelocaldns_ip                    = var.nodelocaldns_ip
+      nodelocaldns_health_port           = var.nodelocaldns_health_port
+      nodelocaldns_second_health_port    = var.nodelocaldns_second_health_port
+      nodelocaldns_bind_metrics_host_ip  = var.nodelocaldns_bind_metrics_host_ip
+      nodelocaldns_secondary_skew_seconds = var.nodelocaldns_secondary_skew_seconds
+      nodelocaldns_external_zones        = var.nodelocaldns_external_zones
+      vrrp_ip                            = var.vrrp_ip
       vrrp_enabled              = var.vrrp_enabled
       use_octavia               = var.use_octavia
       kube_oidc_auth_enabled    = var.kube_oidc_auth_enabled
@@ -51,11 +58,23 @@ resource "local_file" "k8s_cluster" {
       kube_oidc_username_prefix = var.kube_oidc_username_prefix
       kube_oidc_groups_claim    = var.kube_oidc_groups_claim
       kube_oidc_groups_prefix   = var.kube_oidc_groups_prefix
+      kube_proxy_remove         = var.kube_proxy_remove
   })
 
   filename        = "./inventory/group_vars/k8s_cluster/k8s-cluster.yml"
   file_permission = "0644"
   depends_on      = [local_file.ansible_inventory]
+
+  lifecycle {
+    precondition {
+      condition     = !(var.enable_nodelocaldns_secondary && !var.enable_nodelocaldns)
+      error_message = "enable_nodelocaldns_secondary requires enable_nodelocaldns to be true."
+    }
+    precondition {
+      condition     = var.nodelocaldns_health_port != var.nodelocaldns_second_health_port
+      error_message = "nodelocaldns_health_port and nodelocaldns_second_health_port must be different."
+    }
+  }
 }
 
 resource "local_file" "addons" {
