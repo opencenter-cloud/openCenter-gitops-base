@@ -1,8 +1,0 @@
----
-apiVersion: source.toolkit.fluxcd.io/v1
-kind: HelmRepository
-metadata:
-  name: nodelocaldns
-spec:
-  url: https://lablabs.github.io/k8s-nodelocaldns-helm/
-  interval: 1h
