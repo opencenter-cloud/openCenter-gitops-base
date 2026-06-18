@@ -332,3 +332,9 @@ variable "nodelocaldns_external_zones" {
   default     = []
   description = "External DNS zones for nodelocaldns forwarding. Each entry defines zones to forward, target nameservers, cache TTL, and optional rewrite rules."
 }
+
+variable "nodelocaldns_additional_configs" {
+  type        = string
+  default     = ""
+  description = "Additional CoreDNS configuration directives injected into the catch-all (.:53) zone block of the nodelocaldns Corefile. Multiline string with CoreDNS plugin directives."
+}

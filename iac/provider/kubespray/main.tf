@@ -47,6 +47,7 @@ resource "local_file" "k8s_cluster" {
       nodelocaldns_bind_metrics_host_ip  = var.nodelocaldns_bind_metrics_host_ip
       nodelocaldns_secondary_skew_seconds = var.nodelocaldns_secondary_skew_seconds
       nodelocaldns_external_zones        = var.nodelocaldns_external_zones
+      nodelocaldns_additional_configs     = var.nodelocaldns_additional_configs
       vrrp_ip                            = var.vrrp_ip
       vrrp_enabled              = var.vrrp_enabled
       use_octavia               = var.use_octavia
