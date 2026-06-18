@@ -196,6 +196,10 @@ nodelocaldns_health_port: ${nodelocaldns_health_port}
 nodelocaldns_second_health_port: ${nodelocaldns_second_health_port}
 nodelocaldns_bind_metrics_host_ip: ${nodelocaldns_bind_metrics_host_ip}
 nodelocaldns_secondary_skew_seconds: ${nodelocaldns_secondary_skew_seconds}
+%{ if nodelocaldns_additional_configs != "" ~}
+nodelocaldns_additional_configs: |
+  ${nodelocaldns_additional_configs}
+%{ endif ~}
 %{ if length(nodelocaldns_external_zones) > 0 ~}
 nodelocaldns_external_zones:
 %{ for zone in nodelocaldns_external_zones ~}
