@@ -13,7 +13,7 @@ module "secgroup" {
   naming_prefix                          = var.naming_prefix
   subnet_pods                            = var.subnet_pods
   subnet_services                        = var.subnet_services
-  subnet_servers                         = local.mgmt_subnet_cidr
+  subnet_servers                         = ""
   k8s_api_port                           = var.k8s_api_port
   disable_bastion                        = var.disable_bastion
   k8s_api_port_acl                       = var.k8s_api_port_acl
@@ -162,4 +162,12 @@ resource "openstack_networking_secgroup_rule_v2" "controlplane_from_services" {
   direction         = "ingress"
   ethertype         = "IPv4"
   remote_ip_prefix  = var.subnet_services
+}
+
+# Allow all from mgmt subnet (replaces lib/secgroup controlplane_ipv4_servers)
+resource "openstack_networking_secgroup_rule_v2" "controlplane_from_mgmt" {
+  security_group_id = module.secgroup.controlplane_id
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  remote_ip_prefix  = local.mgmt_subnet_cidr
 }
