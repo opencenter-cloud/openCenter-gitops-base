@@ -101,70 +101,10 @@ module "ca" {
 
 ###############################################################################
 # Additional Security Group Rules
-# (VRRP, AH, inter-group, K8s API ACL, pod/service CIDRs)
+# (mgmt subnet access — undercloud-specific, not covered by lib/secgroup)
 ###############################################################################
 
-# VRRP protocol (112) - kube-vip leader election
-resource "openstack_networking_secgroup_rule_v2" "master_vrrp" {
-  security_group_id = module.secgroup.master_id
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "112" # VRRP
-}
-
-# AH protocol (51) - kube-vip
-resource "openstack_networking_secgroup_rule_v2" "master_ah" {
-  security_group_id = module.secgroup.master_id
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "51" # AH
-}
-
-# Allow all from controlplane group members
-resource "openstack_networking_secgroup_rule_v2" "controlplane_from_controlplane" {
-  security_group_id = module.secgroup.controlplane_id
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  remote_group_id   = module.secgroup.controlplane_id
-}
-
-# Allow all from worker group members
-resource "openstack_networking_secgroup_rule_v2" "controlplane_from_worker" {
-  security_group_id = module.secgroup.controlplane_id
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  remote_group_id   = module.secgroup.worker_id
-}
-
-# K8s API port access from ACL CIDRs
-resource "openstack_networking_secgroup_rule_v2" "master_k8s_api" {
-  count             = length(var.k8s_api_port_acl)
-  security_group_id = module.secgroup.master_id
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "tcp"
-  port_range_min    = var.k8s_api_port
-  port_range_max    = var.k8s_api_port
-  remote_ip_prefix  = var.k8s_api_port_acl[count.index]
-}
-
-# Allow all from pod subnet
-resource "openstack_networking_secgroup_rule_v2" "controlplane_from_pods" {
-  security_group_id = module.secgroup.controlplane_id
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  remote_ip_prefix  = var.subnet_pods
-}
-
-# Allow all from service subnet
-resource "openstack_networking_secgroup_rule_v2" "controlplane_from_services" {
-  security_group_id = module.secgroup.controlplane_id
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  remote_ip_prefix  = var.subnet_services
-}
-
-# Allow all from mgmt subnet (replaces lib/secgroup controlplane_ipv4_servers)
+# Allow all from mgmt subnet CIDR (dynamically allocated)
 resource "openstack_networking_secgroup_rule_v2" "controlplane_from_mgmt" {
   security_group_id = module.secgroup.controlplane_id
   direction         = "ingress"

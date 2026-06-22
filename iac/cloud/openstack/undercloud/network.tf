@@ -47,12 +47,6 @@ data "openstack_networking_subnetpool_v2" "mgmt" {
 
 resource "openstack_networking_network_v2" "mgmt" {
   name = "${var.naming_prefix}mgmt"
-
-  segments {
-    network_type     = "vlan"
-    physical_network = var.network_provider
-    segmentation_id  = var.mgmt_vlan_id
-  }
 }
 
 resource "openstack_networking_subnet_v2" "mgmt" {
@@ -67,9 +61,7 @@ resource "openstack_networking_subnet_v2" "mgmt" {
 resource "openstack_networking_router_v2" "mgmt_svi" {
   name = "${var.naming_prefix}mgmt-svi"
 
-  value_specs = {
-    "flavor_id" = "svi"
-  }
+  value_specs = var.router_flavor != "" ? { "flavor_id" = var.router_flavor } : {}
 }
 
 resource "openstack_networking_router_interface_v2" "mgmt_svi" {
@@ -92,12 +84,6 @@ resource "openstack_networking_network_v2" "metallb" {
   for_each = local.metallb_map
 
   name = "${var.naming_prefix}${each.key}"
-
-  segments {
-    network_type     = "vlan"
-    physical_network = var.network_provider
-    segmentation_id  = each.value.vlan_id
-  }
 }
 
 resource "openstack_networking_subnet_v2" "metallb" {
@@ -114,9 +100,7 @@ resource "openstack_networking_router_v2" "metallb_svi" {
 
   name = "${var.naming_prefix}${each.key}-svi"
 
-  value_specs = {
-    "flavor_id" = "svi"
-  }
+  value_specs = var.router_flavor != "" ? { "flavor_id" = var.router_flavor } : {}
 }
 
 resource "openstack_networking_router_interface_v2" "metallb_svi" {

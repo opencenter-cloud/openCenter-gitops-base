@@ -185,7 +185,13 @@ variable "mgmt_prefix_length" {
 variable "network_provider" {
   type        = string
   default     = "datacentre"
-  description = "Physical network name for provider VLAN segments"
+  description = "Physical network name for provider VLAN segments (only used if provider network creation is needed)"
+}
+
+variable "router_flavor" {
+  type        = string
+  default     = ""
+  description = "Neutron router flavor (e.g. 'svi'). Empty = use default router flavor."
 }
 
 variable "metallb_networks" {
