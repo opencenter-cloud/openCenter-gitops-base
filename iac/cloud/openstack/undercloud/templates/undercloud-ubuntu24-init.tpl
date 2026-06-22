@@ -92,6 +92,29 @@ write_files:
                       changed = True
                   else:
                       new_vlans[iface_name] = iface_config
+
+                  # For the mgmt VLAN, suppress the default route by removing
+                  # gateway4/gateway6 and any default routes from the config.
+                  # This prevents netplan from installing a competing default
+                  # route on the mgmt interface.
+                  if vlan_id == MGMT_VLAN_ID:
+                      target = new_vlans.get(desired_name, new_vlans.get(iface_name))
+                      if target:
+                          if "gateway4" in target:
+                              del target["gateway4"]
+                              changed = True
+                          if "gateway6" in target:
+                              del target["gateway6"]
+                              changed = True
+                          # Remove default routes from routes list
+                          if "routes" in target:
+                              target["routes"] = [
+                                  r for r in target["routes"]
+                                  if r.get("to", "") not in ("default", "0.0.0.0/0", "::/0")
+                              ]
+                              if not target["routes"]:
+                                  del target["routes"]
+                              changed = True
               else:
                   # Keep interfaces that don't match any known VLAN ID
                   new_vlans[iface_name] = iface_config
