@@ -17,18 +17,18 @@ output "k8s_internal_ip" {
 output "master_nodes" {
   description = "Control plane instance objects with mgmt access IPs"
   value = [for i, node in openstack_compute_instance_v2.master : {
-    name      = node.name
-    id        = node.id
-    access_ip = openstack_networking_port_v2.subport_mgmt_master[i].all_fixed_ips[0]
+    name         = node.name
+    id           = node.id
+    access_ip_v4 = openstack_networking_port_v2.subport_mgmt_master[i].all_fixed_ips[0]
   }]
 }
 
 output "worker_nodes" {
   description = "Worker instance objects with mgmt access IPs"
   value = [for i, node in openstack_compute_instance_v2.worker : {
-    name      = node.name
-    id        = node.id
-    access_ip = openstack_networking_port_v2.subport_mgmt_worker[i].all_fixed_ips[0]
+    name         = node.name
+    id           = node.id
+    access_ip_v4 = openstack_networking_port_v2.subport_mgmt_worker[i].all_fixed_ips[0]
   }]
 }
 
