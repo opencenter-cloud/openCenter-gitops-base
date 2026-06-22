@@ -43,6 +43,10 @@ resource "openstack_networking_port_v2" "parent_master" {
   name       = "${var.naming_prefix}${var.node_master}${count.index}"
   network_id = local.hostnet_network_id
 
+  fixed_ip {
+    subnet_id = local.hostnet_subnet_id
+  }
+
   security_group_ids = [
     module.secgroup.controlplane_id,
     module.secgroup.master_id,
@@ -142,6 +146,10 @@ resource "openstack_networking_port_v2" "parent_worker" {
 
   name       = "${var.naming_prefix}${var.node_worker}${count.index}"
   network_id = local.hostnet_network_id
+
+  fixed_ip {
+    subnet_id = local.hostnet_subnet_id
+  }
 
   security_group_ids = [
     module.secgroup.controlplane_id,
