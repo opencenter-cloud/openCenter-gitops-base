@@ -37,7 +37,11 @@ oc_controlplane_nodes:
     ${master.name}:
       ansible_host: ${master.access_ip_v4}
       ansible_ip: ${master.access_ip_v4}
+%{ if master.ip != "" ~}
+      ip: ${master.ip}
+%{ else ~}
       ip: ${master.access_ip_v4}
+%{ endif ~}
       access_ip: ${master.access_ip_v4}
 %{endfor ~}
 
@@ -50,7 +54,11 @@ oc_worker_nodes:
     ${worker.name}:
       ansible_host: ${worker.access_ip_v4}
       ansible_ip: ${worker.access_ip_v4}
+%{ if worker.ip != "" ~}
+      ip: ${worker.ip}
+%{ else ~}
       ip: ${worker.access_ip_v4}
+%{ endif ~}
       access_ip: ${worker.access_ip_v4}
 %{endfor ~}
 
@@ -60,6 +68,9 @@ oc_windows_nodes:
 %{ for worker in windows_nodes ~}
     ${worker.name}:
       ansible_host: ${worker.access_ip_v4}
+%{ if worker.ip != "" ~}
+      ip: ${worker.ip}
+%{ endif ~}
 %{endfor ~}
   vars:
     ansible_user: Administrator
