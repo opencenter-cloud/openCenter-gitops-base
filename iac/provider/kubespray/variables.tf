@@ -208,6 +208,7 @@ variable "master_nodes" {
     id           = string
     name         = string
     access_ip_v4 = string
+    ip           = optional(string, "")
   }))
 }
 
@@ -269,6 +270,7 @@ variable "worker_nodes" {
     id           = string
     name         = string
     access_ip_v4 = string
+    ip           = optional(string, "")
   }))
 }
 
@@ -289,6 +291,7 @@ variable "windows_nodes" {
     id           = string
     name         = string
     access_ip_v4 = string
+    ip           = optional(string, "")
   }))
   default = []
 }
