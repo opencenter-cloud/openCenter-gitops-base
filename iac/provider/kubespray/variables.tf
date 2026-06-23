@@ -81,6 +81,12 @@ variable "kubelet_rotate_server_certificates" {
   default = false
 }
 
+variable "containerd_cri_extra_settings" {
+  type        = map(any)
+  default     = {}
+  description = "Optional containerd CRI plugin overrides passed through to kubespray group variables. The module does not set defaults — only user-provided keys are rendered. Example: set cdi_spec_dirs for containerd versions prior to 2.0 where CDI is not enabled by default."
+}
+
 variable "kubespray_version" {
   type    = string
   default = "v2.28.0"

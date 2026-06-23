@@ -164,4 +164,11 @@ write_files:
     owner: root:root
 
 runcmd:
-  - /usr/local/sbin/rewrite-netplan-vlans && reboot
+  - /usr/local/sbin/rewrite-netplan-vlans || true
+  - netplan generate
+
+power_state:
+  mode: reboot
+  timeout: 30
+  message: "Rebooting to activate rewritten netplan configuration"
+  condition: true

@@ -357,3 +357,17 @@ resource "null_resource" "copy_and_update_kubeconfig" {
 #   subnet_join = var.subnet_join
 # }
 
+resource "local_file" "containerd" {
+  count = length(coalesce(var.containerd_cri_extra_settings, {})) > 0 ? 1 : 0
+
+  content = templatefile("${path.module}/templates/containerd.tpl",
+    {
+      containerd_cri_extra_settings = coalesce(var.containerd_cri_extra_settings, {})
+    }
+  )
+
+  filename        = "./inventory/group_vars/all/containerd.yml"
+  file_permission = "0644"
+  depends_on      = [local_file.ansible_inventory]
+}
+
