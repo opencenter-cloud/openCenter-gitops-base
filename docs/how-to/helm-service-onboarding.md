@@ -12,6 +12,8 @@ tags: [helmrelease, overlays, fluxcd, onboarding]
 
 **Purpose:** For platform engineers and cluster operators, explains how to onboard a Helm-based service into a cluster overlay repo. Use this guide for services such as `cert-manager`, `harbor`, `longhorn`, `metallb`, `loki`, and other Helm-based platform services.
 
+This guide covers the **generic pattern** — the directory structure, source objects, Kustomization objects, and override mechanism that apply to every Helm-based service. For a complete **end-to-end walkthrough** that includes external infrastructure setup, secret encryption, and post-deployment validation, see [GitOps Service Deployment Guide (Velero example)](gitops-service-deployment-guide.md).
+
 ## When To Use This Guide
 
 Use this guide when the base service is deployed with:
@@ -339,10 +341,13 @@ For service-specific guidance, see [Cert-manager Configuration Guide](services/c
 
 For an existing Helm-based deployment, update the required cluster-overlay-managed content in the **cluster overlay repo**:
 
-- Update `services/<service>/helm-values/override-values.yaml` for Helm value changes
-- Update any existing resource manifest managed from the cluster overlay
-- Add or update any required Secret or supporting manifest
-- Commit and push the cluster repo change
+1. Create a feature branch
+2. Update `services/<service>/helm-values/override-values.yaml` for Helm value changes
+3. Update any existing resource manifest managed from the cluster overlay
+4. Add or update any required Secret or supporting manifest
+5. Encrypt any new or modified secrets with SOPS
+6. Commit, push, and raise a PR for review
+7. Once merged, FluxCD reconciles the changes automatically
 
 Do not edit the community or enterprise repo as part of a normal cluster change.
 
@@ -372,6 +377,7 @@ kubectl get deploy -n <namespace> <deployment-name> -o yaml
 ## Related Docs
 
 - [Service Deployment Patterns](service-deployment-patterns.md)
+- [GitOps Service Deployment Guide (Velero example)](gitops-service-deployment-guide.md) — end-to-end walkthrough including external infrastructure setup, SOPS encryption, and backup/restore validation
 - [OLM Service Onboarding](olm-service-onboarding.md)
 - [Operator CR Service Onboarding](operator-cr-service-onboarding.md)
 - [Configure Helm Values](configure-helm-values.md)
