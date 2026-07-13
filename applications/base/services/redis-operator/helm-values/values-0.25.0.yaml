@@ -1,0 +1,7 @@
+---
+# Redis Operator (OT Container Kit) - Base Values
+# Chart version: 0.25.0
+# AppVersion: 0.25.0
+
+certManager:
+  enabled: true
