@@ -1,0 +1,9 @@
+---
+# Milvus Operator Helm values
+# Chart version: 1.3.7
+# AppVersion: 1.3.7
+
+# Disable the bundled cert-manager subchart.
+# The platform provides cert-manager via applications/base/services/cert-manager/.
+cert-manager:
+  enabled: false

@@ -1,0 +1,16 @@
+# JupyterHub 4.4.0 (AppVersion 5.5.0) - Base values
+# Cluster-specific overrides (OIDC, storage, images) go in the override secret.
+
+hub:
+  config:
+    JupyterHub:
+      authenticator_class: nativeauthenticator.NativeAuthenticator
+    Authenticator:
+      admin_users: []
+
+singleuser:
+  defaultUrl: /lab
+
+scheduling:
+  userScheduler:
+    enabled: false

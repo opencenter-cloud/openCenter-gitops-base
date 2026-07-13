@@ -1,0 +1,17 @@
+# vLLM Production Stack v0.1.11
+# Minimal base values — override per-cluster as needed
+
+# Disable bundled monitoring — the platform provides kube-prometheus-stack
+kube-prometheus-stack:
+  enabled: false
+
+# Disable bundled prometheus-adapter — platform handles custom metrics
+prometheus-adapter:
+  enabled: false
+
+# Router configuration
+servingEngineSpec:
+  runtimeClassName: ""
+
+# Resource defaults are intentionally unset here.
+# Override per-cluster with model-specific GPU requests via vllm-values-override.

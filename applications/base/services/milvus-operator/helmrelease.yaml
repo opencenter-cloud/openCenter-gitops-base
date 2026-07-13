@@ -1,0 +1,37 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: milvus-operator
+  namespace: milvus-operator
+spec:
+  releaseName: milvus-operator
+  interval: 5m
+  timeout: 10m
+  driftDetection:
+    mode: enabled
+  install:
+    remediation:
+      retries: 3
+      remediateLastFailure: true
+  upgrade:
+    remediation:
+      retries: 0
+      remediateLastFailure: false
+  targetNamespace: milvus-operator
+  chart:
+    spec:
+      chart: milvus-operator
+      version: 1.3.7
+      sourceRef:
+        kind: HelmRepository
+        name: milvus-operator
+        namespace: milvus-operator
+  valuesFrom:
+    - kind: Secret
+      name: milvus-operator-values-base
+      valuesKey: values.yaml
+    - kind: Secret
+      name: milvus-operator-values-override
+      valuesKey: override.yaml
+      optional: true
