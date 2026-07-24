@@ -151,15 +151,37 @@ write_files:
     owner: root:root
   - content: |
       #!/bin/bash
-      # Remove default route from the mgmt VLAN interface when it becomes routable.
-      # This prevents the mgmt interface from advertising a default route that
-      # could conflict with the hostnet default route.
+      # Policy-based routing for the mgmt VLAN interface.
+      # Ensures return traffic for connections arriving on mgmt.X replies via
+      # the mgmt SVI gateway, preventing asymmetric routing when the node also
+      # has a default route on the hostnet interface.
       MGMT_IFACE="mgmt.${mgmt_vlan_id}"
+      MGMT_GATEWAY="${mgmt_svi_gateway}"
+      MGMT_SUBNET="${mgmt_subnet_cidr}"
+      TABLE_ID=${mgmt_vlan_id}
 
-      if [ "$$IFACE" = "$$MGMT_IFACE" ]; then
+      if [ "$$IFACE" = "$$MGMT_IFACE" ] && [ -n "$$MGMT_GATEWAY" ]; then
+        # Remove any default route that DHCP/netplan might have added on this iface
         ip route del default dev "$$IFACE" 2>/dev/null || true
+
+        # Get the IP assigned to the mgmt interface
+        MGMT_IP=$(ip -4 addr show dev "$$IFACE" | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+
+        if [ -n "$$MGMT_IP" ]; then
+          # Ensure routing table entry for the VLAN ID exists
+          grep -q "^$${TABLE_ID} mgmt" /etc/iproute2/rt_tables 2>/dev/null || \
+            echo "$${TABLE_ID} mgmt" >> /etc/iproute2/rt_tables
+
+          # Set up policy routing: traffic from mgmt IP uses mgmt table
+          ip rule del from "$$MGMT_IP" table "$$TABLE_ID" 2>/dev/null || true
+          ip rule add from "$$MGMT_IP" table "$$TABLE_ID" priority 100
+
+          # Populate the mgmt routing table
+          ip route replace "$$MGMT_SUBNET" dev "$$IFACE" table "$$TABLE_ID"
+          ip route replace default via "$$MGMT_GATEWAY" dev "$$IFACE" table "$$TABLE_ID"
+        fi
       fi
-    path: /etc/networkd-dispatcher/routable.d/50-remove-mgmt-default-route
+    path: /etc/networkd-dispatcher/routable.d/50-mgmt-policy-route
     permissions: '0755'
     owner: root:root
 

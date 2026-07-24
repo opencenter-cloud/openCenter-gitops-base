@@ -1,0 +1,14 @@
+---
+# Trunk Enable Configuration
+# Edit these for your cluster.
+
+# OpenStack cloud name (from clouds.yaml)
+os_cloud: uc-oc-stage
+
+# Trunk port IDs to enable before destroy.
+# Find these with: openstack --os-cloud uc-oc-stage network trunk list -f value -c ID | sed 's/^/  - /'
+trunk_ids:
+  - 466d714b-9fba-4061-92a3-9c120c3abc20
+  - 88a9b567-8f56-4c76-bf97-fcabd6542d73
+  - 95c1c006-d58e-47e0-9b68-89b1a7e3d56d
+  - ee551b72-20a9-4145-80eb-fe5b392c9538

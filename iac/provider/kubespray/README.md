@@ -36,3 +36,39 @@
 | kube_oidc_username_prefix | string | 'oidc:' | Prefix for OIDC usernames |
 | kube_oidc_groups_claim | string | "groups" | JWT claim for groups |
 | kube_oidc_groups_prefix | string | 'oidc:' | Prefix for OIDC groups |
+| containerd_cri_extra_settings | map(any) | {} | Optional containerd CRI plugin overrides passed through to kubespray group variables. Only user-provided keys are rendered. |
+
+## Containerd CRI Extra Settings
+
+The `containerd_cri_extra_settings` variable is **optional**. When omitted (or set to `{}`), no additional containerd CRI configuration is rendered and existing behavior is unchanged.
+
+> **Note:** CDI (Container Device Interface) is enabled by default in containerd 2.0+. The `enable_cdi` key is only needed for containerd versions prior to 2.0. For containerd 2.0+ clusters, you typically only need to set `cdi_spec_dirs` if you require non-default CDI spec directories.
+
+### Usage Example
+
+```hcl
+module "kubespray-cluster" {
+  source = "../../iac/provider/kubespray"
+
+  # ... other variables ...
+
+  containerd_cri_extra_settings = {
+    cdi_spec_dirs = ["/etc/cdi", "/var/run/cdi"]
+  }
+}
+```
+
+To also enable CDI on containerd versions prior to 2.0:
+
+```hcl
+module "kubespray-cluster" {
+  source = "../../iac/provider/kubespray"
+
+  # ... other variables ...
+
+  containerd_cri_extra_settings = {
+    enable_cdi    = true
+    cdi_spec_dirs = ["/etc/cdi", "/var/run/cdi"]
+  }
+}
+```

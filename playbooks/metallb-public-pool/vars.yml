@@ -1,0 +1,39 @@
+---
+# MetalLB Public Pool VLAN Configuration
+# Override these variables per cluster as needed.
+
+# OpenStack cloud name (from clouds.yaml)
+os_cloud: uc-oc-stage
+
+# VLAN ID for the MetalLB public-pool network
+metallb_vlan_id: 105
+
+# Subnet CIDR allocated from PUBLIC-IP-POOL
+metallb_subnet: "72.4.119.16/28"
+
+# SVI gateway IP (first usable in the subnet, provided by the SVI router)
+metallb_gateway: "72.4.119.17"
+
+# Routing table ID and name (uses VLAN ID by default)
+metallb_table_id: "{{ metallb_vlan_id }}"
+metallb_table_name: "metal"
+
+# Interface name template
+metallb_iface: "metal.{{ metallb_vlan_id }}"
+
+# OpenStack port names for each node's MetalLB sub-port.
+# Format: <naming_prefix><node_role><index>-<pool_name>
+# These are created by the undercloud Terraform module.
+node_port_names:
+  - sandbox-cp0-public-pool
+  - sandbox-cp1-public-pool
+  - sandbox-cp2-public-pool
+  - sandbox-wn0-public-pool
+
+# Mapping of ansible inventory hostname → OpenStack port name.
+# Used to look up the correct MAC address per node.
+host_port_map:
+  sandbox-cp0: sandbox-cp0-public-pool
+  sandbox-cp1: sandbox-cp1-public-pool
+  sandbox-cp2: sandbox-cp2-public-pool
+  sandbox-wn0: sandbox-wn0-public-pool

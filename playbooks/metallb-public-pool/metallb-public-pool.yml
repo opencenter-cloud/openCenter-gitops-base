@@ -1,0 +1,265 @@
+---
+# MetalLB Public Pool VLAN Setup
+#
+# Configures the MetalLB public-pool VLAN interface and policy-based routing
+# on undercloud nodes. This fills the gap left by cloud-init when the MetalLB
+# OpenStack ports have no fixed_ips assigned.
+#
+# Tags:
+#   openstack  - Port security: allowed_address_pairs + MAC discovery
+#   interface  - Create VLAN sub-interface, set MAC and MTU
+#   routing    - Policy-based routing (table, routes, ip rules)
+#   persist    - Write netplan + networkd-dispatcher for reboot survival
+#   destroy    - Tear down everything (only runs with --tags destroy)
+#
+# Usage:
+#   ansible-playbook -i <inventory> playbooks/metallb-public-pool/metallb-public-pool.yml
+#   ansible-playbook -i <inventory> playbooks/metallb-public-pool/metallb-public-pool.yml --tags openstack
+#   ansible-playbook -i <inventory> playbooks/metallb-public-pool/metallb-public-pool.yml --tags interface,routing
+#   ansible-playbook -i <inventory> playbooks/metallb-public-pool/metallb-public-pool.yml --tags destroy
+#   ansible-playbook -i <inventory> playbooks/metallb-public-pool/metallb-public-pool.yml -e @path/to/custom-vars.yml
+#
+
+- name: Configure OpenStack port security for MetalLB
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tags: [openstack]
+  vars_files:
+    - vars.yml
+
+  tasks:
+    - name: Set allowed_address_pairs on each MetalLB port
+      ansible.builtin.command:
+        cmd: >-
+          openstack --os-cloud {{ os_cloud }} port set {{ item }}
+          --allowed-address ip-address={{ metallb_subnet }}
+      loop: "{{ node_port_names }}"
+      register: port_set_result
+      changed_when: port_set_result.rc == 0
+      failed_when:
+        - port_set_result.rc != 0
+        - "'duplicate' not in port_set_result.stderr"
+
+    - name: Gather port MACs for all MetalLB ports
+      ansible.builtin.command:
+        cmd: >-
+          openstack --os-cloud {{ os_cloud }} port show {{ item }}
+          -f value -c mac_address
+      loop: "{{ node_port_names }}"
+      register: port_macs
+      changed_when: false
+
+    - name: Build node-to-MAC mapping
+      ansible.builtin.set_fact:
+        metallb_port_macs: >-
+          {{
+            dict(
+              node_port_names | zip(port_macs.results | map(attribute='stdout') | list)
+            )
+          }}
+
+    - name: Display port MACs
+      ansible.builtin.debug:
+        var: metallb_port_macs
+
+
+- name: Configure MetalLB VLAN interface and routing on nodes
+  hosts: oc_controlplane_nodes:oc_worker_nodes
+  become: true
+  vars_files:
+    - vars.yml
+
+  tasks:
+    # ─── Discovery ─────────────────────────────────────────────────────────
+    - name: Find trunk parent interface (parent of mgmt VLAN)
+      ansible.builtin.shell:
+        cmd: "cat /sys/class/net/mgmt.109/link 2>/dev/null || ip -o link show mgmt.109 | sed -n 's/.*mgmt\\.109@\\([^:]*\\):.*/\\1/p'"
+      register: trunk_parent
+      changed_when: false
+      tags: [interface, routing, persist, destroy]
+
+    - name: Set trunk parent fact
+      ansible.builtin.set_fact:
+        trunk_iface: "{{ trunk_parent.stdout | trim }}"
+      tags: [interface, routing, persist, destroy]
+
+    - name: Verify trunk parent was found
+      ansible.builtin.assert:
+        that: trunk_iface | length > 0
+        fail_msg: "Could not determine trunk parent interface. Check that mgmt.109 exists."
+      tags: [interface, routing, persist, destroy]
+
+    - name: Get expected MAC from localhost facts
+      ansible.builtin.set_fact:
+        expected_mac: "{{ hostvars['localhost']['metallb_port_macs'][host_port_map[inventory_hostname]] }}"
+      tags: [interface, persist]
+
+    - name: Get trunk parent MTU
+      ansible.builtin.command:
+        cmd: "cat /sys/class/net/{{ trunk_iface }}/mtu"
+      register: parent_mtu
+      changed_when: false
+      tags: [interface, persist]
+
+    # ─── Interface ─────────────────────────────────────────────────────────
+    - name: Check if metal interface exists
+      ansible.builtin.command:
+        cmd: "ip link show {{ metallb_iface }}"
+      register: iface_check
+      failed_when: false
+      changed_when: false
+      tags: [interface]
+
+    - name: Create VLAN interface
+      ansible.builtin.command:
+        cmd: "ip link add link {{ trunk_iface }} name {{ metallb_iface }} type vlan id {{ metallb_vlan_id }}"
+      when: iface_check.rc != 0
+      tags: [interface]
+
+    - name: Get current MAC on metal interface
+      ansible.builtin.command:
+        cmd: "cat /sys/class/net/{{ metallb_iface }}/address"
+      register: current_mac
+      changed_when: false
+      failed_when: false
+      tags: [interface]
+
+    - name: Set MAC address on metal interface
+      ansible.builtin.shell: |
+        ip link set {{ metallb_iface }} down
+        ip link set {{ metallb_iface }} address {{ expected_mac }}
+        ip link set {{ metallb_iface }} up
+      when: current_mac.stdout | default('') != expected_mac
+      tags: [interface]
+
+    - name: Set MTU on metal interface
+      ansible.builtin.command:
+        cmd: "ip link set {{ metallb_iface }} mtu {{ parent_mtu.stdout | trim }}"
+      changed_when: true
+      tags: [interface]
+
+    - name: Bring interface up
+      ansible.builtin.command:
+        cmd: "ip link set {{ metallb_iface }} up"
+      changed_when: false
+      tags: [interface]
+
+    # ─── Routing ───────────────────────────────────────────────────────────
+    - name: Ensure routing table entry in rt_tables
+      ansible.builtin.lineinfile:
+        path: /etc/iproute2/rt_tables
+        regexp: "^{{ metallb_table_id }}\\s"
+        line: "{{ metallb_table_id }} {{ metallb_table_name }}"
+        state: present
+      tags: [routing]
+
+    - name: Add subnet route in metal table
+      ansible.builtin.command:
+        cmd: "ip route replace {{ metallb_subnet }} dev {{ metallb_iface }} table {{ metallb_table_id }}"
+      changed_when: true
+      tags: [routing]
+
+    - name: Add default route via SVI gateway in metal table
+      ansible.builtin.command:
+        cmd: "ip route replace default via {{ metallb_gateway }} dev {{ metallb_iface }} table {{ metallb_table_id }}"
+      changed_when: true
+      tags: [routing]
+
+    - name: Add ip rule for source-based routing
+      ansible.builtin.shell: |
+        if ! ip rule show | grep -q "from {{ metallb_subnet }} lookup {{ metallb_table_name }}"; then
+          ip rule add from {{ metallb_subnet }} table {{ metallb_table_id }}
+          echo changed
+        fi
+      register: rule_result
+      changed_when: "'changed' in rule_result.stdout"
+      tags: [routing]
+
+    # ─── Persist ───────────────────────────────────────────────────────────
+    - name: Write netplan config for metal VLAN
+      ansible.builtin.copy:
+        dest: /etc/netplan/60-metal-{{ metallb_vlan_id }}.yaml
+        mode: "0600"
+        owner: root
+        group: root
+        content: |
+          network:
+            version: 2
+            vlans:
+              {{ metallb_iface }}:
+                id: {{ metallb_vlan_id }}
+                link: {{ trunk_iface }}
+                macaddress: {{ expected_mac }}
+                mtu: {{ parent_mtu.stdout | trim }}
+                dhcp4: false
+                dhcp6: false
+      tags: [persist]
+
+    - name: Deploy networkd-dispatcher policy routing script
+      ansible.builtin.copy:
+        dest: /etc/networkd-dispatcher/routable.d/20-metal-policy-routing
+        mode: "0755"
+        owner: root
+        group: root
+        content: |
+          #!/bin/bash
+          # Policy-based routing for MetalLB public-pool interface.
+          METAL_IFACE="{{ metallb_iface }}"
+          METAL_GATEWAY="{{ metallb_gateway }}"
+          METAL_SUBNET="{{ metallb_subnet }}"
+          TABLE_ID={{ metallb_table_id }}
+          TABLE_NAME="{{ metallb_table_name }}"
+
+          if [ "$IFACE" = "$METAL_IFACE" ]; then
+            grep -q "^${TABLE_ID} ${TABLE_NAME}" /etc/iproute2/rt_tables 2>/dev/null || \
+              echo "${TABLE_ID} ${TABLE_NAME}" >> /etc/iproute2/rt_tables
+
+            ip route replace ${METAL_SUBNET} dev ${METAL_IFACE} table ${TABLE_ID}
+            ip route replace default via ${METAL_GATEWAY} dev ${METAL_IFACE} table ${TABLE_ID}
+
+            if ! ip rule show | grep -q "from ${METAL_SUBNET} lookup ${TABLE_NAME}"; then
+              ip rule add from ${METAL_SUBNET} table ${TABLE_ID}
+            fi
+          fi
+      tags: [persist]
+
+    # ─── Destroy ───────────────────────────────────────────────────────────
+    - name: Remove ip rules
+      ansible.builtin.shell: |
+        while ip rule show | grep -q "from {{ metallb_subnet }} lookup"; do
+          ip rule del from {{ metallb_subnet }} table {{ metallb_table_id }}
+        done
+      failed_when: false
+      tags: [never, destroy]
+
+    - name: Flush metal routing table
+      ansible.builtin.command:
+        cmd: "ip route flush table {{ metallb_table_id }}"
+      failed_when: false
+      tags: [never, destroy]
+
+    - name: Remove metal interface
+      ansible.builtin.command:
+        cmd: "ip link del {{ metallb_iface }}"
+      failed_when: false
+      tags: [never, destroy]
+
+    - name: Remove netplan config
+      ansible.builtin.file:
+        path: /etc/netplan/60-metal-{{ metallb_vlan_id }}.yaml
+        state: absent
+      tags: [never, destroy]
+
+    - name: Remove networkd-dispatcher script
+      ansible.builtin.file:
+        path: /etc/networkd-dispatcher/routable.d/20-metal-policy-routing
+        state: absent
+      tags: [never, destroy]
+
+    - name: Remove routing table entry from rt_tables
+      ansible.builtin.lineinfile:
+        path: /etc/iproute2/rt_tables
+        regexp: "^{{ metallb_table_id }}\\s"
+        state: absent
+      tags: [never, destroy]
