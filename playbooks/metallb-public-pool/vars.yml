@@ -29,6 +29,7 @@ node_port_names:
   - sandbox-cp1-public-pool
   - sandbox-cp2-public-pool
   - sandbox-wn0-public-pool
+  - sandbox-wn1-public-pool
 
 # Mapping of ansible inventory hostname → OpenStack port name.
 # Used to look up the correct MAC address per node.
@@ -37,3 +38,4 @@ host_port_map:
   sandbox-cp1: sandbox-cp1-public-pool
   sandbox-cp2: sandbox-cp2-public-pool
   sandbox-wn0: sandbox-wn0-public-pool
+  sandbox-wn1: sandbox-wn1-public-pool

@@ -24,7 +24,7 @@
   hosts: localhost
   connection: local
   gather_facts: false
-  tags: [openstack]
+  tags: [openstack, interface, persist]
   vars_files:
     - vars.yml
 
@@ -196,32 +196,76 @@
                 dhcp6: false
       tags: [persist]
 
-    - name: Deploy networkd-dispatcher policy routing script
+    - name: Deploy policy routing script
       ansible.builtin.copy:
-        dest: /etc/networkd-dispatcher/routable.d/20-metal-policy-routing
+        dest: /usr/local/sbin/metal-policy-routing
         mode: "0755"
         owner: root
         group: root
         content: |
           #!/bin/bash
           # Policy-based routing for MetalLB public-pool interface.
+          set -e
           METAL_IFACE="{{ metallb_iface }}"
           METAL_GATEWAY="{{ metallb_gateway }}"
           METAL_SUBNET="{{ metallb_subnet }}"
           TABLE_ID={{ metallb_table_id }}
           TABLE_NAME="{{ metallb_table_name }}"
 
-          if [ "$IFACE" = "$METAL_IFACE" ]; then
-            grep -q "^${TABLE_ID} ${TABLE_NAME}" /etc/iproute2/rt_tables 2>/dev/null || \
-              echo "${TABLE_ID} ${TABLE_NAME}" >> /etc/iproute2/rt_tables
-
-            ip route replace ${METAL_SUBNET} dev ${METAL_IFACE} table ${TABLE_ID}
-            ip route replace default via ${METAL_GATEWAY} dev ${METAL_IFACE} table ${TABLE_ID}
-
-            if ! ip rule show | grep -q "from ${METAL_SUBNET} lookup ${TABLE_NAME}"; then
-              ip rule add from ${METAL_SUBNET} table ${TABLE_ID}
+          # Wait for interface to be up
+          for i in $(seq 1 30); do
+            if ip link show "$METAL_IFACE" 2>/dev/null | grep -q "state UP"; then
+              break
             fi
+            sleep 1
+          done
+
+          grep -q "^${TABLE_ID} ${TABLE_NAME}" /etc/iproute2/rt_tables 2>/dev/null || \
+            echo "${TABLE_ID} ${TABLE_NAME}" >> /etc/iproute2/rt_tables
+
+          ip route replace ${METAL_SUBNET} dev ${METAL_IFACE} table ${TABLE_ID}
+          ip route replace default via ${METAL_GATEWAY} dev ${METAL_IFACE} table ${TABLE_ID}
+
+          if ! ip rule show | grep -q "from ${METAL_SUBNET} lookup ${TABLE_NAME}"; then
+            ip rule add from ${METAL_SUBNET} table ${TABLE_ID}
           fi
+      tags: [persist]
+
+    - name: Deploy systemd service for boot-time routing
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/metal-policy-routing.service
+        mode: "0644"
+        owner: root
+        group: root
+        content: |
+          [Unit]
+          Description=MetalLB public-pool policy routing
+          After=network-online.target
+          Wants=network-online.target
+
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/local/sbin/metal-policy-routing
+          RemainAfterExit=yes
+
+          [Install]
+          WantedBy=multi-user.target
+      tags: [persist]
+
+    - name: Enable metal-policy-routing service
+      ansible.builtin.systemd:
+        name: metal-policy-routing
+        enabled: true
+        daemon_reload: true
+      tags: [persist]
+
+    - name: Remove old dispatcher scripts
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/networkd-dispatcher/routable.d/20-metal-policy-routing
+        - /etc/networkd-dispatcher/carrier.d/20-metal-policy-routing
       tags: [persist]
 
     # ─── Destroy ───────────────────────────────────────────────────────────
@@ -251,10 +295,33 @@
         state: absent
       tags: [never, destroy]
 
-    - name: Remove networkd-dispatcher script
+    - name: Disable and remove systemd service
+      ansible.builtin.systemd:
+        name: metal-policy-routing
+        enabled: false
+        state: stopped
+      failed_when: false
+      tags: [never, destroy]
+
+    - name: Remove systemd service file
       ansible.builtin.file:
-        path: /etc/networkd-dispatcher/routable.d/20-metal-policy-routing
+        path: /etc/systemd/system/metal-policy-routing.service
         state: absent
+      tags: [never, destroy]
+
+    - name: Remove policy routing script
+      ansible.builtin.file:
+        path: /usr/local/sbin/metal-policy-routing
+        state: absent
+      tags: [never, destroy]
+
+    - name: Remove dispatcher scripts
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/networkd-dispatcher/routable.d/20-metal-policy-routing
+        - /etc/networkd-dispatcher/carrier.d/20-metal-policy-routing
       tags: [never, destroy]
 
     - name: Remove routing table entry from rt_tables
