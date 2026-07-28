@@ -1,0 +1,37 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kured
+  namespace: kured-system
+spec:
+  releaseName: kured
+  interval: 5m
+  timeout: 10m
+  driftDetection:
+    mode: enabled
+  install:
+    remediation:
+      retries: 3
+      remediateLastFailure: true
+  upgrade:
+    remediation:
+      retries: 0
+      remediateLastFailure: false
+  targetNamespace: kured-system
+  chart:
+    spec:
+      chart: kured
+      version: 6.1.0
+      sourceRef:
+        kind: HelmRepository
+        name: kured
+        namespace: kured-system
+  valuesFrom:
+    - kind: Secret
+      name: kured-values-base
+      valuesKey: values.yaml
+    - kind: Secret
+      name: kured-values-override
+      valuesKey: override.yaml
+      optional: true
