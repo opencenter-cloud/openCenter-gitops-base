@@ -6,17 +6,20 @@
 os_cloud: uc-oc-stage
 
 # VLAN ID for the MetalLB public-pool network
-metallb_vlan_id: 105
+metallb_vlan_id: 106
 
 # Subnet CIDR allocated from PUBLIC-IP-POOL
-metallb_subnet: "72.4.119.16/28"
+metallb_subnet: "72.4.119.112/28"
 
 # SVI gateway IP (first usable in the subnet, provided by the SVI router)
-metallb_gateway: "72.4.119.17"
+metallb_gateway: "72.4.119.113"
 
 # Routing table ID and name (uses VLAN ID by default)
 metallb_table_id: "{{ metallb_vlan_id }}"
 metallb_table_name: "metal"
+
+# Management VLAN ID (used to discover the trunk parent interface)
+mgmt_vlan_id: 108
 
 # Interface name template
 metallb_iface: "metal.{{ metallb_vlan_id }}"
@@ -25,17 +28,15 @@ metallb_iface: "metal.{{ metallb_vlan_id }}"
 # Format: <naming_prefix><node_role><index>-<pool_name>
 # These are created by the undercloud Terraform module.
 node_port_names:
-  - sandbox-cp0-public-pool
-  - sandbox-cp1-public-pool
-  - sandbox-cp2-public-pool
-  - sandbox-wn0-public-pool
-  - sandbox-wn1-public-pool
+  - dirtbag-cp0-public-pool
+  - dirtbag-cp1-public-pool
+  - dirtbag-cp2-public-pool
+  - dirtbag-wn0-public-pool
 
 # Mapping of ansible inventory hostname → OpenStack port name.
 # Used to look up the correct MAC address per node.
 host_port_map:
-  sandbox-cp0: sandbox-cp0-public-pool
-  sandbox-cp1: sandbox-cp1-public-pool
-  sandbox-cp2: sandbox-cp2-public-pool
-  sandbox-wn0: sandbox-wn0-public-pool
-  sandbox-wn1: sandbox-wn1-public-pool
+  dirtbag-cp0: dirtbag-cp0-public-pool
+  dirtbag-cp1: dirtbag-cp1-public-pool
+  dirtbag-cp2: dirtbag-cp2-public-pool
+  dirtbag-wn0: dirtbag-wn0-public-pool

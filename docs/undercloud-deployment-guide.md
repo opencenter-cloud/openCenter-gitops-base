@@ -164,9 +164,55 @@ After `terraform apply` completes:
 
 1. **Run kubespray** — Deploys Kubernetes on the provisioned nodes
 2. **Bootstrap Flux** — `flux bootstrap git` to set up GitOps
-3. **Run MetalLB playbook** — `playbooks/metallb-public-pool/metallb-public-pool.yml` to configure the VLAN interface, MAC, and routing on all nodes
+3. **Run MetalLB playbook** — `playbooks/metallb-public-pool/metallb-public-pool.yml` to configure the VLAN interface, MAC, and routing on all nodes. Remember to set `playbooks/metallb-public-pool/vars.yml` the variables accordingly.
 4. **Restart MetalLB speakers** - Restart the metallb speaker daemonset to force it to re-arp the new metallb interface.
 5. **Deploy applications** — Flux reconciles MetalLB, gateway, and services from the overlay
+
+### MetalLB Playbook
+
+We need to create a file to hold the variable configuration for the specific cluster we want to configure.
+
+metallb_vlan_id: Grab value from main.tf
+metallb_subnet: openstack --os-cloud uc-oc-stage subnet show dirtbag-public-pool
+metallb_gateway: openstack --os-cloud uc-oc-stage router show <CLUSTER>-public-pool-svi -c interfaces_info
+
+
+# Routing table ID and name (uses VLAN ID by default)
+metallb_table_id: "{{ metallb_vlan_id }}"
+metallb_table_name: "metal"
+
+# Interface name template
+metallb_iface: "metal.{{ metallb_vlan_id }}"
+
+# OpenStack port names for each node's MetalLB sub-port.
+# Format: <naming_prefix><node_role><index>-<pool_name>
+# These are created by the undercloud Terraform module.
+node_port_names:
+  - <CLUSTER>-cp0-public-pool
+  - <CLUSTER>-cp1-public-pool
+  - <CLUSTER>-cp2-public-pool
+  - <CLUSTER>-wn0-public-pool
+  - <CLUSTER>-wn1-public-pool
+
+# Mapping of ansible inventory hostname → OpenStack port name.
+# Used to look up the correct MAC address per node.
+host_port_map:
+  <CLUSTER>-cp0: <CLUSTER>-cp0-public-pool
+  <CLUSTER>-cp1: <CLUSTER>-cp1-public-pool
+  <CLUSTER>-cp2: <CLUSTER>-cp2-public-pool
+  <CLUSTER>-wn0: <CLUSTER>-wn0-public-pool
+  <CLUSTER>-wn1: <CLUSTER>-wn1-public-pool
+
+```bash
+ansible-playbook playbooks/metallb-public-pool/metallb-public-pool.yml \
+  -e @playbooks/metallb-public-pool/vars.yml
+```
+
+### Restart MetalLB Speakers
+
+```
+
+```
 
 ## Troubleshooting
 

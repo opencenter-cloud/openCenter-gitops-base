@@ -74,7 +74,7 @@
     # ─── Discovery ─────────────────────────────────────────────────────────
     - name: Find trunk parent interface (parent of mgmt VLAN)
       ansible.builtin.shell:
-        cmd: "cat /sys/class/net/mgmt.109/link 2>/dev/null || ip -o link show mgmt.109 | sed -n 's/.*mgmt\\.109@\\([^:]*\\):.*/\\1/p'"
+        cmd: "cat /sys/class/net/mgmt.{{ mgmt_vlan_id }}/link 2>/dev/null || ip -o link show mgmt.{{ mgmt_vlan_id }} | sed -n 's/.*mgmt\\.{{ mgmt_vlan_id }}@\\([^:]*\\):.*/\\1/p'"
       register: trunk_parent
       changed_when: false
       tags: [interface, routing, persist, destroy]
@@ -87,7 +87,7 @@
     - name: Verify trunk parent was found
       ansible.builtin.assert:
         that: trunk_iface | length > 0
-        fail_msg: "Could not determine trunk parent interface. Check that mgmt.109 exists."
+        fail_msg: "Could not determine trunk parent interface. Check that mgmt.{{ mgmt_vlan_id }} exists."
       tags: [interface, routing, persist, destroy]
 
     - name: Get expected MAC from localhost facts
