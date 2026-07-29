@@ -6,16 +6,19 @@
 # OpenStack ports have no fixed_ips assigned.
 #
 # Tags:
-#   openstack  - Port security: allowed_address_pairs + MAC discovery
-#   interface  - Create VLAN sub-interface, set MAC and MTU
-#   routing    - Policy-based routing (table, routes, ip rules)
-#   persist    - Write netplan + networkd-dispatcher for reboot survival
-#   destroy    - Tear down everything (only runs with --tags destroy)
+#   openstack       - Port security: allowed_address_pairs + MAC discovery
+#   interface       - Create VLAN sub-interface, set MAC and MTU
+#   routing         - Policy-based routing (table, routes, ip rules)
+#   persist         - Write netplan + systemd service for reboot/restart survival
+#   persist-routing - Deploy only the routing script, systemd service, and drop-in
+#                     (does not require OpenStack credentials or MAC discovery)
+#   destroy         - Tear down everything (only runs with --tags destroy)
 #
 # Usage:
 #   ansible-playbook -i <inventory> playbooks/metallb-public-pool/metallb-public-pool.yml
 #   ansible-playbook -i <inventory> playbooks/metallb-public-pool/metallb-public-pool.yml --tags openstack
 #   ansible-playbook -i <inventory> playbooks/metallb-public-pool/metallb-public-pool.yml --tags interface,routing
+#   ansible-playbook -i <inventory> playbooks/metallb-public-pool/metallb-public-pool.yml --tags persist-routing
 #   ansible-playbook -i <inventory> playbooks/metallb-public-pool/metallb-public-pool.yml --tags destroy
 #   ansible-playbook -i <inventory> playbooks/metallb-public-pool/metallb-public-pool.yml -e @path/to/custom-vars.yml
 #
@@ -77,18 +80,18 @@
         cmd: "cat /sys/class/net/mgmt.{{ mgmt_vlan_id }}/link 2>/dev/null || ip -o link show mgmt.{{ mgmt_vlan_id }} | sed -n 's/.*mgmt\\.{{ mgmt_vlan_id }}@\\([^:]*\\):.*/\\1/p'"
       register: trunk_parent
       changed_when: false
-      tags: [interface, routing, persist, destroy]
+      tags: [interface, routing, persist, persist-routing, destroy]
 
     - name: Set trunk parent fact
       ansible.builtin.set_fact:
         trunk_iface: "{{ trunk_parent.stdout | trim }}"
-      tags: [interface, routing, persist, destroy]
+      tags: [interface, routing, persist, persist-routing, destroy]
 
     - name: Verify trunk parent was found
       ansible.builtin.assert:
         that: trunk_iface | length > 0
         fail_msg: "Could not determine trunk parent interface. Check that mgmt.{{ mgmt_vlan_id }} exists."
-      tags: [interface, routing, persist, destroy]
+      tags: [interface, routing, persist, persist-routing, destroy]
 
     - name: Get expected MAC from localhost facts
       ansible.builtin.set_fact:
@@ -220,6 +223,16 @@
             sleep 1
           done
 
+          # Wait for systemd-networkd to finish configuring the interface.
+          # networkd reports "started" before it completes async interface setup,
+          # which can flush routes applied too early.
+          for i in $(seq 1 10); do
+            if networkctl status "$METAL_IFACE" 2>/dev/null | grep -q "State:.*configured"; then
+              break
+            fi
+            sleep 1
+          done
+
           grep -q "^${TABLE_ID} ${TABLE_NAME}" /etc/iproute2/rt_tables 2>/dev/null || \
             echo "${TABLE_ID} ${TABLE_NAME}" >> /etc/iproute2/rt_tables
 
@@ -229,7 +242,7 @@
           if ! ip rule show | grep -q "from ${METAL_SUBNET} lookup ${TABLE_NAME}"; then
             ip rule add from ${METAL_SUBNET} table ${TABLE_ID}
           fi
-      tags: [persist]
+      tags: [persist, persist-routing]
 
     - name: Deploy systemd service for boot-time routing
       ansible.builtin.copy:
@@ -240,8 +253,9 @@
         content: |
           [Unit]
           Description=MetalLB public-pool policy routing
-          After=network-online.target
+          After=systemd-networkd.service network-online.target
           Wants=network-online.target
+          BindsTo=systemd-networkd.service
 
           [Service]
           Type=oneshot
@@ -250,14 +264,34 @@
 
           [Install]
           WantedBy=multi-user.target
-      tags: [persist]
+      tags: [persist, persist-routing]
+
+    - name: Ensure networkd drop-in directory exists
+      ansible.builtin.file:
+        path: /etc/systemd/system/systemd-networkd.service.d
+        state: directory
+        mode: "0755"
+        owner: root
+        group: root
+      tags: [persist, persist-routing]
+
+    - name: Deploy networkd drop-in to pull in metal-policy-routing on restart
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/systemd-networkd.service.d/metal-policy-routing.conf
+        mode: "0644"
+        owner: root
+        group: root
+        content: |
+          [Unit]
+          Wants=metal-policy-routing.service
+      tags: [persist, persist-routing]
 
     - name: Enable metal-policy-routing service
       ansible.builtin.systemd:
         name: metal-policy-routing
         enabled: true
         daemon_reload: true
-      tags: [persist]
+      tags: [persist, persist-routing]
 
     - name: Remove old dispatcher scripts
       ansible.builtin.file:
@@ -266,7 +300,7 @@
       loop:
         - /etc/networkd-dispatcher/routable.d/20-metal-policy-routing
         - /etc/networkd-dispatcher/carrier.d/20-metal-policy-routing
-      tags: [persist]
+      tags: [persist, persist-routing]
 
     # ─── Destroy ───────────────────────────────────────────────────────────
     - name: Remove ip rules
@@ -306,6 +340,12 @@
     - name: Remove systemd service file
       ansible.builtin.file:
         path: /etc/systemd/system/metal-policy-routing.service
+        state: absent
+      tags: [never, destroy]
+
+    - name: Remove networkd drop-in
+      ansible.builtin.file:
+        path: /etc/systemd/system/systemd-networkd.service.d/metal-policy-routing.conf
         state: absent
       tags: [never, destroy]
 
