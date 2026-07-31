@@ -1,82 +1,96 @@
 locals {
   # this will be the user's name and the DNS zone prefix
-  cluster_name                            = "sandbox"
+  cluster_name = "sandbox"
   # Prefix to add to Openstack resource names
-  naming_prefix                           = "${local.cluster_name}-"
-  openstack_auth_url                      = "https://keystone.staging.undercloud.rackspace.net/v3"
-  openstack_insecure                      = false
-  openstack_region                        = "iad3-staging"
-  availability_zone                       = "nova"
-  openstack_user_name                     = ""
-  openstack_user_password                 = ""
-  application_credential_id               = var.os_application_credential_id
-  application_credential_secret           = var.os_application_credential_secret
-  openstack_project_domain_name           = "sandbox"
-  openstack_user_domain_name              = "sandbox"
-  openstack_tenant_name                   = "opencenter"
-  floatingip_pool                         = "PUBLICNET"
-  router_external_network_id              = "b420e863-7d26-4c87-8974-76f6c8750640"
+  naming_prefix                 = "${local.cluster_name}-"
+  openstack_auth_url            = "https://keystone.staging.undercloud.rackspace.net/v3"
+  openstack_insecure            = false
+  openstack_region              = "iad3-staging"
+  availability_zone             = "nova"
+  openstack_user_name           = ""
+  openstack_user_password       = ""
+  application_credential_id     = var.os_application_credential_id
+  application_credential_secret = var.os_application_credential_secret
+  openstack_project_domain_name = "sandbox"
+  openstack_user_domain_name    = "sandbox"
+  openstack_tenant_name         = "opencenter"
+  floatingip_pool               = "PUBLICNET"
+  router_external_network_id    = "b420e863-7d26-4c87-8974-76f6c8750640"
   # DNS servers to configure on the nodes
-  dns_nameservers                         = ["8.8.8.8", "8.8.4.4"]
-  ntp_servers                             = ["time.iad3.rackspace.com", "time2.iad3.rackspace.com"]
-  image_id                                = "c189b216-9fa0-405c-a4ba-39c592e98716"
-  k8s_api_port                            = 443
-  k8s_api_port_acl                        = ["0.0.0.0/0"]
-  worker_count                            = 2
+  dns_nameservers  = ["8.8.8.8", "8.8.4.4"]
+  ntp_servers      = ["time.iad3.rackspace.com", "time2.iad3.rackspace.com"]
+  image_id         = "c189b216-9fa0-405c-a4ba-39c592e98716"
+  k8s_api_port     = 443
+  k8s_api_port_acl = ["0.0.0.0/0"]
+  worker_count     = 2
   # Enter 1 or 3 masters.
-  master_count                            = 3
-  ssh_user                                = "ubuntu"
+  master_count = 3
+  ssh_user     = "ubuntu"
   # these are the ssh public keys that will be able to connect to the cluster's bastion node
-  ssh_authorized_keys                     = ["ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJZzRbKOJSUa5h4GzGE3zr6g6jEOUBH6+Xlu9sH7CASp 000001-rax-ai-sandbox-dfw3"]
-  node_worker                             = "wn"
-  node_master                             = "cp"
+  ssh_authorized_keys = ["ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJZzRbKOJSUa5h4GzGE3zr6g6jEOUBH6+Xlu9sH7CASp 000001-rax-ai-sandbox-dfw3"]
+  node_worker         = "wn"
+  node_master         = "cp"
   #FLEX Flavor Settings ==========================
-  flavor_bastion                          = "gp2.small"
-  flavor_master                           = "gp2.small"
-  flavor_worker                           = "gp2.medium"
+  flavor_bastion = "gp2.small"
+  flavor_master  = "gp2.small"
+  flavor_worker  = "gp2.medium"
 
   # ===================================
   # Undercloud-specific settings (multi-VLAN trunk-port topology)
-  hostnet_cidr                            = "10.2.128.0/24"
-  mgmt_vlan_id                            = 109
-  mgmt_subnet_pool                        = "public-tendot-ip4"
-  kube_vip_address                        = ""
-  disable_bastion                         = true
+  hostnet_cidr         = "10.2.128.0/24"
+  trunk_interface_name = "eno3np0"
+  trunk_mtu            = 9000
+  mgmt_vlan_id         = 109
+  mgmt_subnet_pool     = "public-tendot-ip4"
+  kube_vip_address     = ""
+  disable_bastion      = true
 
-  # MetalLB public IP network (VLAN 105, allocated from PUBLIC-IP-POOL)
+  # MetalLB public IP network. Terraform configures the tagged interface,
+  # policy routes, and pool-CIDR port security on every node at first boot.
   metallb_networks = [
     {
       pool_name   = "public-pool"
       vlan_id     = 105
       subnet_pool = "PUBLIC-IP-POOL"
+
+      # Optional route overrides (defaults shown):
+      # interface_name = "metal.105"
+      # table_id       = 105
+      # rule_priority  = 1105
+
+      # Optional extra addresses/CIDRs. The allocated pool CIDR is always
+      # added automatically to every MetalLB subport.
+      allowed_address_pairs = [
+        # "192.0.2.10",
+      ]
     }
   ]
 
   # ===================================
   #CIDR that will be used by kubernetes pods. Not an openstack network.
-  subnet_pods                             = "10.42.0.0/16"
+  subnet_pods = "10.42.0.0/16"
   #CIDR that will be used for kubernetes services. Not an openstack network.
-  subnet_services                         = "10.43.0.0/16"
+  subnet_services = "10.43.0.0/16"
 
   # ===================================
   #ca_certificates add CA certificates to server's trusts. Good for trusting internal private Certificate Authorities.
-  ca_certificates                         = ""
-  openstack_ca                            = ""
+  ca_certificates = ""
+  openstack_ca    = ""
 
-  cp_server_group_affinity                = ["soft-anti-affinity"]
+  cp_server_group_affinity = ["soft-anti-affinity"]
 
   # ====================================
   #Kubespray Settings
-  kubespray_version                       = "v2.31.0"
-  kubernetes_version                      = "1.35.4"
+  kubespray_version  = "v2.31.0"
+  kubernetes_version = "1.35.4"
   # CNI install_method: "helm" (default) and "kustomize-helm" skip CNI in Kubespray.
   # OpenStack deploy installs the selected CNI after kubeconfig normalization.
   # "kubespray" is retained only for non-OpenStack migration compatibility.
-  network_plugin                          = "calico"
-  deploy_cluster                          = true
-  dns_zone_name                           = "sandbox.iad3.k8s.opencenter.cloud"
+  network_plugin = "calico"
+  deploy_cluster = true
+  dns_zone_name  = "sandbox.iad3.k8s.opencenter.cloud"
   #kub-vip settings
-  kube_vip_enabled                        = true
+  kube_vip_enabled = true
   #Hardening
   k8s_hardening_enabled                   = true
   kube_pod_security_exemptions_namespaces = ["trivy-temp"]
@@ -84,19 +98,19 @@ locals {
   # (CNI is deployed via GitOps after kubeconfig normalization). Kubelet certificate
   # rotation requires node Ready status, which depends on a functioning CNI.
   # Enabling this before the CNI is running causes bootstrap failure.
-  kubelet_rotate_server_certificates      = false
-  os_hardening_enabled                    = true
+  kubelet_rotate_server_certificates = false
+  os_hardening_enabled               = true
 
   #Calico Settings
-  cni_iface                               = "mgmt.109"
+  cni_iface = "mgmt.109"
   #Interface detection method for Calico nodeAddressAutodetectionV4. Can be "first-found", "interface", "cidr"
   #https://docs.tigera.io/calico/latest/reference/installation/api#operator.tigera.io%2fv1.NodeAddressAutodetection
-  calico_interface_autodetect             = "interface"
-  calico_interface_autodetect_cidr        = ""
-  calico_encapsulation_type               = "VXLAN"
-  calico_nat_outgoing                     = true
+  calico_interface_autodetect      = "interface"
+  calico_interface_autodetect_cidr = ""
+  calico_encapsulation_type        = "VXLAN"
+  calico_nat_outgoing              = true
   # Hostnet subnet nodes CIDR (used by kubespray and calico for node addressing)
-  subnet_nodes                            = "10.2.128.0/24"
+  subnet_nodes = "10.2.128.0/24"
 }
 module "undercloud" {
   source = "github.com/opencenter-cloud/openCenter-gitops-base.git//iac/cloud/openstack/undercloud?ref=undercloud"
@@ -115,10 +129,10 @@ module "undercloud" {
   openstack_ca                  = local.openstack_ca
 
   # Naming and placement
-  naming_prefix     = local.naming_prefix
-  availability_zone = local.availability_zone
-  image_id          = local.image_id
-  ssh_user          = local.ssh_user
+  naming_prefix       = local.naming_prefix
+  availability_zone   = local.availability_zone
+  image_id            = local.image_id
+  ssh_user            = local.ssh_user
   ssh_authorized_keys = local.ssh_authorized_keys
   dns_nameservers     = local.dns_nameservers
   ntp_servers         = local.ntp_servers
@@ -145,9 +159,11 @@ module "undercloud" {
   router_external_network_id = local.router_external_network_id
   floatingip_pool            = local.floatingip_pool
 
-  # Undercloud-specific: Management VLAN network
-  mgmt_vlan_id     = local.mgmt_vlan_id
-  mgmt_subnet_pool = local.mgmt_subnet_pool
+  # Undercloud-specific: Physical trunk and management VLAN
+  trunk_interface_name = local.trunk_interface_name
+  trunk_mtu            = local.trunk_mtu
+  mgmt_vlan_id         = local.mgmt_vlan_id
+  mgmt_subnet_pool     = local.mgmt_subnet_pool
 
   # Undercloud-specific: MetalLB networks
   metallb_networks = local.metallb_networks

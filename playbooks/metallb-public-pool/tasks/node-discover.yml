@@ -1,0 +1,106 @@
+---
+- name: Discover the management VLAN parent
+  ansible.builtin.command:
+    argv:
+      - ip
+      - -d
+      - -j
+      - link
+      - show
+      - dev
+      - "{{ mgmt_interface }}"
+  register: mgmt_link
+  changed_when: false
+  when: host_metallb_pools | length > 0
+  tags: [configure, nodes, verify, validate]
+
+- name: Set the discovered trunk parent
+  ansible.builtin.set_fact:
+    trunk_iface: "{{ (mgmt_link.stdout | from_json | first).link }}"
+  when: host_metallb_pools | length > 0
+  tags: [configure, nodes, verify, validate]
+
+- name: Validate the management interface and trunk parent
+  ansible.builtin.assert:
+    that:
+      - (mgmt_link.stdout | from_json | first).linkinfo.info_kind == 'vlan'
+      - trunk_iface is string
+      - trunk_iface | length > 0
+    fail_msg: "{{ mgmt_interface }} is not a VLAN with a discoverable parent."
+  when: host_metallb_pools | length > 0
+  tags: [configure, nodes, verify, validate]
+
+- name: Read trunk parent MTU
+  ansible.builtin.command:
+    argv:
+      - cat
+      - "/sys/class/net/{{ trunk_iface }}/mtu"
+  register: parent_mtu
+  changed_when: false
+  when: host_metallb_pools | length > 0
+  tags: [configure, nodes, verify, validate]
+
+- name: Set trunk parent MTU
+  ansible.builtin.set_fact:
+    trunk_mtu: "{{ parent_mtu.stdout | int }}"
+  when: host_metallb_pools | length > 0
+  tags: [configure, nodes, verify, validate]
+
+- name: Gather this node's MetalLB OpenStack port state
+  ansible.builtin.command:
+    argv:
+      - openstack
+      - --os-cloud
+      - "{{ os_cloud }}"
+      - port
+      - show
+      - "{{ node_port }}"
+      - -f
+      - json
+      - -c
+      - mac_address
+  vars:
+    node_port: >-
+      {{
+        item.node_ports
+        | selectattr('host', 'equalto', inventory_hostname)
+        | map(attribute='port')
+        | first
+      }}
+  environment:
+    PAGER: cat
+  loop: "{{ host_metallb_pools }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: host_metallb_port_info
+  changed_when: false
+  become: false
+  delegate_to: localhost
+  tags: [configure, nodes, verify, validate]
+
+- name: Validate this node's discovered port MAC addresses
+  ansible.builtin.assert:
+    that:
+      - (item.stdout | from_json).mac_address is match('^[0-9a-fA-F]{2}(:[0-9a-fA-F]{2}){5}$')
+    fail_msg: "OpenStack port for {{ item.item.name }}:{{ inventory_hostname }} did not return a valid MAC address."
+  loop: "{{ host_metallb_port_info.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  tags: [configure, nodes, verify, validate]
+
+- name: Initialize this node's pool-to-MAC mapping
+  ansible.builtin.set_fact:
+    host_metallb_port_macs: {}
+  tags: [configure, nodes, verify, validate]
+
+- name: Build this node's pool-to-MAC mapping
+  ansible.builtin.set_fact:
+    host_metallb_port_macs: >-
+      {{
+        host_metallb_port_macs
+        | combine({item.item.name: (item.stdout | from_json).mac_address})
+      }}
+  loop: "{{ host_metallb_port_info.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  tags: [configure, nodes, verify, validate]

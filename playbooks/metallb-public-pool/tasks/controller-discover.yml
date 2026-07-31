@@ -1,0 +1,36 @@
+---
+- name: Gather MetalLB OpenStack port state
+  ansible.builtin.command:
+    argv:
+      - openstack
+      - --os-cloud
+      - "{{ os_cloud }}"
+      - port
+      - show
+      - "{{ item.port }}"
+      - -f
+      - json
+      - -c
+      - id
+      - -c
+      - mac_address
+      - -c
+      - allowed_address_pairs
+  environment:
+    PAGER: cat
+  loop: "{{ metallb_port_records }}"
+  loop_control:
+    label: "{{ item.key }} -> {{ item.port }}"
+  register: metallb_port_info
+  changed_when: false
+  tags: [configure, openstack, destroy]
+
+- name: Validate discovered port MAC addresses
+  ansible.builtin.assert:
+    that:
+      - (item.stdout | from_json).mac_address is match('^[0-9a-fA-F]{2}(:[0-9a-fA-F]{2}){5}$')
+    fail_msg: "OpenStack port {{ item.item.port }} did not return a valid MAC address."
+  loop: "{{ metallb_port_info.results }}"
+  loop_control:
+    label: "{{ item.item.key }}"
+  tags: [configure, openstack, destroy]

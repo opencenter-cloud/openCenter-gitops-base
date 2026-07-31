@@ -81,6 +81,10 @@ metallb_networks = [
     pool_name   = "public-pool"
     vlan_id     = 105
     subnet_pool = "PUBLIC-IP-POOL"
+    allowed_address_pairs = [
+      "192.0.2.10",
+      "192.0.2.11",
+    ]
   }
 ]
 ```
@@ -93,12 +97,23 @@ Defines MetalLB IP pools. Each entry creates:
 | Field | Description |
 |-------|-------------|
 | `pool_name` | Name used in MetalLB `IPAddressPool` and OpenStack port naming (`<prefix>-<node>-<pool_name>`) |
-| `vlan_id` | VLAN tag for the sub-port. Creates interface `metal.<vlan_id>` on nodes |
-| `subnet_pool` | OpenStack subnet pool to allocate public IPs from (e.g., `PUBLIC-IP-POOL` for routable public IPs) |
+| `vlan_id` | VLAN tag for the sub-port. Defaults to `105` and must be unique across pools |
+| `subnet_pool` | OpenStack subnet pool from which the public subnet is allocated |
+| `interface_name` | Optional interface override. Defaults to `metal.<vlan_id>` |
+| `table_id` | Optional policy-route table override. Defaults to `vlan_id` |
+| `rule_priority` | Optional source-policy-rule priority. Defaults to `1000 + vlan_id` |
+| `allowed_address_pairs` | Optional extra IP addresses or CIDRs added to every node's pool subport |
 
-Multiple entries are supported for clusters needing separate IP pools (e.g., public + internal).
+Multiple entries are supported for clusters needing separate IP pools (for example, public and internal pools). Pool names, VLAN IDs, interface names, route-table IDs, and policy-rule priorities must be unique.
 
-**Important:** The MetalLB ports are created without `fixed_ips` — MetalLB manages the IPs, not OpenStack. This means cloud-init does NOT create the VLAN sub-interface automatically. After provisioning, run the `metallb-public-pool` playbook to set up the interface, MAC, and policy-based routing. See `playbooks/metallb-public-pool/README.md`.
+Terraform automatically adds the dynamically allocated pool CIDR to every control-plane and worker subport as an allowed-address pair. Neutron associates that pair with the subport's own MAC, permitting MetalLB-announced addresses through port security. Use `allowed_address_pairs` only for additional addresses or CIDRs beyond the allocated pool; in most deployments it can be omitted.
+
+The MetalLB ports intentionally have no fixed IPs because MetalLB owns the addresses. For each node, Terraform renders two small persistent netplan files from the OpenStack port data:
+
+- `/etc/netplan/50-undercloud.yaml` owns the physical trunk parent and management VLAN. The parent uses the explicit `trunk_interface_name` (default `eno3np0`), is assigned `trunk_mtu` (default `9000`), and uses DHCP for hostnet. The physical NIC is addressed by its stable Linux name because the Neutron parent-port MAC can differ from the bare-metal NIC MAC. The management VLAN receives its fixed subport IP/MAC, DNS, a link-scope subnet route, an on-link default route in the VLAN-numbered table, and a source rule at priority `1000 + mgmt_vlan_id`.
+- `/etc/netplan/60-metallb-public-pools.yaml` owns all MetalLB VLANs. Each pool receives its subport MAC, the same trunk MTU, a link-scope subnet route, an on-link default route in its dedicated table, and a source policy rule.
+
+Cloud-init stages and validates both templates before replacing datasource-generated netplan, disables future cloud-init network regeneration, atomically swaps in and applies the generated files with rollback on failure, and reboots only after a successful apply. No dispatcher scripts or runtime `ip route` commands are used, so netplan remains the source of truth across reboots. When a pre-existing hostnet network is supplied, `trunk_mtu` must match that network's actual MTU.
 
 ## Kubernetes Network Settings
 
@@ -162,64 +177,128 @@ Whether pods SNAT when reaching destinations outside the pod CIDR. Enables pods 
 
 After `terraform apply` completes:
 
-1. **Run kubespray** — Deploys Kubernetes on the provisioned nodes
-2. **Bootstrap Flux** — `flux bootstrap git` to set up GitOps
-3. **Run MetalLB playbook** — `playbooks/metallb-public-pool/metallb-public-pool.yml` to configure the VLAN interface, MAC, and routing on all nodes. Remember to set `playbooks/metallb-public-pool/vars.yml` the variables accordingly.
-4. **Restart MetalLB speakers** - Restart the metallb speaker daemonset to force it to re-arp the new metallb interface.
-5. **Deploy applications** — Flux reconciles MetalLB, gateway, and services from the overlay
+1. **Wait for cloud-init** — Each node validates and installs its management and MetalLB netplan files, then reboots once. Confirm `cloud-init status --wait` succeeds before cluster bootstrap.
+2. **Run kubespray** — Deploy Kubernetes on the provisioned nodes.
+3. **Bootstrap Flux** — Run `flux bootstrap git` to set up GitOps.
+4. **Deploy applications** — Flux reconciles MetalLB, gateway, and services from the overlay.
 
-### MetalLB Playbook
+The MetalLB VLANs and policy routes are present before MetalLB speakers or LoadBalancer services start, avoiding interface-not-found warnings and routine speaker restarts.
 
-We need to create a file to hold the variable configuration for the specific cluster we want to configure.
+### MetalLB Public-Pool Playbook (Existing Nodes and Repair)
 
-metallb_vlan_id: Grab value from main.tf
-metallb_subnet: openstack --os-cloud uc-oc-stage subnet show dirtbag-public-pool
-metallb_gateway: openstack --os-cloud uc-oc-stage router show <CLUSTER>-public-pool-svi -c interfaces_info
+The undercloud module now owns the OpenStack allowed-address pairs and node-side netplan for nodes created with this version. The `metallb-public-pool` playbook remains available for:
 
+- Existing nodes created before automatic cloud-init configuration was added
+- Repairing or verifying drift on a running node
+- Environments where this Terraform module does not create the nodes
+- Explicitly applying or removing a pool without rebuilding an instance
 
-# Routing table ID and name (uses VLAN ID by default)
-metallb_table_id: "{{ metallb_vlan_id }}"
-metallb_table_name: "metal"
+This distinction matters because compute resources ignore later `user_data` changes and cloud-init runs only on first boot. Updating `metallb_networks` does not retrofit or remove netplan configuration on existing instances; rebuild those nodes or converge them with the playbook.
 
-# Interface name template
-metallb_iface: "metal.{{ metallb_vlan_id }}"
+Before running it, confirm:
 
-# OpenStack port names for each node's MetalLB sub-port.
-# Format: <naming_prefix><node_role><index>-<pool_name>
-# These are created by the undercloud Terraform module.
-node_port_names:
-  - <CLUSTER>-cp0-public-pool
-  - <CLUSTER>-cp1-public-pool
-  - <CLUSTER>-cp2-public-pool
-  - <CLUSTER>-wn0-public-pool
-  - <CLUSTER>-wn1-public-pool
+- The OpenStack CLI can use the configured `clouds.yaml` entry.
+- The Ansible inventory places every target host in `oc_controlplane_nodes` or `oc_worker_nodes`.
+- The management VLAN interface exists and netplan uses the `systemd-networkd` renderer.
+- Terraform created a trunk subport for every pool/node pair. The playbook verifies that each port exists and has a valid MAC, but it does not validate trunk membership.
 
-# Mapping of ansible inventory hostname → OpenStack port name.
-# Used to look up the correct MAC address per node.
-host_port_map:
-  <CLUSTER>-cp0: <CLUSTER>-cp0-public-pool
-  <CLUSTER>-cp1: <CLUSTER>-cp1-public-pool
-  <CLUSTER>-cp2: <CLUSTER>-cp2-public-pool
-  <CLUSTER>-wn0: <CLUSTER>-wn0-public-pool
-  <CLUSTER>-wn1: <CLUSTER>-wn1-public-pool
+Copy the repository example to a cluster-specific location instead of putting cluster values in the playbook defaults:
 
 ```bash
-ansible-playbook playbooks/metallb-public-pool/metallb-public-pool.yml \
-  -e @playbooks/metallb-public-pool/vars.yml
+cp playbooks/metallb-public-pool/vars.yml \
+  /path/to/cluster-metallb-public-pool-vars.yml
 ```
 
-### Restart MetalLB Speakers
+Populate it from `mgmt_vlan_id`, each `metallb_networks` entry, the allocated OpenStack subnet and SVI gateway, and the node subport names or UUIDs:
 
+```yaml
+os_cloud: example-undercloud
+
+mgmt_vlan_id: 109
+mgmt_interface: "mgmt.{{ mgmt_vlan_id }}"
+
+metallb_public_pools:
+  - name: public-pool
+    vlan_id: 105
+    subnet: "192.0.2.0/28"
+    gateway: "192.0.2.1"
+
+    # Optional overrides (default behavior shown inline):
+    # interface_name: "metal.105"   # defaults to metal.<vlan_id>
+    # table_id: 105                 # defaults to <vlan_id>
+    # rule_priority: 1105           # defaults to 1000 + <vlan_id>
+    # parent_interface: eno3np0     # defaults to mgmt_interface's parent
+    # mtu: 9000                     # defaults to the trunk-parent MTU
+
+    node_ports:
+      - host: example-cp0
+        port: example-cp0-public-pool
+      - host: example-cp1
+        port: example-cp1-public-pool
+      - host: example-wn0
+        port: example-wn0-public-pool
 ```
 
+Add another mapping under `metallb_public_pools` for each Terraform `metallb_networks` entry. Pool names, VLAN IDs, interface names, route-table IDs, and rule priorities must be unique. Hosts must match the inventory, ports must be unique, the subnet must be a strict network CIDR, and the gateway must be a usable address inside that subnet.
+
+Set the inventory, vars file, and playbook paths, then validate before applying anything:
+
+```bash
+export ANSIBLE_INVENTORY=/path/to/inventory.yaml
+VARS=/path/to/cluster-metallb-public-pool-vars.yml
+PLAYBOOK=playbooks/metallb-public-pool/metallb-public-pool.yml
+
+# Non-applying input, OpenStack port, trunk-parent, and candidate-netplan validation.
+ansible-playbook "$PLAYBOOK" -e @"$VARS" --tags validate
+
+# Full convergence: OpenStack allowed-address pairs, node netplan, and verification.
+ansible-playbook "$PLAYBOOK" -e @"$VARS"
+
+# Read-only runtime verification after convergence or a reboot.
+ansible-playbook "$PLAYBOOK" -e @"$VARS" --tags verify
 ```
+
+For a first deployment, limit node convergence to one host before rolling out to the remaining nodes:
+
+```bash
+ansible-playbook "$PLAYBOOK" -e @"$VARS" --tags nodes --limit example-wn0
+ansible-playbook "$PLAYBOOK" -e @"$VARS" --tags nodes
+```
+
+The `nodes` tag still performs read-only OpenStack lookups to obtain port MACs. Re-running a converged configuration should report no changes.
+
+#### Playbook Tags
+
+| Tag | OpenStack changes | Node changes | Purpose |
+|-----|-------------------|--------------|---------|
+| `configure` | Yes | Yes | Explicit full convergence; also the default untagged run |
+| `openstack` | Yes | No | Add missing exact allowed-address pairs |
+| `nodes` | No | Yes | Render, validate, apply, and verify node netplan |
+| `validate` | No | Temporary files only | Validate inputs, port lookups, trunk discovery, and candidate netplan |
+| `verify` | No | No | Verify runtime interfaces, routes, and policy rules |
+| `destroy` | Yes | Yes | Remove managed netplan/runtime state and configured allowed-address pairs |
+
+`verify` checks runtime state; it does not prove that the managed netplan file exists or matches the current template. Use `--tags nodes` to converge and restore persisted configuration.
+
+The `destroy` tasks also carry Ansible's `never` tag and run only when explicitly requested:
+
+```bash
+ansible-playbook "$PLAYBOOK" -e @"$VARS" --tags destroy
+```
+
+Destroy removes the consolidated netplan, configured runtime interfaces/rules/routes, and the exact configured OpenStack allowed-address pairs. It does not delete OpenStack ports, trunks, or subports. Node destroy flushes each configured route table, so table IDs must not be shared with unrelated routes. A node-limited destroy excludes the `localhost` plays and therefore does not remove OpenStack allowed-address pairs.
+
+See `playbooks/metallb-public-pool/README.md` for the complete variable constraints and persistence test procedure.
 
 ## Troubleshooting
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
-| MetalLB speaker warns "interfaces don't exist" | `metal.X` VLAN sub-interface not created | Run `metallb-public-pool` playbook (`--tags interface`) |
-| Public IP unreachable (traceroute blackholes) | SVI router not advertising route to fabric | Contact undercloud networking team; may need router recreate |
-| ARP for MetalLB VIP ignored by switch | Port security: wrong MAC or missing `allowed_address_pairs` | Run playbook (`--tags openstack`) to fix port security |
-| Return traffic doesn't reach client | No policy-based routing on node for public subnet | Run playbook (`--tags routing`) |
-| `terraform destroy` fails on trunks | Trunk ports disabled by platform | Run `trunk-enable` playbook first |
+| MetalLB speaker warns that `metal.X` does not exist | First-boot cloud-init failed, or this is an existing node from before automatic configuration | Check `cloud-init status --long` and `/var/log/cloud-init-output.log`; repair existing nodes with the playbook's `nodes` tag |
+| Cloud-init reports undercloud netplan validation failure | The management VLAN parent was not discoverable, route settings conflict, or generated netplan is invalid | Correct `mgmt_vlan_id`/`metallb_networks`, inspect `/var/log/cloud-init-output.log`, and rebuild or repair the node |
+| OpenStack port lookup fails in the playbook | Wrong `os_cloud`, port name/UUID, or missing subport | Correct the vars file and confirm Terraform created every pool/node subport |
+| ARP for a MetalLB VIP is blocked | The pool-CIDR/MAC allowed-address pair is missing or stale | Apply Terraform; use the playbook's `openstack` tag for existing or non-module-managed ports |
+| Return traffic does not reach the client | The VLAN route table or source policy rule is missing or stale | Run `--tags verify`; repair with `--tags nodes` |
+| Public IP traffic reaches the SVI but not the fabric | The SVI router route is not being advertised upstream | Contact the undercloud networking team; the router may need correction |
+| Configuration disappears after a reboot | The consolidated netplan file is absent or stale | Run `--tags nodes`, then repeat the persistence checks in the playbook README |
+| `terraform destroy` fails on trunks | Trunk ports are disabled by the platform | Run the `trunk-enable` playbook first |

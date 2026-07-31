@@ -12,10 +12,11 @@ locals {
   master_metallb_ports = flatten([
     for idx in range(local.master_count) : [
       for name, net in local.metallb_map : {
-        master_idx = idx
-        pool_name  = name
-        network_id = openstack_networking_network_v2.metallb[name].id
-        vlan_id    = net.vlan_id
+        master_idx            = idx
+        pool_name             = name
+        network_id            = openstack_networking_network_v2.metallb[name].id
+        vlan_id               = net.vlan_id
+        allowed_address_pairs = net.allowed_address_pairs
       }
     ]
   ])
@@ -24,10 +25,11 @@ locals {
   worker_metallb_ports = flatten([
     for idx in range(local.worker_count) : [
       for name, net in local.metallb_map : {
-        worker_idx = idx
-        pool_name  = name
-        network_id = openstack_networking_network_v2.metallb[name].id
-        vlan_id    = net.vlan_id
+        worker_idx            = idx
+        pool_name             = name
+        network_id            = openstack_networking_network_v2.metallb[name].id
+        vlan_id               = net.vlan_id
+        allowed_address_pairs = net.allowed_address_pairs
       }
     ]
   ])
@@ -100,8 +102,21 @@ resource "openstack_networking_port_v2" "subport_mgmt_master" {
 resource "openstack_networking_port_v2" "subport_metallb_master" {
   for_each = { for p in local.master_metallb_ports : "${p.master_idx}-${p.pool_name}" => p }
 
-  name       = "${var.naming_prefix}${var.node_master}${each.value.master_idx}-${each.value.pool_name}"
-  network_id = each.value.network_id
+  name        = "${var.naming_prefix}${var.node_master}${each.value.master_idx}-${each.value.pool_name}"
+  network_id  = each.value.network_id
+  no_fixed_ip = true
+
+  # Permit the complete dynamically allocated pool through port security.
+  # Neutron uses this subport's MAC when mac_address is omitted.
+  dynamic "allowed_address_pairs" {
+    for_each = concat(
+      [openstack_networking_subnet_v2.metallb[each.value.pool_name].cidr],
+      each.value.allowed_address_pairs,
+    )
+    content {
+      ip_address = allowed_address_pairs.value
+    }
+  }
 
   security_group_ids = [
     module.secgroup.controlplane_id,
@@ -196,8 +211,21 @@ resource "openstack_networking_port_v2" "subport_mgmt_worker" {
 resource "openstack_networking_port_v2" "subport_metallb_worker" {
   for_each = { for p in local.worker_metallb_ports : "${p.worker_idx}-${p.pool_name}" => p }
 
-  name       = "${var.naming_prefix}${var.node_worker}${each.value.worker_idx}-${each.value.pool_name}"
-  network_id = each.value.network_id
+  name        = "${var.naming_prefix}${var.node_worker}${each.value.worker_idx}-${each.value.pool_name}"
+  network_id  = each.value.network_id
+  no_fixed_ip = true
+
+  # Permit the complete dynamically allocated pool through port security.
+  # Neutron uses this subport's MAC when mac_address is omitted.
+  dynamic "allowed_address_pairs" {
+    for_each = concat(
+      [openstack_networking_subnet_v2.metallb[each.value.pool_name].cidr],
+      each.value.allowed_address_pairs,
+    )
+    content {
+      ip_address = allowed_address_pairs.value
+    }
+  }
 
   security_group_ids = [
     module.secgroup.controlplane_id,

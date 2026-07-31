@@ -161,13 +161,38 @@ variable "hostnet_subnet_id" {
   description = "Pre-existing hostnet subnet ID. Empty = create new."
 }
 
+variable "trunk_interface_name" {
+  type        = string
+  default     = "eno3np0"
+  nullable    = false
+  description = "Predictable Linux interface name assigned to the OpenStack trunk parent"
+
+  validation {
+    condition     = can(regex("^[A-Za-z0-9_.-]+$", var.trunk_interface_name)) && length(var.trunk_interface_name) <= 15
+    error_message = "trunk_interface_name may contain only letters, numbers, underscores, periods, and hyphens and must not exceed 15 characters."
+  }
+}
+
+variable "trunk_mtu" {
+  type        = number
+  default     = 9000
+  nullable    = false
+  description = "MTU configured on the trunk parent and all management and MetalLB VLAN interfaces"
+
+  validation {
+    condition     = var.trunk_mtu >= 1280 && var.trunk_mtu <= 9216 && floor(var.trunk_mtu) == var.trunk_mtu
+    error_message = "trunk_mtu must be an integer between 1280 and 9216."
+  }
+}
+
 variable "mgmt_vlan_id" {
   type        = number
   default     = 102
-  description = "VLAN ID for management network (1-4094)"
+  description = "VLAN ID and dedicated policy-route table for the management network"
+
   validation {
-    condition     = var.mgmt_vlan_id >= 1 && var.mgmt_vlan_id <= 4094
-    error_message = "mgmt_vlan_id must be between 1 and 4094."
+    condition     = var.mgmt_vlan_id >= 1 && var.mgmt_vlan_id <= 4094 && floor(var.mgmt_vlan_id) == var.mgmt_vlan_id && !contains([253, 254, 255], var.mgmt_vlan_id)
+    error_message = "mgmt_vlan_id must be an integer between 1 and 4094 and must not use reserved route tables 253, 254, or 255."
   }
 }
 
@@ -196,17 +221,63 @@ variable "router_flavor" {
 
 variable "metallb_networks" {
   type = list(object({
-    pool_name   = string
-    vlan_id     = optional(number, 105)
-    subnet_pool = string
+    pool_name             = string
+    vlan_id               = optional(number, 105)
+    subnet_pool           = string
+    interface_name        = optional(string)
+    table_id              = optional(number)
+    rule_priority         = optional(number)
+    allowed_address_pairs = optional(list(string), [])
   }))
   default     = []
-  description = "List of MetalLB VLAN network configurations"
+  description = "MetalLB VLAN networks and first-boot policy-routing configuration"
+
   validation {
     condition = alltrue([
-      for net in var.metallb_networks : net.vlan_id >= 1 && net.vlan_id <= 4094
+      for net in var.metallb_networks : net.vlan_id >= 1 && net.vlan_id <= 4094 && floor(net.vlan_id) == net.vlan_id
     ])
-    error_message = "All metallb_networks entries must have vlan_id between 1 and 4094."
+    error_message = "All metallb_networks entries must have an integer vlan_id between 1 and 4094."
+  }
+
+  validation {
+    condition = alltrue([
+      for net in var.metallb_networks :
+      can(regex("^[A-Za-z0-9_-]+$", net.pool_name)) &&
+      can(regex("^[A-Za-z0-9_.-]+$", net.interface_name != null ? net.interface_name : "metal.${net.vlan_id}")) &&
+      length(net.interface_name != null ? net.interface_name : "metal.${net.vlan_id}") <= 15
+    ])
+    error_message = "MetalLB pool names and interface names may contain only letters, numbers, underscores, periods, and hyphens; interface names must not exceed 15 characters."
+  }
+
+  validation {
+    condition = alltrue([
+      for net in var.metallb_networks :
+      (net.table_id != null ? net.table_id : net.vlan_id) > 0 &&
+      floor(net.table_id != null ? net.table_id : net.vlan_id) == (net.table_id != null ? net.table_id : net.vlan_id) &&
+      !contains([253, 254, 255], net.table_id != null ? net.table_id : net.vlan_id)
+    ])
+    error_message = "MetalLB route table IDs must be positive integers and must not use reserved tables 253, 254, or 255."
+  }
+
+  validation {
+    condition = alltrue([
+      for net in var.metallb_networks :
+      (net.rule_priority != null ? net.rule_priority : 1000 + net.vlan_id) > 0 &&
+      (net.rule_priority != null ? net.rule_priority : 1000 + net.vlan_id) < 32766 &&
+      floor(net.rule_priority != null ? net.rule_priority : 1000 + net.vlan_id) == (net.rule_priority != null ? net.rule_priority : 1000 + net.vlan_id)
+    ])
+    error_message = "MetalLB policy-rule priorities must be integers from 1 through 32765."
+  }
+
+  validation {
+    condition = alltrue([
+      length(distinct([for net in var.metallb_networks : net.pool_name])) == length(var.metallb_networks),
+      length(distinct([for net in var.metallb_networks : net.vlan_id])) == length(var.metallb_networks),
+      length(distinct([for net in var.metallb_networks : net.interface_name != null ? net.interface_name : "metal.${net.vlan_id}"])) == length(var.metallb_networks),
+      length(distinct([for net in var.metallb_networks : net.table_id != null ? net.table_id : net.vlan_id])) == length(var.metallb_networks),
+      length(distinct([for net in var.metallb_networks : net.rule_priority != null ? net.rule_priority : 1000 + net.vlan_id])) == length(var.metallb_networks),
+    ])
+    error_message = "MetalLB pool names, VLAN IDs, interface names, route table IDs, and policy-rule priorities must be unique."
   }
 }
 

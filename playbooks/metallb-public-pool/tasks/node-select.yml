@@ -1,0 +1,14 @@
+---
+- name: Initialize pools configured on this node
+  ansible.builtin.set_fact:
+    host_metallb_pools: []
+  tags: [configure, nodes, verify, validate, destroy]
+
+- name: Select pools configured on this node
+  ansible.builtin.set_fact:
+    host_metallb_pools: "{{ host_metallb_pools + [item] }}"
+  loop: "{{ metallb_effective_pools }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: inventory_hostname in (item.node_ports | map(attribute='host') | list)
+  tags: [configure, nodes, verify, validate, destroy]

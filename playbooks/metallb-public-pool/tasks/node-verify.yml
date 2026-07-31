@@ -1,0 +1,85 @@
+---
+- name: Verify MetalLB VLAN interfaces are managed by networkd
+  ansible.builtin.command:
+    argv:
+      - networkctl
+      - status
+      - "{{ item.interface_name }}"
+      - --no-pager
+  loop: "{{ host_metallb_pools }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: verified_interfaces
+  changed_when: false
+  tags: [configure, nodes, verify]
+
+- name: Read configured MetalLB routes
+  ansible.builtin.command:
+    argv:
+      - ip
+      - -j
+      - route
+      - show
+      - table
+      - "{{ item.table_id }}"
+  loop: "{{ host_metallb_pools }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: verified_routes
+  changed_when: false
+  tags: [configure, nodes, verify]
+
+- name: Read configured MetalLB policy rules
+  ansible.builtin.command:
+    argv:
+      - ip
+      - -j
+      - rule
+      - show
+  register: verified_rules
+  changed_when: false
+  tags: [configure, nodes, verify]
+
+- name: Assert MetalLB routes match configuration
+  ansible.builtin.assert:
+    that:
+      - >-
+        routes
+        | selectattr('dst', 'equalto', 'default')
+        | selectattr('gateway', 'equalto', item.item.gateway)
+        | selectattr('dev', 'equalto', item.item.interface_name)
+        | list
+        | length == 1
+      - >-
+        routes
+        | selectattr('dst', 'equalto', item.item.subnet)
+        | selectattr('dev', 'equalto', item.item.interface_name)
+        | list
+        | length == 1
+    fail_msg: "Routes for pool {{ item.item.name }} do not match the netplan configuration."
+  loop: "{{ verified_routes.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  vars:
+    routes: "{{ item.stdout | from_json }}"
+  tags: [configure, nodes, verify]
+
+- name: Assert MetalLB policy rules match configuration
+  ansible.builtin.assert:
+    that:
+      - matching_rules | length == 1
+      - ((matching_rules | first).table | string) == (item.table_id | string)
+    fail_msg: "Policy rule for pool {{ item.name }} does not match the netplan configuration."
+  loop: "{{ host_metallb_pools }}"
+  loop_control:
+    label: "{{ item.name }}"
+  vars:
+    matching_rules: >-
+      {{
+        (verified_rules.stdout | from_json)
+        | selectattr('priority', 'equalto', item.rule_priority | int)
+        | selectattr('src', 'equalto', item.source_address)
+        | selectattr('srclen', 'equalto', item.source_prefixlen | int)
+        | list
+      }}
+  tags: [configure, nodes, verify]

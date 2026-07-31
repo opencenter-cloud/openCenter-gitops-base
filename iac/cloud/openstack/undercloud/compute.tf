@@ -13,7 +13,7 @@ resource "openstack_compute_instance_v2" "master" {
   flavor_name       = var.size_master.flavor
   image_id          = var.image_id
   availability_zone = var.availability_zone
-  user_data         = data.cloudinit_config.undercloud_ubuntu24.rendered
+  user_data         = data.cloudinit_config.undercloud_ubuntu24_master[count.index].rendered
   key_pair          = module.ssh-keypair.keypair.name
 
   block_device {
@@ -71,7 +71,7 @@ resource "openstack_compute_instance_v2" "worker" {
   flavor_name       = var.size_worker.flavor
   image_id          = var.image_id
   availability_zone = var.availability_zone
-  user_data         = data.cloudinit_config.undercloud_ubuntu24.rendered
+  user_data         = data.cloudinit_config.undercloud_ubuntu24_worker[count.index].rendered
   key_pair          = module.ssh-keypair.keypair.name
 
   block_device {
@@ -155,12 +155,13 @@ locals {
   additional_pool_metallb = flatten([
     for inst in local.additional_pool_instances : [
       for name, net in local.metallb_map : {
-        key          = "${inst.pool_name}-${inst.instance_idx}-${name}"
-        pool_name    = inst.pool_name
-        inst_idx     = inst.instance_idx
-        metallb_name = name
-        network_id   = openstack_networking_network_v2.metallb[name].id
-        vlan_id      = net.vlan_id
+        key                   = "${inst.pool_name}-${inst.instance_idx}-${name}"
+        pool_name             = inst.pool_name
+        inst_idx              = inst.instance_idx
+        metallb_name          = name
+        network_id            = openstack_networking_network_v2.metallb[name].id
+        vlan_id               = net.vlan_id
+        allowed_address_pairs = net.allowed_address_pairs
       }
     ]
   ])
@@ -225,8 +226,21 @@ resource "openstack_networking_port_v2" "subport_mgmt_additional" {
 resource "openstack_networking_port_v2" "subport_metallb_additional" {
   for_each = local.additional_pool_metallb_map
 
-  name       = "${var.naming_prefix}${local.additional_pool_instances_map["${each.value.pool_name}-${each.value.inst_idx}"].node_worker}${each.value.inst_idx}-${each.value.metallb_name}"
-  network_id = each.value.network_id
+  name        = "${var.naming_prefix}${local.additional_pool_instances_map["${each.value.pool_name}-${each.value.inst_idx}"].node_worker}${each.value.inst_idx}-${each.value.metallb_name}"
+  network_id  = each.value.network_id
+  no_fixed_ip = true
+
+  # Permit the complete dynamically allocated pool through port security.
+  # Neutron uses this subport's MAC when mac_address is omitted.
+  dynamic "allowed_address_pairs" {
+    for_each = concat(
+      [openstack_networking_subnet_v2.metallb[each.value.metallb_name].cidr],
+      each.value.allowed_address_pairs,
+    )
+    content {
+      ip_address = allowed_address_pairs.value
+    }
+  }
 
   security_group_ids = [
     module.secgroup.controlplane_id,
@@ -267,7 +281,7 @@ resource "openstack_compute_instance_v2" "additional_worker" {
   flavor_name       = each.value.flavor
   image_id          = each.value.image_id
   availability_zone = var.availability_zone
-  user_data         = data.cloudinit_config.undercloud_ubuntu24.rendered
+  user_data         = data.cloudinit_config.undercloud_ubuntu24_additional_worker[each.key].rendered
   key_pair          = module.ssh-keypair.keypair.name
 
   block_device {

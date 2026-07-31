@@ -1,0 +1,168 @@
+---
+- name: Render and validate a candidate MetalLB netplan
+  when: host_metallb_pools | length > 0
+  tags: [configure, nodes, validate]
+  block:
+    - name: Create temporary netplan validation root
+      ansible.builtin.tempfile:
+        state: directory
+        prefix: metallb-netplan-
+      register: metallb_netplan_validation_root
+      changed_when: false
+
+    - name: Create candidate netplan directory
+      ansible.builtin.file:
+        path: "{{ metallb_netplan_validation_root.path }}/etc/netplan"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+      changed_when: false
+
+    - name: Find baseline netplan files
+      ansible.builtin.find:
+        paths: /etc/netplan
+        patterns:
+          - "*.yaml"
+          - "*.yml"
+        file_type: file
+      register: metallb_baseline_netplan_files
+
+    - name: Copy baseline netplan files into the validation root
+      ansible.builtin.copy:
+        src: "{{ item.path }}"
+        dest: "{{ metallb_netplan_validation_root.path }}/etc/netplan/{{ item.path | basename }}"
+        remote_src: true
+        owner: root
+        group: root
+        mode: "0600"
+      loop: "{{ metallb_baseline_netplan_files.files }}"
+      loop_control:
+        label: "{{ item.path | basename }}"
+      when: (item.path | basename) != '60-metallb-public-pools.yaml'
+      changed_when: false
+
+    - name: Render candidate MetalLB netplan
+      ansible.builtin.template:
+        src: templates/60-metallb-public-pools.yaml.j2
+        dest: "{{ metallb_netplan_validation_root.path }}/etc/netplan/60-metallb-public-pools.yaml"
+        owner: root
+        group: root
+        mode: "0600"
+      changed_when: false
+
+    - name: Validate candidate MetalLB netplan
+      ansible.builtin.command:
+        argv:
+          - netplan
+          - generate
+          - --root-dir
+          - "{{ metallb_netplan_validation_root.path }}"
+      changed_when: false
+
+  always:
+    - name: Remove temporary netplan validation root
+      ansible.builtin.file:
+        path: "{{ metallb_netplan_validation_root.path }}"
+        state: absent
+      when:
+        - metallb_netplan_validation_root is defined
+        - metallb_netplan_validation_root.path is defined
+      changed_when: false
+
+- name: Write consolidated MetalLB netplan
+  ansible.builtin.template:
+    src: templates/60-metallb-public-pools.yaml.j2
+    dest: /etc/netplan/60-metallb-public-pools.yaml
+    owner: root
+    group: root
+    mode: "0600"
+  when: host_metallb_pools | length > 0
+  notify: Apply MetalLB netplan
+  tags: [configure, nodes]
+
+- name: Remove consolidated netplan from nodes with no configured pools
+  ansible.builtin.file:
+    path: /etc/netplan/60-metallb-public-pools.yaml
+    state: absent
+  when: host_metallb_pools | length == 0
+  notify: Apply MetalLB netplan
+  tags: [configure, nodes]
+
+- name: Read current routes before convergence
+  ansible.builtin.command:
+    argv:
+      - ip
+      - -j
+      - route
+      - show
+      - table
+      - "{{ item.table_id }}"
+  loop: "{{ host_metallb_pools }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: preconfigure_routes
+  changed_when: false
+  failed_when: false
+  tags: [configure, nodes]
+
+- name: Read current policy rules before convergence
+  ansible.builtin.command:
+    argv:
+      - ip
+      - -j
+      - rule
+      - show
+  register: preconfigure_rules
+  changed_when: false
+  tags: [configure, nodes]
+
+- name: Trigger netplan apply when runtime state has drifted
+  ansible.builtin.debug:
+    msg: "Runtime network state for {{ item.item.name }} differs from netplan."
+  loop: "{{ preconfigure_routes.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  vars:
+    pool_routes: "{{ (item.stdout | default('[]') | from_json) if item.rc == 0 else [] }}"
+    current_rules: "{{ preconfigure_rules.stdout | from_json }}"
+    matching_rules: >-
+      {{
+        current_rules
+        | selectattr('priority', 'equalto', item.item.rule_priority | int)
+        | selectattr('src', 'equalto', item.item.source_address)
+        | selectattr('srclen', 'equalto', item.item.source_prefixlen | int)
+        | list
+      }}
+  when: >-
+    item.rc != 0
+    or (
+      pool_routes
+      | selectattr('dst', 'equalto', 'default')
+      | selectattr('gateway', 'equalto', item.item.gateway)
+      | selectattr('dev', 'equalto', item.item.interface_name)
+      | list
+      | length
+    ) == 0
+    or (
+      pool_routes
+      | selectattr('dst', 'equalto', item.item.subnet)
+      | selectattr('dev', 'equalto', item.item.interface_name)
+      | list
+      | length
+    ) == 0
+    or (matching_rules | length) == 0
+    or ((matching_rules | first).table | string) != (item.item.table_id | string)
+  changed_when: true
+  notify: Apply MetalLB netplan
+  tags: [configure, nodes]
+
+- name: Apply queued netplan changes
+  ansible.builtin.meta: flush_handlers
+  tags: [configure, nodes]
+
+- name: Wait for the node after applying netplan
+  ansible.builtin.wait_for_connection:
+    timeout: 300
+  when: metallb_netplan_applied | default(false)
+  tags: [configure, nodes]

@@ -1,0 +1,149 @@
+---
+- name: Validate global configuration
+  ansible.builtin.assert:
+    that:
+      - os_cloud is string
+      - os_cloud | length > 0
+      - mgmt_vlan_id | int >= 1
+      - mgmt_vlan_id | int <= 4094
+      - mgmt_interface is string
+      - mgmt_interface | length > 0
+      - metallb_public_pools is sequence
+      - metallb_public_pools | length > 0
+    fail_msg: "Invalid global MetalLB public-pool configuration."
+
+- name: Initialize effective pool configuration
+  ansible.builtin.set_fact:
+    metallb_effective_pools: []
+
+- name: Validate required raw pool fields
+  ansible.builtin.assert:
+    that:
+      - item.name is defined
+      - item.vlan_id is defined
+      - item.subnet is defined
+      - item.gateway is defined
+      - item.node_ports is defined
+      - item.node_ports is sequence
+      - item.node_ports is not string
+    fail_msg: "Every pool requires name, vlan_id, subnet, gateway, and node_ports."
+  loop: "{{ metallb_public_pools }}"
+  loop_control:
+    label: "{{ item.name | default('unnamed pool') }}"
+
+- name: Build effective pool configuration
+  ansible.builtin.set_fact:
+    metallb_effective_pools: >-
+      {{
+        metallb_effective_pools
+        + [
+            item
+            | combine(
+                {
+                  'vlan_id': item.vlan_id | int,
+                  'interface_name': item.interface_name | default('metal.' ~ (item.vlan_id | string)),
+                  'table_id': item.table_id | default(item.vlan_id) | int,
+                  'rule_priority': item.rule_priority | default(1000 + (item.vlan_id | int)) | int,
+                  'source_address': item.subnet.split('/')[0],
+                  'source_prefixlen': item.subnet.split('/')[1] | int
+                }
+              )
+          ]
+      }}
+  loop: "{{ metallb_public_pools }}"
+  loop_control:
+    label: "{{ item.name | default('unnamed pool') }}"
+
+- name: Validate each pool
+  ansible.builtin.assert:
+    that:
+      - item.name is match('^[A-Za-z0-9_-]+$')
+      - item.vlan_id | int >= 1
+      - item.vlan_id | int <= 4094
+      - item.interface_name is match('^[A-Za-z0-9_.-]+$')
+      - item.interface_name | length <= 15
+      - item.table_id | int > 0
+      - item.table_id | int not in [253, 254, 255]
+      - item.rule_priority | int > 0
+      - item.rule_priority | int < 32766
+      - item.subnet is string
+      - item.subnet | length > 0
+      - item.gateway is string
+      - item.gateway | length > 0
+      - item.node_ports is sequence
+      - item.node_ports | length > 0
+      - (item.node_ports | map(attribute='host') | list | unique | length) == (item.node_ports | length)
+    fail_msg: "Invalid configuration for pool {{ item.name | default('unnamed') }}."
+  loop: "{{ metallb_effective_pools }}"
+  loop_control:
+    label: "{{ item.name | default('unnamed pool') }}"
+
+- name: Validate pool names, interfaces, tables, VLANs, and priorities are unique
+  ansible.builtin.assert:
+    that:
+      - (metallb_effective_pools | map(attribute='name') | list | unique | length) == (metallb_effective_pools | length)
+      - (metallb_effective_pools | map(attribute='interface_name') | list | unique | length) == (metallb_effective_pools | length)
+      - (metallb_effective_pools | map(attribute='table_id') | list | unique | length) == (metallb_effective_pools | length)
+      - (metallb_effective_pools | map(attribute='vlan_id') | list | unique | length) == (metallb_effective_pools | length)
+      - (metallb_effective_pools | map(attribute='rule_priority') | list | unique | length) == (metallb_effective_pools | length)
+    fail_msg: "Pool names, interfaces, table IDs, VLAN IDs, and rule priorities must be unique."
+
+- name: Initialize flattened node port records
+  ansible.builtin.set_fact:
+    metallb_port_records: []
+
+- name: Build flattened node port records
+  ansible.builtin.set_fact:
+    metallb_port_records: >-
+      {{
+        metallb_port_records
+        + [
+            {
+              'key': item.0.name ~ ':' ~ item.1.host,
+              'pool_name': item.0.name,
+              'subnet': item.0.subnet,
+              'host': item.1.host,
+              'port': item.1.port
+            }
+          ]
+      }}
+  loop: "{{ metallb_effective_pools | subelements('node_ports') }}"
+  loop_control:
+    label: "{{ item.0.name }}:{{ item.1.host }}"
+
+- name: Validate node port records
+  ansible.builtin.assert:
+    that:
+      - item.host is string
+      - item.host | length > 0
+      - item.host in ((groups['oc_controlplane_nodes'] | default([])) + (groups['oc_worker_nodes'] | default([])))
+      - item.port is string
+      - item.port | length > 0
+    fail_msg: "Invalid node port record {{ item.key }}."
+  loop: "{{ metallb_port_records }}"
+  loop_control:
+    label: "{{ item.key }}"
+
+- name: Validate node port keys and ports are unique
+  ansible.builtin.assert:
+    that:
+      - (metallb_port_records | map(attribute='key') | list | unique | length) == (metallb_port_records | length)
+      - (metallb_port_records | map(attribute='port') | list | unique | length) == (metallb_port_records | length)
+    fail_msg: "Each pool/host pair and OpenStack port must be unique."
+
+- name: Validate subnet and gateway relationships
+  ansible.builtin.command:
+    argv:
+      - python3
+      - -c
+      - >-
+        import ipaddress, sys;
+        subnet = ipaddress.ip_network(sys.argv[1], strict=True);
+        gateway = ipaddress.ip_address(sys.argv[2]);
+        assert gateway in subnet and gateway not in (subnet.network_address, subnet.broadcast_address)
+      - "{{ item.subnet }}"
+      - "{{ item.gateway }}"
+  loop: "{{ metallb_effective_pools }}"
+  loop_control:
+    label: "{{ item.name }}"
+  changed_when: false

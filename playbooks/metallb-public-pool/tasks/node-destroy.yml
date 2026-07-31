@@ -1,0 +1,114 @@
+---
+# Destroy is intentionally independent of the live management interface.
+- name: Remove consolidated MetalLB netplan during destroy
+  ansible.builtin.file:
+    path: /etc/netplan/60-metallb-public-pools.yaml
+    state: absent
+  notify: Apply MetalLB netplan
+  tags: [never, destroy]
+
+- name: Apply netplan removal during destroy
+  ansible.builtin.meta: flush_handlers
+  tags: [never, destroy]
+
+- name: Read policy rules remaining after netplan removal
+  ansible.builtin.command:
+    argv:
+      - ip
+      - -j
+      - rule
+      - show
+  register: destroy_policy_rules
+  changed_when: false
+  tags: [never, destroy]
+
+- name: Initialize policy-rule priorities to remove
+  ansible.builtin.set_fact:
+    destroy_rule_priorities: []
+  tags: [never, destroy]
+
+- name: Identify residual MetalLB policy rules
+  ansible.builtin.set_fact:
+    destroy_rule_priorities: "{{ (destroy_rule_priorities + [item.1.priority | int]) | unique }}"
+  loop: "{{ host_metallb_pools | product(destroy_policy_rules.stdout | from_json) | list }}"
+  loop_control:
+    label: "{{ item.0.name }} priority {{ item.1.priority | default('unknown') }}"
+  when:
+    - item.1.src | default('') == item.0.source_address
+    - item.1.srclen | default(0) | int == item.0.source_prefixlen | int
+    - (item.1.table | default('') | string) == (item.0.table_id | string)
+  tags: [never, destroy]
+
+- name: Remove residual MetalLB policy rules
+  ansible.builtin.command:
+    argv:
+      - ip
+      - rule
+      - del
+      - priority
+      - "{{ item }}"
+  loop: "{{ destroy_rule_priorities }}"
+  tags: [never, destroy]
+
+- name: Read residual MetalLB routes
+  ansible.builtin.command:
+    argv:
+      - ip
+      - -j
+      - route
+      - show
+      - table
+      - "{{ item.table_id }}"
+  loop: "{{ host_metallb_pools }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: destroy_routes
+  changed_when: false
+  failed_when: false
+  tags: [never, destroy]
+
+- name: Flush nonempty residual MetalLB route tables
+  ansible.builtin.command:
+    argv:
+      - ip
+      - route
+      - flush
+      - table
+      - "{{ item.item.table_id }}"
+  loop: "{{ destroy_routes.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  when:
+    - item.rc == 0
+    - item.stdout | from_json | length > 0
+  tags: [never, destroy]
+
+- name: Check for residual MetalLB VLAN interfaces
+  ansible.builtin.command:
+    argv:
+      - ip
+      - -j
+      - link
+      - show
+      - dev
+      - "{{ item.interface_name }}"
+  loop: "{{ host_metallb_pools }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: destroy_interfaces
+  changed_when: false
+  failed_when: false
+  tags: [never, destroy]
+
+- name: Remove residual MetalLB VLAN interfaces
+  ansible.builtin.command:
+    argv:
+      - ip
+      - link
+      - delete
+      - "{{ item.item.interface_name }}"
+  loop: "{{ destroy_interfaces.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  when: item.rc == 0
+  tags: [never, destroy]

@@ -1,0 +1,26 @@
+---
+- name: Add missing allowed-address pairs
+  ansible.builtin.command:
+    argv:
+      - openstack
+      - --os-cloud
+      - "{{ os_cloud }}"
+      - port
+      - set
+      - --allowed-address
+      - >-
+        ip-address={{ item.item.subnet }},mac-address={{ (item.stdout | from_json).mac_address }}
+      - "{{ item.item.port }}"
+  loop: "{{ metallb_port_info.results }}"
+  loop_control:
+    label: "{{ item.item.key }}"
+  when: >-
+    (
+      (item.stdout | from_json).allowed_address_pairs
+      | default([])
+      | selectattr('ip_address', 'equalto', item.item.subnet)
+      | selectattr('mac_address', 'equalto', (item.stdout | from_json).mac_address)
+      | list
+      | length
+    ) == 0
+  tags: [configure, openstack]

@@ -6,6 +6,7 @@
 resource "openstack_networking_network_v2" "hostnet" {
   count = var.hostnet_network_id == "" ? 1 : 0
   name  = "${var.naming_prefix}hostnet"
+  mtu   = var.trunk_mtu
 }
 
 resource "openstack_networking_subnet_v2" "hostnet" {
@@ -47,6 +48,14 @@ data "openstack_networking_subnetpool_v2" "mgmt" {
 
 resource "openstack_networking_network_v2" "mgmt" {
   name = "${var.naming_prefix}mgmt"
+  mtu  = var.trunk_mtu
+
+  lifecycle {
+    precondition {
+      condition     = var.trunk_interface_name != "mgmt.${var.mgmt_vlan_id}"
+      error_message = "The trunk parent and management VLAN interfaces must use different names."
+    }
+  }
 }
 
 resource "openstack_networking_subnet_v2" "mgmt" {
@@ -84,6 +93,30 @@ resource "openstack_networking_network_v2" "metallb" {
   for_each = local.metallb_map
 
   name = "${var.naming_prefix}${each.key}"
+  mtu  = var.trunk_mtu
+
+  lifecycle {
+    precondition {
+      condition     = each.value.vlan_id != var.mgmt_vlan_id
+      error_message = "MetalLB VLAN IDs must not use the management VLAN ID."
+    }
+    precondition {
+      condition     = each.value.interface_name != "mgmt.${var.mgmt_vlan_id}"
+      error_message = "MetalLB interface names must not use the management interface name."
+    }
+    precondition {
+      condition     = each.value.interface_name != var.trunk_interface_name
+      error_message = "MetalLB interface names must not use the trunk parent interface name."
+    }
+    precondition {
+      condition     = each.value.table_id != var.mgmt_vlan_id
+      error_message = "MetalLB route table IDs must not use the management route table ID."
+    }
+    precondition {
+      condition     = each.value.rule_priority != 1000 + var.mgmt_vlan_id
+      error_message = "MetalLB policy-rule priorities must not use the management rule priority."
+    }
+  }
 }
 
 resource "openstack_networking_subnet_v2" "metallb" {
@@ -122,6 +155,12 @@ locals {
   # Mgmt subnet CIDR (dynamically allocated from pool)
   mgmt_subnet_cidr = openstack_networking_subnet_v2.mgmt.cidr
 
-  # MetalLB network map for for_each
-  metallb_map = { for net in var.metallb_networks : net.pool_name => net }
+  # MetalLB network map with effective first-boot route defaults.
+  metallb_map = {
+    for net in var.metallb_networks : net.pool_name => merge(net, {
+      interface_name = net.interface_name != null ? net.interface_name : "metal.${net.vlan_id}"
+      table_id       = net.table_id != null ? net.table_id : net.vlan_id
+      rule_priority  = net.rule_priority != null ? net.rule_priority : 1000 + net.vlan_id
+    })
+  }
 }

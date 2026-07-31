@@ -1,84 +1,163 @@
-# MetalLB Public Pool VLAN Setup
+# MetalLB Public-Pool VLAN Setup
 
-Configures the MetalLB public-pool VLAN interface and policy-based routing on undercloud nodes.
+Configures one or more MetalLB public-pool VLANs and source-based routing tables on undercloud Kubernetes nodes.
 
-## Why is this needed?
+Netplan and `systemd-networkd` are the only sources of truth for node networking. The playbook does not create interfaces or routes with imperative `ip link`, `ip route`, or `ip rule` commands during configuration.
 
-On the undercloud topology, MetalLB public-pool OpenStack ports are created **without `fixed_ips`** (by design — MetalLB manages the IPs, not OpenStack). Because there's no IP on the port, cloud-init/netplan never creates the VLAN sub-interface on the node OS. This playbook fills that gap.
+## Why this is needed
 
-## What it does
+MetalLB public-pool OpenStack ports are created without `fixed_ips`. Because OpenStack does not assign an address, cloud-init does not create the VLAN interface on the node. This playbook supplies the missing netplan configuration while preserving OpenStack port-security enforcement.
 
-| Step | Description |
-|------|-------------|
-| **OpenStack** | Adds `allowed_address_pairs` on MetalLB ports so port security allows MetalLB VIPs. Discovers port MACs. |
-| **Interface** | Creates `metal.<vlan_id>` VLAN sub-interface on the trunk parent, sets MAC to match the OpenStack port, sets MTU. |
-| **Routing** | Configures policy-based routing: separate routing table, default via SVI gateway, ip rule matching the public subnet. |
-| **Persist** | Writes netplan config + networkd-dispatcher script so everything survives reboots. |
+## What it manages
+
+- OpenStack `allowed_address_pairs` for every pool and node port
+- VLAN interface ID, parent, MAC, and MTU
+- A dedicated route table per pool
+- A link-scope route for the public subnet
+- An on-link default route through the SVI gateway
+- A source policy rule with an explicit priority
+- Complete node and OpenStack teardown
 
 ## Prerequisites
 
-- OpenStack CLI configured with a `clouds.yaml` entry (default: `uc-oc-stage`)
-- SSH access to cluster nodes via the inventory
-- The undercloud Terraform module has already created the cluster (ports, trunks, etc.)
+- OpenStack CLI and a working `clouds.yaml` entry
+- SSH and sudo access to the target nodes
+- Netplan using the `systemd-networkd` renderer
+- Existing management VLAN on the trunk parent
+- OpenStack trunk subports already created for every configured pool/node pair
 
 ## Configuration
 
-Edit `vars.yml` to match your cluster:
+Pass a cluster-specific vars file with `-e @<file>`. A node may participate in multiple pools, and every OpenStack port identifier is overrideable.
 
 ```yaml
-os_cloud: uc-oc-stage           # OpenStack cloud name
-metallb_vlan_id: 105            # VLAN ID for public-pool
-metallb_subnet: "72.4.119.16/28" # Subnet allocated from PUBLIC-IP-POOL
-metallb_gateway: "72.4.119.17"  # SVI gateway IP
-node_port_names:                # OpenStack port names per node
-  - sandbox-cp0-public-pool
-  - ...
-host_port_map:                  # inventory hostname → port name
-  sandbox-cp0: sandbox-cp0-public-pool
-  ...
+os_cloud: uc-oc-stage
+
+mgmt_vlan_id: 109
+mgmt_interface: "mgmt.{{ mgmt_vlan_id }}"
+
+metallb_public_pools:
+  - name: public-pool
+    vlan_id: 105
+    interface_name: metal.105
+    subnet: "72.4.119.16/28"
+    gateway: "72.4.119.17"
+    table_id: 105
+    rule_priority: 1105
+    node_ports:
+      - host: sandbox-cp0
+        port: sandbox-cp0-public-pool
+      - host: sandbox-cp1
+        port: sandbox-cp1-public-pool
+
+  - name: second-public-pool
+    vlan_id: 205
+    interface_name: metal.205
+    subnet: "192.0.2.0/28"
+    gateway: "192.0.2.1"
+    table_id: 205
+    rule_priority: 1205
+    node_ports:
+      - host: sandbox-wn0
+        port: 00000000-0000-0000-0000-000000000000
 ```
 
-You can also pass an external vars file:
-```bash
-ansible-playbook -i <inventory> playbooks/metallb-public-pool/metallb-public-pool.yml \
-  -e @/path/to/my-cluster-vars.yml
+`port` may be an OpenStack port name or UUID. No naming convention is assumed.
+
+Defaults when omitted:
+
+```yaml
+table_id: <vlan_id>
+rule_priority: 1000 + <vlan_id>
+interface_name: "metal.<vlan_id>"
+```
+
+Rule priorities, table IDs, interface names, VLAN IDs, and pool names must be unique. Defaults are convenience values and remain fully overrideable.
+
+A pool may optionally override the discovered parent interface or MTU:
+
+```yaml
+parent_interface: eno3np0
+mtu: 9000
 ```
 
 ## Usage
 
 ```bash
-# Full run (all steps)
-ansible-playbook -i <inventory> playbooks/metallb-public-pool/metallb-public-pool.yml
+export ANSIBLE_INVENTORY=/path/to/inventory.yaml
+VARS=/path/to/metallb-public-pool-vars.yml
+PLAYBOOK=playbooks/metallb-public-pool/metallb-public-pool.yml
 
-# Only OpenStack port security
-ansible-playbook -i <inventory> playbooks/metallb-public-pool/metallb-public-pool.yml --tags openstack
+# Validate variables, OpenStack ports, trunk discovery, and candidate netplan.
+# Candidate files are rendered under a temporary root and are not applied.
+ansible-playbook "$PLAYBOOK" -e @"$VARS" --tags validate
 
-# Only create interfaces
-ansible-playbook -i <inventory> playbooks/metallb-public-pool/metallb-public-pool.yml --tags interface
+# Full convergence: OpenStack followed by nodes and verification.
+ansible-playbook "$PLAYBOOK" -e @"$VARS"
 
-# Only routing
-ansible-playbook -i <inventory> playbooks/metallb-public-pool/metallb-public-pool.yml --tags routing
+# Explicit full convergence tag.
+ansible-playbook "$PLAYBOOK" -e @"$VARS" --tags configure
 
-# Only persistence configs
-ansible-playbook -i <inventory> playbooks/metallb-public-pool/metallb-public-pool.yml --tags persist
+# OpenStack allowed-address pairs only.
+ansible-playbook "$PLAYBOOK" -e @"$VARS" --tags openstack
 
-# Destroy everything (tear down for re-testing)
-ansible-playbook -i <inventory> playbooks/metallb-public-pool/metallb-public-pool.yml --tags destroy
+# Node netplan configuration and verification only.
+# This still performs read-only OpenStack lookups to obtain port MACs.
+ansible-playbook "$PLAYBOOK" -e @"$VARS" --tags nodes
+
+# Read-only runtime verification.
+ansible-playbook "$PLAYBOOK" -e @"$VARS" --tags verify
+
+# Complete node and OpenStack teardown.
+ansible-playbook "$PLAYBOOK" -e @"$VARS" --tags destroy
 ```
 
 ## Tags
 
-| Tag | Scope | Description |
-|-----|-------|-------------|
-| `openstack` | localhost | Port security + MAC discovery |
-| `interface` | nodes | VLAN interface creation + MAC + MTU |
-| `routing` | nodes | Policy-based routing setup |
-| `persist` | nodes | Netplan + dispatcher scripts |
-| `destroy` | nodes | Remove all changes (must be explicitly requested) |
+| Tag | Mutates OpenStack | Mutates nodes | Description |
+|---|---:|---:|---|
+| `configure` | Yes | Yes | Complete convergence and verification |
+| `openstack` | Yes | No | Add missing allowed-address pairs |
+| `nodes` | No | Yes | Render, validate, apply, and verify netplan |
+| `validate` | No | Temporary files only | Validate inputs, ports, trunk discovery, and candidate netplan |
+| `verify` | No | No | Verify interfaces, routes, and policy rules |
+| `destroy` | Yes | Yes | Remove managed netplan, runtime residue, and allowed-address pairs |
 
-## Notes
+The destructive tasks also carry Ansible's `never` tag and run only when `--tags destroy` is explicitly supplied.
 
-- The `destroy` tag uses Ansible's `never` special tag — it won't run unless explicitly passed via `--tags destroy`.
-- The mgmt VLAN (109) is fully handled by cloud-init and does NOT need this playbook.
-- This playbook is idempotent — safe to run multiple times.
-- After a fresh Terraform apply, run this playbook before deploying MetalLB services that use the public-pool.
+## Safety and convergence behavior
+
+- Nodes are processed with `serial: 1` and `any_errors_fatal: true`.
+- Candidate netplan is validated with the installed netplan version before `/etc/netplan` is changed.
+- `netplan apply` runs only when configuration or runtime drift requires it.
+- After applying netplan, the playbook waits for the node connection and verifies every interface, route, and policy rule.
+- Re-running a converged configuration should report no changes.
+
+## Persistence tests
+
+Before approving a new cluster, test one node first with `--limit`:
+
+```bash
+ansible-playbook "$PLAYBOOK" -e @"$VARS" --tags validate --limit sandbox-wn0
+ansible-playbook "$PLAYBOOK" -e @"$VARS" --tags nodes --limit sandbox-wn0
+```
+
+Then verify these lifecycle operations:
+
+```bash
+systemctl restart systemd-networkd
+systemctl stop systemd-networkd
+systemctl start systemd-networkd
+networkctl reload
+networkctl reconfigure metal.105
+```
+
+After each operation:
+
+```bash
+networkctl status metal.105
+ip route show table 105
+ip rule show priority 1105
+```
+
+Finally reboot the node and repeat the checks before rolling out to the rest of the cluster.

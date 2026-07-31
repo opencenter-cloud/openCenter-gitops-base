@@ -1,42 +1,41 @@
 ---
-# MetalLB Public Pool VLAN Configuration
-# Override these variables per cluster as needed.
+# Example MetalLB public-pool configuration.
+# Copy this file for each cluster and pass it with:
+#   ansible-playbook metallb-public-pool.yml -e @/path/to/cluster-vars.yml
+#
+# Replace all example values below before running the playbook.
 
-# OpenStack cloud name (from clouds.yaml)
-os_cloud: uc-oc-stage
+# OpenStack cloud name from clouds.yaml.
+os_cloud: example-undercloud
 
-# VLAN ID for the MetalLB public-pool network
-metallb_vlan_id: 106
+# Existing management VLAN used to discover the physical trunk parent.
+mgmt_vlan_id: 109
+mgmt_interface: "mgmt.{{ mgmt_vlan_id }}"
 
-# Subnet CIDR allocated from PUBLIC-IP-POOL
-metallb_subnet: "72.4.119.112/28"
+# One node may participate in multiple pools. Pool names, interface names,
+# VLANs, route tables, and policy-rule priorities must be unique.
+metallb_public_pools:
+  - name: public-pool
+    vlan_id: 105
+    subnet: "192.0.2.0/28"
+    gateway: "192.0.2.1"
 
-# SVI gateway IP (first usable in the subnet, provided by the SVI router)
-metallb_gateway: "72.4.119.113"
+    # Optional overrides and their defaults:
+    # interface_name: "metal.105"   # metal.<vlan_id>
+    # table_id: 105                 # <vlan_id>
+    # rule_priority: 1105           # 1000 + <vlan_id>
+    # parent_interface: eno1        # discovered parent of mgmt_interface
+    # mtu: 9000                     # discovered trunk-parent MTU
 
-# Routing table ID and name (uses VLAN ID by default)
-metallb_table_id: "{{ metallb_vlan_id }}"
-metallb_table_name: "metal"
+    # Hosts must match entries in the oc_controlplane_nodes or oc_worker_nodes
+    # inventory groups. Ports may be OpenStack port names or UUIDs and must
+    # already exist as trunk subports.
+    node_ports:
+      - host: example-cp0
+        port: example-cp0-public-pool
+      - host: example-cp1
+        port: example-cp1-public-pool
+      - host: example-wn0
+        port: example-wn0-public-pool
 
-# Management VLAN ID (used to discover the trunk parent interface)
-mgmt_vlan_id: 108
-
-# Interface name template
-metallb_iface: "metal.{{ metallb_vlan_id }}"
-
-# OpenStack port names for each node's MetalLB sub-port.
-# Format: <naming_prefix><node_role><index>-<pool_name>
-# These are created by the undercloud Terraform module.
-node_port_names:
-  - dirtbag-cp0-public-pool
-  - dirtbag-cp1-public-pool
-  - dirtbag-cp2-public-pool
-  - dirtbag-wn0-public-pool
-
-# Mapping of ansible inventory hostname → OpenStack port name.
-# Used to look up the correct MAC address per node.
-host_port_map:
-  dirtbag-cp0: dirtbag-cp0-public-pool
-  dirtbag-cp1: dirtbag-cp1-public-pool
-  dirtbag-cp2: dirtbag-cp2-public-pool
-  dirtbag-wn0: dirtbag-wn0-public-pool
+# Add more pool mappings under metallb_public_pools as needed.
