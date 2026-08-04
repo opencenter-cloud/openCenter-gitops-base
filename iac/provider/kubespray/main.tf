@@ -187,15 +187,38 @@ resource "null_resource" "wait_cloudinit" {
       if [[ "${var.baremetal_deployment}" == "false" ]]; then
       for i in $(seq 1 $MAX_RETRIES); do
           echo "[$(date)] Checking cloud-init status on all nodes (attempt $i)..."
-          
-          ansible k8s_cluster -m shell -a 'cloud-init status --wait' -b
 
-          if [ $? -eq 0 ]; then
-              echo "All nodes have completed cloud-init."
+          ansible k8s_cluster -m shell -a '
+            cloud-init status --wait
+            cloudinit_rc=$?
+
+            case "$cloudinit_rc" in
+              0)
+                exit 0
+                ;;
+              2)
+                echo "Cloud-init completed with recoverable errors; continuing."
+                exit 0
+                ;;
+              *)
+                echo "Cloud-init failed with critical errors (exit code $cloudinit_rc)." >&2
+                exit "$cloudinit_rc"
+                ;;
+            esac
+          ' -b
+          ansible_rc=$?
+
+          if [ "$ansible_rc" -eq 0 ]; then
+              echo "All nodes have completed cloud-init without critical errors."
               exit 0
           fi
 
-          echo " Some nodes are still running cloud-init. Retrying in $SLEEP_INTERVALs..."
+          if [ "$ansible_rc" -ne 4 ]; then
+              echo "Cloud-init failed critically on one or more nodes (Ansible exit code $ansible_rc)."
+              exit "$ansible_rc"
+          fi
+
+          echo "Some nodes are unreachable. Retrying in $SLEEP_INTERVALs..."
           sleep "$SLEEP_INTERVAL"
       done
 

@@ -102,7 +102,7 @@ locals {
   os_hardening_enabled               = true
 
   #Calico Settings
-  cni_iface = "mgmt.109"
+  cni_iface = "${local.trunk_interface_name}.${local.mgmt_vlan_id}"
   #Interface detection method for Calico nodeAddressAutodetectionV4. Can be "first-found", "interface", "cidr"
   #https://docs.tigera.io/calico/latest/reference/installation/api#operator.tigera.io%2fv1.NodeAddressAutodetection
   calico_interface_autodetect      = "interface"

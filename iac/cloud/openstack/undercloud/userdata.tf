@@ -8,13 +8,15 @@ locals {
   undercloud_netplan_common = {
     trunk_interface_name = var.trunk_interface_name
     trunk_mtu            = var.trunk_mtu
-    mgmt_interface_name  = "mgmt.${var.mgmt_vlan_id}"
+    hostnet_subnet_cidr  = data.openstack_networking_subnet_v2.hostnet.cidr
+    hostnet_gateway      = data.openstack_networking_subnet_v2.hostnet.gateway_ip
+    mgmt_interface_name  = "${var.trunk_interface_name}.${var.mgmt_vlan_id}"
     mgmt_vlan_id         = var.mgmt_vlan_id
     mgmt_subnet_cidr     = openstack_networking_subnet_v2.mgmt.cidr
     mgmt_gateway         = openstack_networking_subnet_v2.mgmt.gateway_ip
     mgmt_table_id        = var.mgmt_vlan_id
     mgmt_rule_priority   = 1000 + var.mgmt_vlan_id
-    dns_nameservers      = var.dns_nameservers
+    dns_nameservers      = data.openstack_networking_subnet_v2.hostnet.dns_nameservers
   }
 
   master_metallb_cloudinit = {
@@ -61,6 +63,7 @@ locals {
 
   master_netplan = {
     for idx in range(local.master_count) : idx => merge(local.undercloud_netplan_common, {
+      hostnet_address  = "${openstack_networking_port_v2.parent_master[idx].all_fixed_ips[0]}/${split("/", local.undercloud_netplan_common.hostnet_subnet_cidr)[1]}"
       mgmt_mac_address = openstack_networking_port_v2.subport_mgmt_master[idx].mac_address
       mgmt_address     = "${openstack_networking_port_v2.subport_mgmt_master[idx].all_fixed_ips[0]}/${split("/", local.mgmt_subnet_cidr)[1]}"
       metallb_networks = local.master_metallb_cloudinit[idx]
@@ -69,6 +72,7 @@ locals {
 
   worker_netplan = {
     for idx in range(local.worker_count) : idx => merge(local.undercloud_netplan_common, {
+      hostnet_address  = "${openstack_networking_port_v2.parent_worker[idx].all_fixed_ips[0]}/${split("/", local.undercloud_netplan_common.hostnet_subnet_cidr)[1]}"
       mgmt_mac_address = openstack_networking_port_v2.subport_mgmt_worker[idx].mac_address
       mgmt_address     = "${openstack_networking_port_v2.subport_mgmt_worker[idx].all_fixed_ips[0]}/${split("/", local.mgmt_subnet_cidr)[1]}"
       metallb_networks = local.worker_metallb_cloudinit[idx]
@@ -77,6 +81,7 @@ locals {
 
   additional_worker_netplan = {
     for instance_key, instance in local.additional_pool_instances_map : instance_key => merge(local.undercloud_netplan_common, {
+      hostnet_address  = "${openstack_networking_port_v2.parent_additional[instance_key].all_fixed_ips[0]}/${split("/", local.undercloud_netplan_common.hostnet_subnet_cidr)[1]}"
       mgmt_mac_address = openstack_networking_port_v2.subport_mgmt_additional[instance_key].mac_address
       mgmt_address     = "${openstack_networking_port_v2.subport_mgmt_additional[instance_key].all_fixed_ips[0]}/${split("/", local.mgmt_subnet_cidr)[1]}"
       metallb_networks = local.additional_worker_metallb_cloudinit[instance_key]

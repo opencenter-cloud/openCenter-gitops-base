@@ -161,6 +161,13 @@ variable "hostnet_subnet_id" {
   description = "Pre-existing hostnet subnet ID. Empty = create new."
 }
 
+variable "trunk_admin_state_up" {
+  type        = bool
+  default     = true
+  nullable    = false
+  description = "Administrative up/down state applied to all OpenStack trunk resources"
+}
+
 variable "trunk_interface_name" {
   type        = string
   default     = "eno3np0"

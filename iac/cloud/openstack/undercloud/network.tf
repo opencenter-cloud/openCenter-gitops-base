@@ -27,6 +27,25 @@ resource "openstack_networking_subnet_v2" "hostnet" {
   }
 }
 
+data "openstack_networking_subnet_v2" "hostnet" {
+  subnet_id = local.hostnet_subnet_id
+
+  lifecycle {
+    postcondition {
+      condition     = self.network_id == local.hostnet_network_id
+      error_message = "The selected hostnet subnet must belong to the selected hostnet network."
+    }
+    postcondition {
+      condition     = self.ip_version == 4
+      error_message = "The selected hostnet subnet must use IPv4."
+    }
+    postcondition {
+      condition     = self.gateway_ip != null && self.gateway_ip != ""
+      error_message = "The selected hostnet subnet must define a gateway for the parent default route."
+    }
+  }
+}
+
 resource "openstack_networking_router_v2" "hostnet" {
   name                = "${var.naming_prefix}hostnet"
   external_network_id = var.router_external_network_id

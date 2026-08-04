@@ -19,15 +19,9 @@ ntp:
 %{endfor~}
 
 write_files:
-  # Prevent cloud-init from recreating datasource netplan on subsequent boots.
-  - path: /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
-    owner: root:root
-    permissions: '0644'
-    content: |
-      network: {config: disabled}
-
-  # Stage the complete desired configuration for validation before installation.
-  - path: /var/lib/undercloud-netplan/etc/netplan/50-undercloud.yaml
+  # Keep the Terraform-rendered configuration separate until it validates.
+  # Datasource networking remains active during the initial boot and SSH setup.
+  - path: /var/lib/undercloud-netplan/etc/netplan/50-cloud-init.yaml
     owner: root:root
     permissions: '0600'
     content: |
@@ -39,42 +33,38 @@ write_files:
     content: |
       ${indent(6, metallb_netplan)}
 %{endif~}
-
-runcmd:
-  - |
+  - path: /usr/local/sbin/apply-undercloud-netplan
+    owner: root:root
+    permissions: '0755'
+    content: |
+      #!/bin/sh
       set -eu
-      LIVE_DIR=/etc/netplan
-      NEXT_DIR=/etc/netplan.undercloud
-      BACKUP_DIR=/etc/netplan.cloud-init-backup
 
-      restore_netplan() {
-        if [ -d "$BACKUP_DIR" ]; then
-          rm -rf "$LIVE_DIR"
-          mv "$BACKUP_DIR" "$LIVE_DIR"
-          netplan generate || true
-          netplan apply || true
-        fi
-      }
+      root=/var/lib/undercloud-netplan
+      staged="$root/etc/netplan"
+      backup="$root/original-netplan"
 
-      netplan generate --root-dir /var/lib/undercloud-netplan
-      rm -rf "$NEXT_DIR" "$BACKUP_DIR"
-      install -d -m 0755 "$NEXT_DIR"
-      install -m 0600 /var/lib/undercloud-netplan/etc/netplan/50-undercloud.yaml "$NEXT_DIR/50-undercloud.yaml"
-%{if metallb_netplan != ""~}
-      install -m 0600 /var/lib/undercloud-netplan/etc/netplan/60-metallb-public-pools.yaml "$NEXT_DIR/60-metallb-public-pools.yaml"
-%{endif~}
+      # Validate the complete candidate before changing active networking.
+      netplan generate --root-dir "$root"
 
-      trap restore_netplan EXIT HUP INT TERM
-      mv "$LIVE_DIR" "$BACKUP_DIR"
-      mv "$NEXT_DIR" "$LIVE_DIR"
+      # Preserve the datasource configuration for recovery and troubleshooting.
+      if [ ! -d "$backup" ]; then
+        cp -a /etc/netplan "$backup"
+      fi
+
+      install -m 0600 "$staged/50-cloud-init.yaml" /etc/netplan/50-cloud-init.yaml
+      if [ -f "$staged/60-metallb-public-pools.yaml" ]; then
+        install -m 0600 "$staged/60-metallb-public-pools.yaml" /etc/netplan/60-metallb-public-pools.yaml
+      fi
+
       netplan generate
       netplan apply
-      rm -rf "$BACKUP_DIR"
-      trap - EXIT HUP INT TERM
-      touch /run/undercloud-netplan-configured
 
-power_state:
-  mode: reboot
-  timeout: 30
-  message: "Rebooting to activate persistent undercloud netplan configuration"
-  condition: [test, -f, /run/undercloud-netplan-configured]
+      # Keep the promoted configuration authoritative on later boots.
+      printf '%s\n' 'network: {config: disabled}' > /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
+
+      # Kubespray will not continue unless this final marker exists.
+      touch "$root/ready"
+
+runcmd:
+  - [ /usr/local/sbin/apply-undercloud-netplan ]

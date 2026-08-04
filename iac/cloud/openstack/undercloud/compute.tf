@@ -188,6 +188,10 @@ resource "openstack_networking_port_v2" "parent_additional" {
   name       = "${var.naming_prefix}${each.value.node_worker}${each.value.instance_idx}"
   network_id = local.hostnet_network_id
 
+  fixed_ip {
+    subnet_id = local.hostnet_subnet_id
+  }
+
   security_group_ids = [
     module.secgroup.controlplane_id,
     module.secgroup.worker_id,
@@ -253,8 +257,9 @@ resource "openstack_networking_port_v2" "subport_metallb_additional" {
 resource "openstack_networking_trunk_v2" "additional" {
   for_each = local.additional_pool_instances_map
 
-  name    = "${var.naming_prefix}${each.value.node_worker}${each.value.instance_idx}"
-  port_id = openstack_networking_port_v2.parent_additional[each.key].id
+  name           = "${var.naming_prefix}${each.value.node_worker}${each.value.instance_idx}"
+  port_id        = openstack_networking_port_v2.parent_additional[each.key].id
+  admin_state_up = var.trunk_admin_state_up
 
   sub_port {
     port_id           = openstack_networking_port_v2.subport_mgmt_additional[each.key].id

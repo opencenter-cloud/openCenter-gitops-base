@@ -131,8 +131,9 @@ resource "openstack_networking_port_v2" "subport_metallb_master" {
 resource "openstack_networking_trunk_v2" "master" {
   count = local.master_count
 
-  name    = "${var.naming_prefix}${var.node_master}${count.index}"
-  port_id = openstack_networking_port_v2.parent_master[count.index].id
+  name           = "${var.naming_prefix}${var.node_master}${count.index}"
+  port_id        = openstack_networking_port_v2.parent_master[count.index].id
+  admin_state_up = var.trunk_admin_state_up
 
   # Mgmt subport
   sub_port {
@@ -240,8 +241,9 @@ resource "openstack_networking_port_v2" "subport_metallb_worker" {
 resource "openstack_networking_trunk_v2" "worker" {
   count = local.worker_count
 
-  name    = "${var.naming_prefix}${var.node_worker}${count.index}"
-  port_id = openstack_networking_port_v2.parent_worker[count.index].id
+  name           = "${var.naming_prefix}${var.node_worker}${count.index}"
+  port_id        = openstack_networking_port_v2.parent_worker[count.index].id
+  admin_state_up = var.trunk_admin_state_up
 
   # Mgmt subport
   sub_port {
