@@ -47,6 +47,15 @@ output "mgmt_network_id" {
   value       = openstack_networking_network_v2.mgmt.id
 }
 
+output "additional_worker_nodes" {
+  description = "Additional worker pool instance objects with mgmt access IPs"
+  value = [for key, node in openstack_compute_instance_v2.additional_worker : {
+    name         = node.name
+    id           = node.id
+    access_ip_v4 = openstack_networking_port_v2.subport_mgmt_additional[key].all_fixed_ips[0]
+  }]
+}
+
 output "metallb_pools" {
   description = "MetalLB pool information for downstream consumption"
   value = [for name, net in openstack_networking_subnet_v2.metallb : {

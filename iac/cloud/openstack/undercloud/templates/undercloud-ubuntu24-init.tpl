@@ -11,6 +11,9 @@ ssh_authorized_keys:
   - ${key}
 %{endfor~}
 
+package_update: true
+package_upgrade: true
+
 ntp:
   enabled: true
   servers:
