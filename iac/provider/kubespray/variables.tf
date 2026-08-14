@@ -1,6 +1,7 @@
 variable "address_bastion" {
-  type    = string
-  default = "0.0.0.0"
+  type        = string
+  default     = ""
+  description = "Bastion host address. When empty, the generated inventory omits the ProxyCommand and ansible connects to nodes directly."
 }
 
 variable "baremetal_deployment" {

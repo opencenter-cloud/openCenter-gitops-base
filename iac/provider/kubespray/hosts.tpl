@@ -1,7 +1,7 @@
 all:
   vars:
     cloud_name: "${cluster_name}"
-    ansible_ssh_common_args: '-o IdentityFile=${ssh_key_path} -o IdentitiesOnly=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ProxyCommand="ssh -o IdentityFile=${ssh_key_path} -o IdentitiesOnly=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p -q ${ssh_user}@${address_bastion}"'
+    ansible_ssh_common_args: '-o IdentityFile=${ssh_key_path} -o IdentitiesOnly=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null%{ if address_bastion != "" } -o ProxyCommand="ssh -o IdentityFile=${ssh_key_path} -o IdentitiesOnly=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p -q ${ssh_user}@${address_bastion}"%{ endif }'
     ansible_user: "${ssh_user}"
     ansible_python_interpreter: /usr/bin/python3
     k8s_internal_ip: ${k8s_internal_ip}
