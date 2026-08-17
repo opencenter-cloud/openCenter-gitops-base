@@ -61,7 +61,13 @@ variable "k8s_api_port" {
 variable "k8s_internal_ip" {
   type        = string
   default     = ""
-  description = "The internal IP address used as a VIP for the kube-apiserver."
+  description = "The host used for Calico's explicit Kubernetes API endpoint, typically the internal kube-apiserver VIP."
+}
+
+variable "kubernetes_service_endpoint_enabled" {
+  type        = bool
+  default     = true
+  description = "Whether to render the explicit Kubernetes API endpoint. Defaults to true for backward compatibility; set false to use the in-cluster Kubernetes service."
 }
 
 variable "subnet_nodes" {
