@@ -20,9 +20,11 @@ installation:
   serviceCIDRs:
     - "${subnet_services}"
 
-
-# Optionally configure the host and port used to access the Kubernetes API server.
+# Preserve the module's historical explicit Kubernetes API endpoint by default.
+# Set kubernetes_service_endpoint_enabled to false to use the in-cluster
+# Kubernetes service endpoint instead.
+%{ if kubernetes_service_endpoint_enabled ~}
 kubernetesServiceEndpoint:
   host: "${k8s_internal_ip}"
   port: "${k8s_api_port}"
-
+%{ endif ~}

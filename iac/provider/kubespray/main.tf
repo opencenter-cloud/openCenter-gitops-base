@@ -61,13 +61,15 @@ resource "local_file" "k8s_cluster" {
 resource "local_file" "addons" {
   content = templatefile("${path.module}/templates/addons.tpl",
     {
-      cert_manager_enabled   = var.cert_manager_enabled
-      cni_iface              = var.cni_iface
-      k8s_api_ip             = var.k8s_api_ip
-      k8s_api_port           = var.k8s_api_port
-      kube_vip_enabled       = var.kube_vip_enabled
-      metrics_server_enabled = var.metrics_server_enabled
-      vrrp_ip                = var.vrrp_ip
+      cert_manager_enabled          = var.cert_manager_enabled
+      cni_iface                     = var.cni_iface
+      k8s_api_ip                    = var.k8s_api_ip
+      k8s_api_port                  = var.k8s_api_port
+      kube_vip_enabled              = var.kube_vip_enabled
+      metrics_server_container_port = var.metrics_server_container_port
+      metrics_server_enabled        = var.metrics_server_enabled
+      metrics_server_host_network   = var.metrics_server_host_network
+      vrrp_ip                       = var.vrrp_ip
   })
 
   filename        = "./inventory/group_vars/k8s_cluster/addons.yml"

@@ -16,6 +16,8 @@ locals {
     mgmt_gateway         = openstack_networking_subnet_v2.mgmt.gateway_ip
     mgmt_table_id        = var.mgmt_vlan_id
     mgmt_rule_priority   = 1000 + var.mgmt_vlan_id
+    subnet_pods          = var.subnet_pods
+    subnet_services      = var.subnet_services
     dns_nameservers      = data.openstack_networking_subnet_v2.hostnet.dns_nameservers
   }
 

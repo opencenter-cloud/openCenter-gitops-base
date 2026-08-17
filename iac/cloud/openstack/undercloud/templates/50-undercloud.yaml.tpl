@@ -45,6 +45,12 @@ network:
           on-link: true
           table: ${mgmt_table_id}
       routing-policy:
+        - to: "${subnet_pods}"
+          table: 254
+          priority: 1000
+        - to: "${subnet_services}"
+          table: 254
+          priority: 1000
         - from: "${mgmt_subnet_cidr}"
           table: ${mgmt_table_id}
           priority: ${mgmt_rule_priority}

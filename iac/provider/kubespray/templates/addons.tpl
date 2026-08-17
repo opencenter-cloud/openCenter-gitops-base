@@ -15,11 +15,11 @@ registry_service_type: "LoadBalancer"
 
 # Metrics Server deployment
 metrics_server_enabled: ${metrics_server_enabled}
-# metrics_server_container_port: 10250
+metrics_server_container_port: ${metrics_server_container_port}
 # metrics_server_kubelet_insecure_tls: true
 # metrics_server_metric_resolution: 15s
 # metrics_server_kubelet_preferred_address_types: "InternalIP,ExternalIP,Hostname"
-# metrics_server_host_network: false
+metrics_server_host_network: ${metrics_server_host_network}
 # metrics_server_replicas: 1
 
 # Rancher Local Path Provisioner

@@ -11,14 +11,14 @@ The undercloud uses a trunk-port model where each server gets a single physical 
                           │         Physical Server          │
                           │                                  │
   Upstream Switch ────────┤  eno3np0 (trunk parent, native)  │
-   (VLAN trunk)           │    ├── mgmt.109 (VLAN 109)      │  ← Management / Kube-VIP / Calico
+   (VLAN trunk)           │    ├── eno3np0.109 (VLAN 109)      │  ← Management / Kube-VIP / Calico
                           │    └── metal.105 (VLAN 105)     │  ← MetalLB public IPs
                           │                                  │
-                          │  hostnet: 10.2.128.0/24          │  ← Native/untagged, DHCP, default route
+                          │  hostnet: 10.2.128.0/24          │  ← Native/untagged, static, default route
                           └─────────────────────────────────┘
 ```
 
-- **Hostnet** — Native (untagged) network on the trunk parent. Provides DHCP, default route, and outbound NAT.
+- **Hostnet** — Native (untagged) network on the trunk parent. Neutron allocates each parent port a fixed IP that Terraform configures statically with the subnet gateway, DNS, default route, and outbound NAT.
 - **Mgmt VLAN** — Tagged VLAN for Kubernetes API access (kube-vip), Calico node-to-node, and SSH.
 - **MetalLB VLAN(s)** — Tagged VLAN(s) for public-facing LoadBalancer IPs. No IPs assigned by OpenStack; MetalLB manages them via L2 advertisement.
 
@@ -32,7 +32,7 @@ These settings come after the standard cluster/server sizing in `main.tf`:
 hostnet_cidr = "10.2.128.0/24"
 ```
 
-The CIDR for the native (untagged) host network. This is the network the trunk parent interface gets its IP from via DHCP. It provides the node's default route and outbound NAT to the internet via an OVN router connected to PUBLICNET.
+The CIDR for the native (untagged) host network. Neutron allocates a fixed IP from this subnet to each trunk parent port; Terraform renders that exact allocation, the subnet prefix, gateway, and DNS into netplan as a static configuration. It provides the node's main-table default route and outbound NAT to the internet via an OVN router connected to PUBLICNET.
 
 ### `mgmt_vlan_id`
 
@@ -40,7 +40,7 @@ The CIDR for the native (untagged) host network. This is the network the trunk p
 mgmt_vlan_id = 109
 ```
 
-VLAN ID for the management network. This creates a tagged sub-interface (`mgmt.<id>`) on each node. Used for:
+VLAN ID for the management network. This creates a tagged sub-interface (`<trunk_interface_name>.<id>`, for example `eno3np0.109`) on each node. Used for:
 - **Kube-VIP** — The HA Kubernetes API floating IP lives here
 - **Calico node mesh** — Calico's `nodeAddressAutodetection` uses this interface
 - **SSH access** — Nodes are accessed via mgmt IPs (through a ProxyCommand jump)
@@ -108,12 +108,12 @@ Multiple entries are supported for clusters needing separate IP pools (for examp
 
 Terraform automatically adds the dynamically allocated pool CIDR to every control-plane and worker subport as an allowed-address pair. Neutron associates that pair with the subport's own MAC, permitting MetalLB-announced addresses through port security. Use `allowed_address_pairs` only for additional addresses or CIDRs beyond the allocated pool; in most deployments it can be omitted.
 
-The MetalLB ports intentionally have no fixed IPs because MetalLB owns the addresses. For each node, Terraform renders two small persistent netplan files from the OpenStack port data:
+The MetalLB ports intentionally have no fixed IPs because MetalLB owns the addresses. For each node, Terraform renders two candidate netplan files under the staging root:
 
-- `/etc/netplan/50-undercloud.yaml` owns the physical trunk parent and management VLAN. The parent uses the explicit `trunk_interface_name` (default `eno3np0`), is assigned `trunk_mtu` (default `9000`), and uses DHCP for hostnet. The physical NIC is addressed by its stable Linux name because the Neutron parent-port MAC can differ from the bare-metal NIC MAC. The management VLAN receives its fixed subport IP/MAC, DNS, a link-scope subnet route, an on-link default route in the VLAN-numbered table, and a source rule at priority `1000 + mgmt_vlan_id`.
-- `/etc/netplan/60-metallb-public-pools.yaml` owns all MetalLB VLANs. Each pool receives its subport MAC, the same trunk MTU, a link-scope subnet route, an on-link default route in its dedicated table, and a source policy rule.
+- `/var/lib/undercloud-netplan/etc/netplan/50-cloud-init.yaml` owns the physical trunk parent and management VLAN. The parent uses the explicit `trunk_interface_name` (default `eno3np0`), is assigned `trunk_mtu` (default `9000`), and receives the exact fixed IP, prefix, gateway, and DNS from its Neutron parent-port/subnet allocation. Its default route stays in the main table. The physical NIC is addressed by its stable Linux name because the Neutron parent-port MAC can differ from the bare-metal NIC MAC. The management VLAN keeps the datasource-compatible `<trunk_interface_name>.<mgmt_vlan_id>` name, receives its fixed subport IP/MAC, and places its link-scope and default routes exclusively in the VLAN-numbered table with a source rule at priority `1000 + mgmt_vlan_id`.
+- `/var/lib/undercloud-netplan/etc/netplan/60-metallb-public-pools.yaml` owns all MetalLB VLANs. Each pool receives its subport MAC, the same trunk MTU, a link-scope subnet route, an on-link default route in its dedicated table, and a source policy rule.
 
-Cloud-init stages and validates both templates before replacing datasource-generated netplan, disables future cloud-init network regeneration, atomically swaps in and applies the generated files with rollback on failure, and reboots only after a successful apply. No dispatcher scripts or runtime `ip route` commands are used, so netplan remains the source of truth across reboots. When a pre-existing hostnet network is supplied, `trunk_mtu` must match that network's actual MTU.
+Cloud-init first stages these templates so the OpenStack datasource configuration remains active for initial management SSH. During the final cloud-init stage, `/usr/local/sbin/apply-undercloud-netplan` validates the complete staged root, backs up the datasource netplan to `/var/lib/undercloud-netplan/original-netplan`, promotes the rendered files, runs `netplan generate` and `netplan apply`, and only then disables datasource network regeneration. The script writes `/var/lib/undercloud-netplan/ready` last; the Kubespray readiness gate refuses to continue if that marker is missing. No reboot is required. When a pre-existing hostnet network is supplied, `trunk_mtu` must match that network's actual MTU.
 
 ## Kubernetes Network Settings
 
@@ -139,7 +139,7 @@ The hostnet CIDR repeated here for kubespray. Used internally by kubespray for `
 ### `cni_iface`
 
 ```hcl
-cni_iface = "mgmt.109"
+cni_iface = "eno3np0.109"
 ```
 
 The interface Calico uses for the VXLAN tunnel endpoints. Must match the mgmt VLAN interface name. Calico's `nodeAddressAutodetectionV4` uses this to determine which IP to use for the node mesh.
@@ -173,16 +173,17 @@ calico_nat_outgoing = true
 
 Whether pods SNAT when reaching destinations outside the pod CIDR. Enables pods to reach the internet via the node's default route.
 
-## Post-Provisioning Steps
+## Provisioning Sequence
 
-After `terraform apply` completes:
+`terraform apply` performs the node-side networking steps before Kubernetes bootstrap:
 
-1. **Wait for cloud-init** — Each node validates and installs its management and MetalLB netplan files, then reboots once. Confirm `cloud-init status --wait` succeeds before cluster bootstrap.
-2. **Run kubespray** — Deploy Kubernetes on the provisioned nodes.
-3. **Bootstrap Flux** — Run `flux bootstrap git` to set up GitOps.
-4. **Deploy applications** — Flux reconciles MetalLB, gateway, and services from the overlay.
+1. **Bootstrap datasource networking** — OpenStack provides initial connectivity on the Neutron-allocated hostnet and management VLAN so the node is reachable during cloud-init.
+2. **Validate and activate rendered netplan** — The local cloud-init script validates the staging root, backs up `/etc/netplan`, promotes the base and optional MetalLB files, and applies them without renaming the management interface.
+3. **Require the readiness marker** — Kubespray accepts the known recoverable cloud-init status only when `/var/lib/undercloud-netplan/ready` exists. A failed network activation stops provisioning.
+4. **Run Kubespray** — Kubernetes starts only after every node has completed cloud-init and activated its policy routing.
+5. **Bootstrap Flux and deploy applications** — Run `flux bootstrap git`, then allow Flux to reconcile MetalLB, gateway, and services from the overlay.
 
-The MetalLB VLANs and policy routes are present before MetalLB speakers or LoadBalancer services start, avoiding interface-not-found warnings and routine speaker restarts.
+Before starting MetalLB speakers or LoadBalancer services, verify the expected `metal.<vlan_id>` interfaces and policy-route tables on the deployed nodes.
 
 ### MetalLB Public-Pool Playbook (Existing Nodes and Repair)
 
@@ -215,7 +216,7 @@ Populate it from `mgmt_vlan_id`, each `metallb_networks` entry, the allocated Op
 os_cloud: example-undercloud
 
 mgmt_vlan_id: 109
-mgmt_interface: "mgmt.{{ mgmt_vlan_id }}"
+mgmt_interface: "eno3np0.{{ mgmt_vlan_id }}"
 
 metallb_public_pools:
   - name: public-pool
@@ -294,8 +295,8 @@ See `playbooks/metallb-public-pool/README.md` for the complete variable constrai
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
-| MetalLB speaker warns that `metal.X` does not exist | First-boot cloud-init failed, or this is an existing node from before automatic configuration | Check `cloud-init status --long` and `/var/log/cloud-init-output.log`; repair existing nodes with the playbook's `nodes` tag |
-| Cloud-init reports undercloud netplan validation failure | The management VLAN parent was not discoverable, route settings conflict, or generated netplan is invalid | Correct `mgmt_vlan_id`/`metallb_networks`, inspect `/var/log/cloud-init-output.log`, and rebuild or repair the node |
+| MetalLB speaker warns that `metal.X` does not exist | First-boot network activation failed, or runtime state drifted | Check `cloud-init status --long`, `/var/log/cloud-init-output.log`, and `/var/lib/undercloud-netplan/ready`; repair existing nodes with the playbook's `nodes` tag |
+| Undercloud netplan activation fails | The staged candidate is invalid or `netplan apply` failed | Inspect `/var/lib/undercloud-netplan/etc/netplan/` and `/var/lib/undercloud-netplan/original-netplan`, correct `mgmt_vlan_id`/`metallb_networks`, and rebuild the node |
 | OpenStack port lookup fails in the playbook | Wrong `os_cloud`, port name/UUID, or missing subport | Correct the vars file and confirm Terraform created every pool/node subport |
 | ARP for a MetalLB VIP is blocked | The pool-CIDR/MAC allowed-address pair is missing or stale | Apply Terraform; use the playbook's `openstack` tag for existing or non-module-managed ports |
 | Return traffic does not reach the client | The VLAN route table or source policy rule is missing or stale | Run `--tags verify`; repair with `--tags nodes` |
