@@ -258,6 +258,6 @@ kube_vip_enabled: true
 kube_vip_arp_enabled: true
 kube_vip_controlplane_enabled: true
 kube_vip_address: ${vrrp_ip}
-kube_vip_interface: "${cni_iface}"
+kube_vip_interface: "${kube_vip_interface}"
 kube_vip_services_enabled: false
 %{ endif ~}

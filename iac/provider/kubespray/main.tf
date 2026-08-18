@@ -63,6 +63,7 @@ resource "local_file" "addons" {
     {
       cert_manager_enabled   = var.cert_manager_enabled
       cni_iface              = var.cni_iface
+      kube_vip_interface     = var.kube_vip_interface
       k8s_api_ip             = var.k8s_api_ip
       k8s_api_port           = var.k8s_api_port
       kube_vip_enabled       = var.kube_vip_enabled

@@ -25,6 +25,12 @@ variable "cni_iface" {
   default = "enp3s0"
 }
 
+variable "kube_vip_interface" {
+  type        = string
+  default     = ""
+  description = "Interface kube-vip binds the control-plane VIP to. When empty, kube-vip auto-detects."
+}
+
 variable "deploy_cluster" {
   type    = bool
   default = false
