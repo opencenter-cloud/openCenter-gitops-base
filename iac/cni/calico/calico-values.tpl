@@ -8,7 +8,8 @@ installation:
       interface: "${cni_iface}"
 %{ endif ~}
 %{ if calico_interface_autodetect == "cidr" ~}
-      cidr: "${calico_interface_autodetect_cidr}"
+      cidrs:
+        - "${calico_interface_autodetect_cidr}"
 %{ endif ~}
 %{ if calico_interface_autodetect == "first-found" ~}
       firstFound: true
