@@ -3,6 +3,7 @@
 | Key | Type | Default| Description |
 | --- | --- | --- | --- |
 | address_bastion | string | "" | Public IP address of the bastion host for SSH access |
+| additional_sysctl | list(object({ name = string, value = string })) | [] | Additional sysctl settings applied by Kubespray on all nodes |
 | baremetal_deployment | bool | false | No bastion will be used in inventory and it wont wait for cloud-init to complete |
 | cert_manager_enabled | bool | false | Enable the built-in cert-manager in Kubespray |
 | cluster_name | string | "" | Name of the Kubernetes cluster |
@@ -17,6 +18,8 @@
 | subnet_nodes | string | "" | CIDR for node network servers|
 | subnet_pods | string | "10.42.0.0/16 | CIDR for pod network |
 | subnet_services | string | "10.43.0.0/16" | CIDR for service network |
+| sysctl_file_path | string | "" | Optional sysctl configuration file path; when empty Kubespray uses its default |
+| sysctl_ignore_unknown_keys | bool | null | Whether Kubespray ignores unknown sysctl keys; null omits the setting |
 | kubernetes_version | string | "1.30.4" | Kubernetes version to deploy  |
 | kubespray_version | string | "v2.28.1" | Kubespray version to use |
 | kube_vip_enabled | bool | false | Enable kube-vip for HA on Kube API Server. Requires vrrp_enabled to true  |
