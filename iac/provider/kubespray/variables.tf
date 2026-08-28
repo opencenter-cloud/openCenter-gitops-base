@@ -1,3 +1,12 @@
+variable "additional_sysctl" {
+  type = list(object({
+    name  = string
+    value = string
+  }))
+  default     = []
+  description = "Additional sysctl name/value entries applied by Kubespray on all nodes."
+}
+
 variable "address_bastion" {
   type        = string
   default     = ""
@@ -207,6 +216,18 @@ variable "subnet_services" {
 variable "subnet_join" {
   type    = string
   default = "100.64.0.0/16"
+}
+
+variable "sysctl_file_path" {
+  type        = string
+  default     = ""
+  description = "Optional path for the sysctl configuration file managed by Kubespray. When empty, Kubespray uses its default."
+}
+
+variable "sysctl_ignore_unknown_keys" {
+  type        = bool
+  default     = null
+  description = "Optional Kubespray setting that controls whether unknown sysctl keys are ignored."
 }
 
 variable "worker_nodes" {

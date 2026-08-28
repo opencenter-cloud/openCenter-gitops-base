@@ -30,6 +30,19 @@ resource "local_file" "ansible_inventory" {
   #   }
 }
 
+resource "local_file" "all_group_vars" {
+  content = templatefile("${path.module}/templates/all.tpl",
+    {
+      additional_sysctl          = var.additional_sysctl
+      sysctl_file_path           = var.sysctl_file_path
+      sysctl_ignore_unknown_keys = var.sysctl_ignore_unknown_keys
+  })
+
+  filename        = "./inventory/group_vars/all/all.yml"
+  file_permission = "0644"
+  depends_on      = [local_file.ansible_inventory]
+}
+
 resource "local_file" "k8s_cluster" {
   content = templatefile("${path.module}/templates/k8s_cluster.tpl",
     {
