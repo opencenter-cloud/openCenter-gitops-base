@@ -10,6 +10,7 @@
 | cni_iface | string | "eth0" | Network interface for CNI plugin ("eth0") |
 | deploy_cluster | bool | false | Whether to run the Kubespray playbooks and create the Kubernetes cluster (true) |
 | dns_zone_name | string | "" | DNS name for the Kubernetes API ("k8s.cluster-name.demo.mk8s.net") |
+| coredns_external_zones | list(object({ zones = list(string), nameservers = list(string), cache = number })) | [] | External DNS zones forwarded by CoreDNS to the specified nameservers |
 | master_nodes | list(object) | List of objects with id, name and access_ip_v4 | Configuration object for master nodes |
 | network_plugin | string | "none" | CNI network plugin to use ("calico"). Set to "none" to deploy the CNI separately |
 | k8s_hardening_enabled | bool | false | Enable Kubernetes security hardening. Will include additional hardening manifest. |

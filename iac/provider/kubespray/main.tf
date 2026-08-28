@@ -53,6 +53,7 @@ resource "local_file" "k8s_cluster" {
       subnet_pods               = var.subnet_pods
       subnet_services           = var.subnet_services
       enable_nodelocaldns       = var.enable_nodelocaldns
+      coredns_external_zones    = var.coredns_external_zones
       vrrp_ip                   = var.vrrp_ip
       vrrp_enabled              = var.vrrp_enabled
       use_octavia               = var.use_octavia
