@@ -213,6 +213,21 @@ nodelocaldns_secondary_skew_seconds: 5
 #   cache: 5
 #   rewrite:
 #   - name website.tld website.namespace.svc.cluster.local
+%{ if length(coredns_external_zones) > 0 ~}
+# External zones configuration for CoreDNS
+coredns_external_zones:
+%{ for external_zone in coredns_external_zones ~}
+  - zones:
+%{ for zone in external_zone.zones ~}
+      - ${zone}
+%{ endfor ~}
+    nameservers:
+%{ for nameserver in external_zone.nameservers ~}
+      - ${nameserver}
+%{ endfor ~}
+    cache: ${external_zone.cache}
+%{ endfor ~}
+%{ endif ~}
 # Enable k8s_external plugin for CoreDNS
 enable_coredns_k8s_external: false
 coredns_k8s_external_zone: k8s_external.local

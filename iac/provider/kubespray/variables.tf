@@ -58,6 +58,26 @@ variable "enable_nodelocaldns" {
   description = "Enable nodelocaldns for the cluster. This is useful for clusters with many nodes to reduce DNS query latency."
 }
 
+variable "coredns_external_zones" {
+  type = list(object({
+    zones       = list(string)
+    nameservers = list(string)
+    cache       = number
+  }))
+  default     = []
+  description = "External DNS zones forwarded by CoreDNS to the specified nameservers."
+
+  validation {
+    condition = alltrue([
+      for external_zone in var.coredns_external_zones :
+      length(external_zone.zones) > 0 &&
+      length(external_zone.nameservers) > 0 &&
+      external_zone.cache >= 0
+    ])
+    error_message = "Each coredns_external_zones entry must contain at least one zone and nameserver, and cache must be non-negative."
+  }
+}
+
 variable "k8s_hardening_enabled" {
   type        = bool
   default     = false
