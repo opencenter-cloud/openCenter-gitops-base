@@ -48,7 +48,7 @@ For the complete directory layout, see [Directory Structure](docs/reference/dire
 | **[model-registry-operator](applications/base/services/model-registry-operator/)** | `opendatahub` | `OLM` | Model versioning and lifecycle management | [README](applications/base/services/model-registry-operator/README.md) |
 | **[nodelocaldns](applications/base/services/nodelocaldns/)** | `nodelocaldns` | `2.4.0` | Per-node DNS caching agent | [README](applications/base/services/nodelocaldns/README.md) |
 | **[nvidia-gpu-operator](applications/base/services/nvidia-gpu-operator/)** | `gpu-operator` | `v26.3.2` | NVIDIA GPU lifecycle management with MIG support | [README](applications/base/services/nvidia-gpu-operator/README.md) |
-| **[olm](applications/base/services/olm/)** | `olm` | `v0.34.0` | Operator Lifecycle Manager | [README](applications/base/services/olm/README.md) |
+| **[olm](applications/base/services/olm/)** | `olm` | `v0.46.0` | Operator Lifecycle Manager | [README](applications/base/services/olm/README.md) |
 | **[openstack-ccm](applications/base/services/openstack-ccm/)** | `openstack-ccm` | `2.33.1` | OpenStack Cloud Controller Manager | [README](applications/base/services/openstack-ccm/README.md) |
 | **[openstack-csi](applications/base/services/openstack-csi/)** | `openstack-csi` | `2.33.1` | OpenStack Cinder CSI driver | [README](applications/base/services/openstack-csi/README.md) |
 | **[postgres-operator](applications/base/services/postgres-operator/)** | `postgres-operator` | `1.14.0` | PostgreSQL cluster management | [README](applications/base/services/postgres-operator/README.md) |

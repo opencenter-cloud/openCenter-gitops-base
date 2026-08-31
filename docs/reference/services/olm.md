@@ -16,8 +16,8 @@ tags: [olm, operators, lifecycle]
 
 ## What This Repo Deploys
 
-- upstream `crds.yaml` pinned to `v0.34.0`
-- upstream `olm.yaml` pinned to `v0.34.0`
+- upstream `crds.yaml` pinned to `v0.46.0`
+- upstream `olm.yaml` pinned to `v0.46.0`
 
 ## When to Use It
 
