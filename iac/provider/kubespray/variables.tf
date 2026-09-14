@@ -1,6 +1,7 @@
 variable "additional_sysctl" {
   type = list(object({
-    name  = string
+    na
+      = string
     value = string
   }))
   default     = []
@@ -115,6 +116,88 @@ variable "k8s_api_port" {
 variable "kubelet_rotate_server_certificates" {
   type    = bool
   default = false
+}
+
+variable "kube_control_plane_eviction_hard" {
+  type = map(string)
+  default = {
+    "memory.available" = "1Gi"
+  }
+  description = "Kubelet hard eviction thresholds applied to nodes in the kube_control_plane group. Unspecified thresholds retain kubelet defaults when merging is enabled."
+}
+
+variable "kube_control_plane_eviction_soft" {
+  type        = map(string)
+  default     = {}
+  description = "Kubelet soft eviction thresholds applied to nodes in the kube_control_plane group. Each signal must have a matching grace period."
+}
+
+variable "kube_control_plane_eviction_soft_grace_period" {
+  type        = map(string)
+  default     = {}
+  description = "Grace periods for kube_control_plane_eviction_soft, keyed by the same eviction signals."
+}
+
+variable "kube_control_plane_eviction_max_pod_grace_period" {
+  type        = number
+  default     = null
+  description = "Optional maximum pod termination grace period in seconds for soft evictions on kube_control_plane nodes."
+
+  validation {
+    condition = var.kube_control_plane_eviction_max_pod_grace_period == null ? true : (
+      var.kube_control_plane_eviction_max_pod_grace_period == floor(var.kube_control_plane_eviction_max_pod_grace_period) &&
+      var.kube_control_plane_eviction_max_pod_grace_period >= -2147483648 &&
+      var.kube_control_plane_eviction_max_pod_grace_period <= 2147483647
+    )
+    error_message = "kube_control_plane_eviction_max_pod_grace_period must be null or a signed 32-bit integer."
+  }
+}
+
+variable "kube_control_plane_merge_default_eviction_settings" {
+  type        = bool
+  default     = true
+  description = "Merge kubelet's default hard eviction thresholds with kube_control_plane_eviction_hard."
+}
+
+variable "kube_node_eviction_hard" {
+  type = map(string)
+  default = {
+    "memory.available" = "1Gi"
+  }
+  description = "Kubelet hard eviction thresholds applied to nodes in the kube_node group. Unspecified thresholds retain kubelet defaults when merging is enabled."
+}
+
+variable "kube_node_eviction_soft" {
+  type        = map(string)
+  default     = {}
+  description = "Kubelet soft eviction thresholds applied to nodes in the kube_node group. Each signal must have a matching grace period."
+}
+
+variable "kube_node_eviction_soft_grace_period" {
+  type        = map(string)
+  default     = {}
+  description = "Grace periods for kube_node_eviction_soft, keyed by the same eviction signals."
+}
+
+variable "kube_node_eviction_max_pod_grace_period" {
+  type        = number
+  default     = null
+  description = "Optional maximum pod termination grace period in seconds for soft evictions on kube_node nodes."
+
+  validation {
+    condition = var.kube_node_eviction_max_pod_grace_period == null ? true : (
+      var.kube_node_eviction_max_pod_grace_period == floor(var.kube_node_eviction_max_pod_grace_period) &&
+      var.kube_node_eviction_max_pod_grace_period >= -2147483648 &&
+      var.kube_node_eviction_max_pod_grace_period <= 2147483647
+    )
+    error_message = "kube_node_eviction_max_pod_grace_period must be null or a signed 32-bit integer."
+  }
+}
+
+variable "kube_node_merge_default_eviction_settings" {
+  type        = bool
+  default     = true
+  description = "Merge kubelet's default hard eviction thresholds with kube_node_eviction_hard."
 }
 
 variable "kubespray_version" {

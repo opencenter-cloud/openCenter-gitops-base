@@ -25,6 +25,16 @@
 | kubespray_version | string | "v2.28.1" | Kubespray version to use |
 | kube_vip_enabled | bool | false | Enable kube-vip for HA on Kube API Server. Requires vrrp_enabled to true  |
 | kube_pod_security_exemptions_namespaces | list(string) | [] | Namespaces exempt from pod security |
+| kube_control_plane_eviction_hard | map(string) | `{ "memory.available" = "1Gi" }` | Kubelet hard eviction thresholds applied to nodes in the `kube_control_plane` group; unspecified thresholds retain kubelet defaults when merging is enabled |
+| kube_control_plane_eviction_soft | map(string) | `{}` | Kubelet soft eviction thresholds applied to control-plane nodes; each signal must have a matching grace-period entry |
+| kube_control_plane_eviction_soft_grace_period | map(string) | `{}` | Grace periods for control-plane soft eviction, keyed by the same signals as `kube_control_plane_eviction_soft` |
+| kube_control_plane_eviction_max_pod_grace_period | number | null | Optional maximum pod termination grace period in seconds for control-plane soft evictions; null omits the setting |
+| kube_control_plane_merge_default_eviction_settings | bool | true | Merge kubelet's default hard eviction thresholds with the control-plane thresholds |
+| kube_node_eviction_hard | map(string) | `{ "memory.available" = "1Gi" }` | Kubelet hard eviction thresholds applied to nodes in the `kube_node` group; unspecified thresholds retain kubelet defaults when merging is enabled |
+| kube_node_eviction_soft | map(string) | `{}` | Kubelet soft eviction thresholds applied to worker nodes; each signal must have a matching grace-period entry |
+| kube_node_eviction_soft_grace_period | map(string) | `{}` | Grace periods for worker soft eviction, keyed by the same signals as `kube_node_eviction_soft` |
+| kube_node_eviction_max_pod_grace_period | number | null | Optional maximum pod termination grace period in seconds for worker soft evictions; null omits the setting |
+| kube_node_merge_default_eviction_settings | bool | true | Merge kubelet's default hard eviction thresholds with the worker thresholds |
 | worker_nodes | list(object) | List of objects with id, name and access_ip_v4 | Configuration object for worker nodes |
 | k8s_api_ip | string | "" | External IP for Kubernetes API |
 | k8s_api_port | number | 6443 | Port for Kubernetes API |
@@ -40,3 +50,25 @@
 | kube_oidc_username_prefix | string | 'oidc:' | Prefix for OIDC usernames |
 | kube_oidc_groups_claim | string | "groups" | JWT claim for groups |
 | kube_oidc_groups_prefix | string | 'oidc:' | Prefix for OIDC groups |
+
+## Kubelet soft eviction
+
+Soft eviction is disabled by default. To enable it for a node group, configure thresholds and grace periods with identical eviction-signal keys. Use kubelet configuration values such as `"2Gi"` or `"10%"`; do not include the `<` operator used by the deprecated kubelet command-line flags.
+
+For example, configure workers independently from control-plane nodes:
+
+```hcl
+kube_node_eviction_soft = {
+  "memory.available" = "2Gi"
+  "nodefs.available" = "15%"
+}
+
+kube_node_eviction_soft_grace_period = {
+  "memory.available" = "1m30s"
+  "nodefs.available" = "2m"
+}
+
+kube_node_eviction_max_pod_grace_period = 60
+```
+
+The equivalent `kube_control_plane_*` inputs apply the policy only to control-plane nodes. `evictionMaxPodGracePeriod` is emitted as an integer number of seconds; leaving the input as `null` omits it. `mergeDefaultEvictionSettings` affects hard-eviction defaults only and does not add soft thresholds.

@@ -43,6 +43,50 @@ resource "local_file" "all_group_vars" {
   depends_on      = [local_file.ansible_inventory]
 }
 
+resource "local_file" "kube_control_plane_eviction" {
+  content = templatefile("${path.module}/templates/kubelet.tpl",
+    {
+      eviction_hard                   = var.kube_control_plane_eviction_hard
+      eviction_soft                   = var.kube_control_plane_eviction_soft
+      eviction_soft_grace_period      = var.kube_control_plane_eviction_soft_grace_period
+      eviction_max_pod_grace_period   = var.kube_control_plane_eviction_max_pod_grace_period
+      merge_default_eviction_settings = var.kube_control_plane_merge_default_eviction_settings
+  })
+
+  filename        = "./inventory/group_vars/kube_control_plane/kubelet.yml"
+  file_permission = "0644"
+  depends_on      = [local_file.ansible_inventory]
+
+  lifecycle {
+    precondition {
+      condition     = toset(keys(var.kube_control_plane_eviction_soft)) == toset(keys(var.kube_control_plane_eviction_soft_grace_period))
+      error_message = "kube_control_plane_eviction_soft and kube_control_plane_eviction_soft_grace_period must contain the same eviction signal keys."
+    }
+  }
+}
+
+resource "local_file" "kube_node_eviction" {
+  content = templatefile("${path.module}/templates/kubelet.tpl",
+    {
+      eviction_hard                   = var.kube_node_eviction_hard
+      eviction_soft                   = var.kube_node_eviction_soft
+      eviction_soft_grace_period      = var.kube_node_eviction_soft_grace_period
+      eviction_max_pod_grace_period   = var.kube_node_eviction_max_pod_grace_period
+      merge_default_eviction_settings = var.kube_node_merge_default_eviction_settings
+  })
+
+  filename        = "./inventory/group_vars/kube_node/kubelet.yml"
+  file_permission = "0644"
+  depends_on      = [local_file.ansible_inventory]
+
+  lifecycle {
+    precondition {
+      condition     = toset(keys(var.kube_node_eviction_soft)) == toset(keys(var.kube_node_eviction_soft_grace_period))
+      error_message = "kube_node_eviction_soft and kube_node_eviction_soft_grace_period must contain the same eviction signal keys."
+    }
+  }
+}
+
 resource "local_file" "k8s_cluster" {
   content = templatefile("${path.module}/templates/k8s_cluster.tpl",
     {

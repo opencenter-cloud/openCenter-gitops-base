@@ -215,6 +215,13 @@ module "kubespray-cluster" {
   kube_oidc_username_prefix               = local.kube_oidc_username_prefix
   kube_oidc_groups_claim                  = local.kube_oidc_groups_claim
   kube_oidc_groups_prefix                 = local.kube_oidc_groups_prefix
+
+  # Containerd CRI extra settings (optional)
+  # CDI is enabled by default in containerd 2.0+. This setting is only needed
+  # for older containerd versions where CDI must be explicitly enabled.
+  # containerd_cri_extra_settings = {
+  #   cdi_spec_dirs = ["/etc/cdi", "/var/run/cdi"]
+  # }
 }
 
 
@@ -235,3 +242,88 @@ module "calico" {
   subnet_services                  = local.subnet_services
   windows_dataplane                = length(module.openstack-nova.windows_nodes) > 0 ? "HSN" : "Disabled"
 }
+
+# # =============================================================================
+# # Undercloud module example (multi-VLAN trunk-port topology)
+# # Uncomment to use the undercloud module instead of openstack-nova
+# # =============================================================================
+# module "undercloud" {
+#   source = "github.com/opencenter-cloud/openCenter-gitops-base.git//iac/cloud/openstack/undercloud?ref=2026.01"
+#
+#   # OpenStack Authentication (reuses local variables from above)
+#   openstack_auth_url            = local.openstack_auth_url
+#   openstack_insecure            = local.openstack_insecure
+#   openstack_region              = local.openstack_region
+#   openstack_user_name           = local.openstack_user_name
+#   openstack_password            = local.openstack_user_password
+#   openstack_tenant_name         = local.openstack_tenant_name
+#   openstack_project_domain_name = local.openstack_project_domain_name
+#   openstack_user_domain_name    = local.openstack_user_domain_name
+#   application_credential_id     = local.application_credential_id
+#   application_credential_secret = local.application_credential_secret
+#   openstack_ca                  = local.openstack_ca
+#
+#   # Naming and placement
+#   naming_prefix     = local.naming_prefix
+#   availability_zone = local.availability_zone
+#   image_id          = local.image_id
+#   ssh_user          = local.ssh_user
+#   ssh_authorized_keys = local.ssh_authorized_keys
+#   dns_nameservers     = local.dns_nameservers
+#   node_master         = local.node_master
+#   node_worker         = local.node_worker
+#
+#   # Cluster sizing
+#   size_master = {
+#     count  = local.master_count
+#     flavor = local.flavor_master
+#   }
+#   size_worker = {
+#     count  = local.worker_count
+#     flavor = local.flavor_worker
+#   }
+#
+#   # Kubernetes networking
+#   subnet_pods     = local.subnet_pods
+#   subnet_services = local.subnet_services
+#   k8s_api_port    = local.k8s_api_port
+#
+#   # Router and floating IP
+#   router_external_network_id = local.router_external_network_id
+#   floatingip_pool            = local.floatingip_pool
+#
+#   # Undercloud-specific: Management VLAN network
+#   mgmt_vlan_id       = 102
+#   mgmt_subnet_pool   = "mgmt-pool"
+#   mgmt_prefix_length = 26
+#   network_provider   = "datacentre"
+#
+#   # Undercloud-specific: MetalLB VLAN networks
+#   metallb_networks = [
+#     {
+#       pool_name   = "public-pool"
+#       vlan_id     = 105
+#       subnet_pool = "public-pool"
+#     },
+#   ]
+#
+#   # Undercloud-specific: Hostnet (leave defaults or specify pre-existing)
+#   # hostnet_cidr       = "172.31.20.0/24"
+#   # hostnet_network_id = ""
+#   # hostnet_subnet_id  = ""
+#
+#   # Undercloud-specific: kube-vip VIP (empty = auto-computed as broadcast-1 of mgmt subnet)
+#   # kube_vip_address = ""
+#
+#   # Bastion disabled by default in undercloud (SVI-routed access)
+#   disable_bastion = true
+#
+#   # Boot-from-volume settings
+#   worker_node_bfv_volume_size      = local.worker_node_bfv_volume_size
+#   worker_node_bfv_destination_type = local.worker_node_bfv_destination_type
+#   worker_node_bfv_source_type      = local.worker_node_bfv_source_type
+#   worker_node_bfv_volume_type      = local.worker_node_bfv_volume_type
+#
+#   # CA certificates
+#   ca_certificates = local.ca_certificates
+# }
