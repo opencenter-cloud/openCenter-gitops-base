@@ -263,11 +263,11 @@ variable "containerd_cri_extra_settings" {
 
 variable "kubespray_version" {
   type    = string
-  default = "v2.28.0"
+  default = "v2.31.0"
 }
 variable "kubernetes_version" {
   type    = string
-  default = "1.30.4"
+  default = "1.35.4"
 }
 
 variable "kubeconfig_path" {

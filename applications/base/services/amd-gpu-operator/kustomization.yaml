@@ -9,6 +9,6 @@ secretGenerator:
       namespace: kube-amd-gpu
       type: Opaque
       files:
-        - values.yaml=helm-values/values-v1.5.0.yaml
+        - values.yaml=helm-values/values-v1.5.1.yaml
       options:
         disableNameSuffixHash: true

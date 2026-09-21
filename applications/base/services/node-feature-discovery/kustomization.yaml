@@ -9,6 +9,6 @@ secretGenerator:
       namespace: node-feature-discovery
       type: Opaque
       files:
-        - values.yaml=helm-values/values-0.18.3.yaml
+        - values.yaml=helm-values/values-0.19.0.yaml
       options:
         disableNameSuffixHash: true

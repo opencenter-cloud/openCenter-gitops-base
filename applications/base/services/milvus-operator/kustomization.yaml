@@ -9,6 +9,6 @@ secretGenerator:
       namespace: milvus-operator
       type: Opaque
       files:
-        - values.yaml=helm-values/values-1.3.7.yaml
+        - values.yaml=helm-values/values-1.3.10.yaml
       options:
         disableNameSuffixHash: true

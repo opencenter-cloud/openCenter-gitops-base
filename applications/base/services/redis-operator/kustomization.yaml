@@ -9,6 +9,6 @@ secretGenerator:
       namespace: redis-operator
       type: Opaque
       files:
-        - values.yaml=helm-values/values-0.25.0.yaml
+        - values.yaml=helm-values/values-0.26.1.yaml
       options:
         disableNameSuffixHash: true

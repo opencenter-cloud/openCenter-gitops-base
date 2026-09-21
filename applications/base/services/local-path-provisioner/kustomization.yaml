@@ -9,6 +9,6 @@ secretGenerator:
     namespace: local-path-storage
     type: Opaque
     files:
-      - values.yaml=helm-values/values-0.0.36.yaml
+      - values.yaml=helm-values/values-0.0.37.yaml
     options:
       disableNameSuffixHash: true

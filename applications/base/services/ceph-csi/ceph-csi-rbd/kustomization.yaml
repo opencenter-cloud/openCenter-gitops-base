@@ -8,6 +8,6 @@ secretGenerator:
     namespace: ceph-csi
     type: Opaque
     files:
-      - values.yaml=helm-values/values-3.17.0.yaml
+      - values.yaml=helm-values/values-3.17.1.yaml
     options:
       disableNameSuffixHash: true

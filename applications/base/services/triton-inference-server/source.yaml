@@ -7,4 +7,4 @@ spec:
   url: https://github.com/triton-inference-server/server
   interval: 1h
   ref:
-    tag: "v2.69.0"
+    tag: "v2.72.0"

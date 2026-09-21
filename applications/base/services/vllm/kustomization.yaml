@@ -9,6 +9,6 @@ secretGenerator:
       namespace: vllm
       type: Opaque
       files:
-        - values.yaml=helm-values/values-0.1.11.yaml
+        - values.yaml=helm-values/values-0.1.12.yaml
       options:
         disableNameSuffixHash: true

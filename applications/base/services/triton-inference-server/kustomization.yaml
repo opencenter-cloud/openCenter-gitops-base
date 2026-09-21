@@ -9,6 +9,6 @@ secretGenerator:
       namespace: triton-inference-server
       type: Opaque
       files:
-        - values.yaml=helm-values/values-v2.69.0.yaml
+        - values.yaml=helm-values/values-v2.72.0.yaml
       options:
         disableNameSuffixHash: true

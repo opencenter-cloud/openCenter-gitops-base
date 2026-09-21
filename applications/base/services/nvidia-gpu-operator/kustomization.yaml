@@ -9,6 +9,6 @@ secretGenerator:
       namespace: gpu-operator
       type: Opaque
       files:
-        - values.yaml=helm-values/values-v26.3.2.yaml
+        - values.yaml=helm-values/values-v26.7.0.yaml
       options:
         disableNameSuffixHash: true

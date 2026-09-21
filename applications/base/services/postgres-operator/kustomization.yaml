@@ -9,6 +9,6 @@ secretGenerator:
       namespace: postgres-operator
       type: Opaque
       files:
-        - values.yaml=helm-values/values-1.14.0.yaml
+        - values.yaml=helm-values/values-2.0.2.yaml
       options:
         disableNameSuffixHash: true

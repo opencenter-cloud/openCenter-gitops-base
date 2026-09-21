@@ -9,6 +9,6 @@ secretGenerator:
       namespace: kube-system
       type: Opaque
       files:
-        - values.yaml=helm-values/values-v1.16.2.yaml
+        - values.yaml=helm-values/values-v1.16.6.yaml
       options:
         disableNameSuffixHash: true

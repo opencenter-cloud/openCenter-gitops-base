@@ -9,6 +9,6 @@ secretGenerator:
       namespace: kuberay-system
       type: Opaque
       files:
-        - values.yaml=helm-values/values-1.4.2.yaml
+        - values.yaml=helm-values/values-1.7.1.yaml
       options:
         disableNameSuffixHash: true

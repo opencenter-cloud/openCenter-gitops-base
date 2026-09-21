@@ -9,6 +9,6 @@ secretGenerator:
       namespace: metallb-system
       type: Opaque
       files:
-        - values.yaml=helm-values/values-0.15.2.yaml
+        - values.yaml=helm-values/values-0.16.1.yaml
       options:
         disableNameSuffixHash: true
