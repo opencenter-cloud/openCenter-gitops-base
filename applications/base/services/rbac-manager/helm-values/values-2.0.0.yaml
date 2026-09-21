@@ -1,12 +1,12 @@
 ---
-# Hardened values for rbac-manager v1.21.1 (app version v1.9.2)
+# Hardened values for rbac-manager chart v2.0.0 (app version v1.10.0)
 # RBAC Manager for automated RBAC management
 # Based on official Fairwinds chart values and documentation
 
 # Image configuration
 image:
   repository: quay.io/reactiveops/rbac-manager
-  tag: v1.9.2
+  tag: v1.10.0
   digest: ""
   pullPolicy: Always
   imagePullSecrets: []
