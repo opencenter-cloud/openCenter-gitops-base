@@ -1,0 +1,89 @@
+---
+# MetalLB public-pool VLAN and policy-routing setup.
+#
+# Netplan/systemd-networkd is the source of truth for node interfaces, routes,
+# and policy rules. The playbook supports multiple pools per node.
+#
+# Tags:
+#   configure - Complete OpenStack and node convergence (also the default run)
+#   openstack - OpenStack allowed-address pairs only
+#   nodes     - Complete node-side netplan convergence
+#   verify    - Read-only node verification
+#   validate  - Render and validate candidate netplan without applying it
+#   destroy   - Complete teardown, protected by Ansible's never tag
+
+- name: Validate inputs and prepare OpenStack state
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - vars.yml
+
+  tasks:
+    - name: Validate controller inputs
+      ansible.builtin.import_tasks: tasks/controller-validate.yml
+      tags: [always]
+
+    - name: Discover OpenStack controller state
+      ansible.builtin.import_tasks: tasks/controller-discover.yml
+
+    - name: Configure OpenStack controller state
+      ansible.builtin.import_tasks: tasks/controller-configure.yml
+
+- name: Configure and verify MetalLB public pools on nodes
+  hosts: oc_controlplane_nodes:oc_worker_nodes
+  become: true
+  gather_facts: false
+  serial: 1
+  any_errors_fatal: true
+  vars_files:
+    - vars.yml
+
+  handlers:
+    - name: Generate networkd configuration from netplan
+      ansible.builtin.command:
+        cmd: netplan generate
+      changed_when: false
+      listen: Apply MetalLB netplan
+
+    - name: Apply MetalLB netplan configuration
+      ansible.builtin.command:
+        cmd: netplan apply
+      listen: Apply MetalLB netplan
+
+    - name: Record MetalLB netplan application
+      ansible.builtin.set_fact:
+        metallb_netplan_applied: true
+      changed_when: false
+      listen: Apply MetalLB netplan
+
+  tasks:
+    - name: Validate node inputs
+      ansible.builtin.import_tasks: tasks/controller-validate.yml
+      tags: [configure, nodes, verify, validate, destroy]
+
+    - name: Select MetalLB pools for each node
+      ansible.builtin.import_tasks: tasks/node-select.yml
+
+    - name: Discover MetalLB node state
+      ansible.builtin.import_tasks: tasks/node-discover.yml
+
+    - name: Configure MetalLB node state
+      ansible.builtin.import_tasks: tasks/node-configure.yml
+
+    - name: Verify MetalLB node state
+      ansible.builtin.import_tasks: tasks/node-verify.yml
+
+    - name: Destroy MetalLB node state
+      ansible.builtin.import_tasks: tasks/node-destroy.yml
+
+- name: Remove MetalLB OpenStack allowed-address pairs
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - vars.yml
+
+  tasks:
+    - name: Destroy OpenStack controller state
+      ansible.builtin.import_tasks: tasks/controller-destroy.yml

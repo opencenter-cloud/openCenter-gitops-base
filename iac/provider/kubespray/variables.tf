@@ -200,6 +200,12 @@ variable "kube_node_merge_default_eviction_settings" {
   description = "Merge kubelet's default hard eviction thresholds with kube_node_eviction_hard."
 }
 
+variable "containerd_cri_extra_settings" {
+  type        = map(any)
+  default     = {}
+  description = "Optional containerd CRI plugin overrides passed through to kubespray group variables. The module does not set defaults — only user-provided keys are rendered. Example: set cdi_spec_dirs for containerd versions prior to 2.0 where CDI is not enabled by default."
+}
+
 variable "kubespray_version" {
   type    = string
   default = "v2.28.0"
@@ -272,7 +278,23 @@ variable "metrics_server_enabled" {
   type        = bool
   default     = true
   description = "Enable metrics server for the cluster. This is useful for monitoring and scaling."
+}
 
+variable "metrics_server_host_network" {
+  type        = bool
+  default     = false
+  description = "Run metrics-server in the host network namespace. Enable when the pod network cannot reach kubelet endpoints."
+}
+
+variable "metrics_server_container_port" {
+  type        = number
+  default     = 10250
+  description = "Secure serving port for metrics-server. Use a port other than 10250 with host networking because kubelet uses 10250."
+
+  validation {
+    condition     = var.metrics_server_container_port >= 1 && var.metrics_server_container_port <= 65535
+    error_message = "metrics_server_container_port must be between 1 and 65535."
+  }
 }
 
 variable "network_plugin" {

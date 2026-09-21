@@ -120,14 +120,16 @@ resource "local_file" "k8s_cluster" {
 resource "local_file" "addons" {
   content = templatefile("${path.module}/templates/addons.tpl",
     {
-      cert_manager_enabled   = var.cert_manager_enabled
-      cni_iface              = var.cni_iface
-      kube_vip_interface     = var.kube_vip_interface
-      k8s_api_ip             = var.k8s_api_ip
-      k8s_api_port           = var.k8s_api_port
-      kube_vip_enabled       = var.kube_vip_enabled
-      metrics_server_enabled = var.metrics_server_enabled
-      vrrp_ip                = var.vrrp_ip
+      cert_manager_enabled          = var.cert_manager_enabled
+      cni_iface                     = var.cni_iface
+      kube_vip_interface            = var.kube_vip_interface
+      k8s_api_ip                    = var.k8s_api_ip
+      k8s_api_port                  = var.k8s_api_port
+      kube_vip_enabled              = var.kube_vip_enabled
+      metrics_server_container_port = var.metrics_server_container_port
+      metrics_server_enabled        = var.metrics_server_enabled
+      metrics_server_host_network   = var.metrics_server_host_network
+      vrrp_ip                       = var.vrrp_ip
   })
 
   filename        = "./inventory/group_vars/k8s_cluster/addons.yml"
@@ -247,15 +249,38 @@ resource "null_resource" "wait_cloudinit" {
       if [[ "${var.baremetal_deployment}" == "false" ]]; then
       for i in $(seq 1 $MAX_RETRIES); do
           echo "[$(date)] Checking cloud-init status on all nodes (attempt $i)..."
-          
-          ansible k8s_cluster -m shell -a 'cloud-init status --wait' -b
 
-          if [ $? -eq 0 ]; then
-              echo "All nodes have completed cloud-init."
+          ansible k8s_cluster -m shell -a '
+            cloud-init status --wait
+            cloudinit_rc=$?
+
+            case "$cloudinit_rc" in
+              0)
+                exit 0
+                ;;
+              2)
+                echo "Cloud-init completed with recoverable errors; continuing."
+                exit 0
+                ;;
+              *)
+                echo "Cloud-init failed with critical errors (exit code $cloudinit_rc)." >&2
+                exit "$cloudinit_rc"
+                ;;
+            esac
+          ' -b
+          ansible_rc=$?
+
+          if [ "$ansible_rc" -eq 0 ]; then
+              echo "All nodes have completed cloud-init without critical errors."
               exit 0
           fi
 
-          echo " Some nodes are still running cloud-init. Retrying in $SLEEP_INTERVALs..."
+          if [ "$ansible_rc" -ne 4 ]; then
+              echo "Cloud-init failed critically on one or more nodes (Ansible exit code $ansible_rc)."
+              exit "$ansible_rc"
+          fi
+
+          echo "Some nodes are unreachable. Retrying in $SLEEP_INTERVALs..."
           sleep "$SLEEP_INTERVAL"
       done
 
@@ -416,4 +441,18 @@ resource "null_resource" "copy_and_update_kubeconfig" {
 #   subnet_services = var.subnet_services
 #   subnet_join = var.subnet_join
 # }
+
+resource "local_file" "containerd" {
+  count = length(coalesce(var.containerd_cri_extra_settings, {})) > 0 ? 1 : 0
+
+  content = templatefile("${path.module}/templates/containerd.tpl",
+    {
+      containerd_cri_extra_settings = coalesce(var.containerd_cri_extra_settings, {})
+    }
+  )
+
+  filename        = "./inventory/group_vars/all/containerd.yml"
+  file_permission = "0644"
+  depends_on      = [local_file.ansible_inventory]
+}
 

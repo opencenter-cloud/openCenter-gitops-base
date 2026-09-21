@@ -36,6 +36,9 @@ oc_controlplane_nodes:
 %{ for master in master_nodes ~}
     ${master.name}:
       ansible_host: ${master.access_ip_v4}
+      ansible_ip: ${master.access_ip_v4}
+      ip: ${master.access_ip_v4}
+      access_ip: ${master.access_ip_v4}
 %{endfor ~}
 
 oc_worker_nodes:
@@ -46,6 +49,9 @@ oc_worker_nodes:
 %{ for worker in worker_nodes ~}
     ${worker.name}:
       ansible_host: ${worker.access_ip_v4}
+      ansible_ip: ${worker.access_ip_v4}
+      ip: ${worker.access_ip_v4}
+      access_ip: ${worker.access_ip_v4}
 %{endfor ~}
 
 %{~ if length(windows_nodes) > 0 }

@@ -1,0 +1,27 @@
+# Managed by Ansible: playbooks/metallb-public-pool/metallb-public-pool.yml
+network:
+  version: 2
+  renderer: networkd
+  vlans:
+{% for pool in host_metallb_pools %}
+    {{ pool.interface_name }}:
+      id: {{ pool.vlan_id }}
+      link: {{ pool.parent_interface | default(trunk_iface) }}
+      macaddress: "{{ host_metallb_port_macs[pool.name] }}"
+      mtu: {{ pool.mtu | default(trunk_mtu) }}
+      dhcp4: false
+      dhcp6: false
+      optional: true
+      routes:
+        - to: "{{ pool.subnet }}"
+          scope: link
+          table: {{ pool.table_id }}
+        - to: default
+          via: "{{ pool.gateway }}"
+          on-link: true
+          table: {{ pool.table_id }}
+      routing-policy:
+        - from: "{{ pool.subnet }}"
+          table: {{ pool.table_id }}
+          priority: {{ pool.rule_priority }}
+{% endfor %}

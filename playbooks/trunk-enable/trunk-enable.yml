@@ -1,0 +1,33 @@
+---
+# Enable trunk ports before Terraform destroy.
+#
+# Undercloud trunk ports get disabled by the platform when servers are deleted.
+# Terraform destroy fails if the trunks are in a disabled state. This playbook
+# re-enables them so destroy can proceed cleanly.
+#
+# Usage:
+#   ansible-playbook playbooks/trunk-enable/trunk-enable.yml
+#   ansible-playbook playbooks/trunk-enable/trunk-enable.yml -e @path/to/custom-vars.yml
+#   ansible-playbook playbooks/trunk-enable/trunk-enable.yml -e os_cloud=my-cloud
+#
+- name: Enable trunk ports for Terraform destroy
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - vars.yml
+
+  tasks:
+    - name: Enable each trunk port
+      ansible.builtin.command:
+        cmd: "openstack --os-cloud {{ os_cloud }} network trunk set --enable {{ item }}"
+      loop: "{{ trunk_ids }}"
+      register: result
+      changed_when: result.rc == 0
+      failed_when:
+        - result.rc != 0
+        - "'already enabled' not in result.stderr | default('')"
+
+    - name: Display results
+      ansible.builtin.debug:
+        msg: "Enabled {{ trunk_ids | length }} trunk(s). Terraform destroy should now succeed."
