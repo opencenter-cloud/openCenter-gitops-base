@@ -36,6 +36,7 @@ Documentation is organized by what the reader is trying to do, not by document g
 | [`operations/`](operations/) | Day-1 and day-2 tasks | Service onboarding, configuration, secrets, troubleshooting |
 | [`reference/`](reference/) | Lookup | Directory layout, Flux resources, values schema, per-service reference |
 | [`concepts/`](concepts/) | Understanding | Architecture, GitOps workflow, values layering, security model |
+| [`catalog/`](catalog/) | Proposal | Service catalog design: schema, current-state baseline, migration plan |
 | [`release/`](release/) | Release notes | Per-release notes |
 | [`contributing/`](contributing/) | Authoring | Templates for new service docs |
 
@@ -83,6 +84,15 @@ Per-service operational guides live under [`operations/services/`](operations/se
 - [Enterprise Components Pattern](concepts/enterprise-components.md) – How the private enterprise repository composes on top of this base.
 - [Security Model](concepts/security-model.md) – Security controls and known gaps.
 - [OpenTelemetry Architecture](concepts/opentelemetry-architecture.md) – Telemetry pipeline overview.
+
+## Service Catalog (proposed)
+
+A declarative service catalog is proposed to replace the four separate representations of the service inventory that exist today. Not yet implemented.
+
+- [Service Catalog](catalog/index.md) – Why the catalog exists and what it consolidates.
+- [Catalog Schema](catalog/schema.md) – Fragment schema, packaging types, composite services, blueprint files.
+- [Current State](catalog/current-state.md) – Measured baseline: taxonomy, deployability gap, drift defects, blast radius.
+- [Migration Plan](catalog/migration-plan.md) – Phased delivery, acceptance criteria, open decisions.
 
 ## Infrastructure as Code
 
