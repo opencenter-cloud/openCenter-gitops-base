@@ -1,0 +1,22 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: gateway-api
+path: applications/base/services/gateway-api
+packaging: ociHelm
+version: v0.0.0-latest
+namespace: envoy-gateway-system
+source:
+  name: envoyproxy
+  url: oci://docker.io/envoyproxy
+description: Next-generation ingress/gateway routing (Envoy Gateway)
+blueprints:
+  - name: minimal
+    tier: recommended
+  - name: enterprise
+    tier: recommended
+  - name: networking
+    tier: recommended
+renderOwner: renderCatalog
+versionWaiver: Chart tracks the floating 'v0.0.0-latest' Envoy Gateway tag; the pinned base values file
+  is values-v0.0.0.yaml.

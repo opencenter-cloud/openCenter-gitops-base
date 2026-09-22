@@ -1,0 +1,18 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: openstack-csi
+path: applications/base/services/openstack-csi
+packaging: helmRepository
+version: 2.36.5
+namespace: openstack-csi
+source:
+  name: cpo
+  url: https://kubernetes.github.io/cloud-provider-openstack
+description: OpenStack Cinder CSI driver
+blueprints:
+  - name: storage
+    tier: optional
+  - name: cloud-provider-integration
+    tier: optional
+renderOwner: renderCatalog

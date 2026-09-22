@@ -1,0 +1,17 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: jupyterhub
+path: applications/base/services/jupyterhub
+packaging: helmRepository
+version: 4.4.2
+namespace: jupyterhub
+source:
+  name: jupyterhub
+  url: https://hub.jupyter.org/helm-chart/
+description: Multi-user notebook environments
+blueprints:
+  - name: ai-ml
+    tier: optional
+maturity: beta
+renderOwner: none

@@ -10,5 +10,6 @@ secretGenerator:
       - values.yaml=helm-values/values-91.4.1.yaml
       - alertmanager-overrides.yaml=helm-values/alertmanager-overrides.yaml
       - prometheus-overrides.yaml=helm-values/prometheus-overrides.yaml
+      - alerting-rules-overrides.yaml=helm-values/alerting-rules-overrides.yaml
     options:
       disableNameSuffixHash: true

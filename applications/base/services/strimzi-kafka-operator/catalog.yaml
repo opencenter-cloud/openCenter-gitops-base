@@ -1,0 +1,18 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: strimzi-kafka-operator
+path: applications/base/services/strimzi-kafka-operator
+packaging: ociHelm
+version: 0.50.0
+namespace: kafka-system
+source:
+  name: strimzi-kafka-operator
+  url: oci://quay.io/strimzi-helm
+description: Apache Kafka lifecycle management
+blueprints:
+  - name: enterprise
+    tier: optional
+  - name: data-messaging
+    tier: optional
+renderOwner: renderCatalog

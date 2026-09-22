@@ -1,0 +1,21 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: redis-operator
+path: applications/base/services/redis-operator
+packaging: helmRepository
+version: 0.26.1
+namespace: redis-operator
+source:
+  name: redis-operator
+  url: https://ot-container-kit.github.io/helm-charts/
+description: Redis multi-topology management
+requires:
+  - cert-manager
+blueprints:
+  - name: enterprise
+    tier: optional
+  - name: data-messaging
+    tier: optional
+maturity: beta
+renderOwner: none

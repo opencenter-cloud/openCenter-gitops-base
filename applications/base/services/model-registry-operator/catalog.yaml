@@ -1,0 +1,16 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: model-registry-operator
+path: applications/base/services/model-registry-operator
+packaging: olmSubscription
+version: alpha
+namespace: opendatahub
+description: Model versioning and lifecycle registry
+requires:
+  - olm
+blueprints:
+  - name: ai-ml
+    tier: optional
+maturity: alpha
+renderOwner: none

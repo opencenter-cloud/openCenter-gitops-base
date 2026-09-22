@@ -1,0 +1,19 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: Blueprint
+name: minimal
+title: "Minimal"
+description: The smallest viable cluster. Provides networking, certificate management, storage, secrets, DNS, and basic observability. Enough to run stateless and stateful workloads with TLS.
+members:
+  - cert-manager
+  - metallb
+  - sealed-secrets
+  - nodelocaldns
+  - external-snapshotter
+  - longhorn
+  - gateway-api
+  - observability/kube-prometheus-stack
+choices:
+  - name: cni
+    description: CNI
+    oneOf: [cilium, calico, kube-ovn]

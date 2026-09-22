@@ -1,0 +1,20 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: cert-manager
+path: applications/base/services/cert-manager
+packaging: helmRepository
+version: v1.21.2
+namespace: cert-manager
+source:
+  name: jetstack
+  url: https://charts.jetstack.io
+description: Automated TLS certificate management
+blueprints:
+  - name: minimal
+    tier: required
+  - name: enterprise
+    tier: required
+  - name: security-policy
+    tier: required
+renderOwner: descriptor

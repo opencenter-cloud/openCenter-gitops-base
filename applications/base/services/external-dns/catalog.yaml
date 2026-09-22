@@ -1,0 +1,18 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: external-dns
+path: applications/base/services/external-dns
+packaging: helmRepository
+version: 1.22.0
+namespace: external-dns
+source:
+  name: external-dns
+  url: https://kubernetes-sigs.github.io/external-dns/
+description: DNS record synchronization with external providers
+blueprints:
+  - name: enterprise
+    tier: optional
+  - name: networking
+    tier: optional
+renderOwner: renderCatalog

@@ -1,0 +1,12 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: Blueprint
+name: data-messaging
+title: "Data & Messaging"
+description: Databases, caches, message brokers, and feature stores.
+members:
+  - postgres-operator
+  - redis-operator
+  - strimzi-kafka-operator
+  - milvus-operator
+  - feast-operator

@@ -1,0 +1,11 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: Blueprint
+name: cloud-provider-integration
+title: "Cloud Provider Integration"
+description: Infrastructure-specific integrations. Deploy based on target cloud/hypervisor.
+members:
+  - openstack-ccm
+  - openstack-csi
+  - vsphere-csi
+  - metallb

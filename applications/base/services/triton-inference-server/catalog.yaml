@@ -1,0 +1,17 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: triton-inference-server
+path: applications/base/services/triton-inference-server
+packaging: gitRepository
+version: v2.72.0
+namespace: triton-inference-server
+source:
+  name: triton-inference-server
+  url: https://github.com/triton-inference-server/server
+description: NVIDIA high-performance model inference server
+blueprints:
+  - name: ai-ml
+    tier: optional
+maturity: beta
+renderOwner: none

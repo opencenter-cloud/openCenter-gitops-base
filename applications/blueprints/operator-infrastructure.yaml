@@ -1,0 +1,9 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: Blueprint
+name: operator-infrastructure
+title: "Operator Infrastructure"
+description: Services that manage other operators and their lifecycle.
+members:
+  - olm
+  - node-feature-discovery

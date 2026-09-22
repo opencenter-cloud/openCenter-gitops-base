@@ -1,0 +1,101 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: observability
+path: applications/base/services/observability
+packaging: composite
+deployableAsUnit: false
+description: Full-stack monitoring, logging, tracing, and telemetry collection
+renderOwner: renderCatalog
+subcomponents:
+  - name: namespace
+    path: namespace
+    role: prerequisite
+    deployable: false
+  - name: sources
+    path: sources
+    role: prerequisite
+    deployable: false
+  - name: kube-prometheus-stack
+    path: kube-prometheus-stack
+    deployable: true
+    packaging: helmRepository
+    version: 91.4.1
+    namespace: observability
+    source:
+      name: prometheus-community
+      url: https://prometheus-community.github.io/helm-charts
+    description: Prometheus, Grafana, Alertmanager
+    blueprints:
+      - name: minimal
+        tier: recommended
+      - name: enterprise
+        tier: required
+      - name: observability
+        tier: required
+  - name: loki
+    path: loki
+    deployable: true
+    packaging: helmRepository
+    version: 7.3.0
+    namespace: observability
+    requires:
+      - sources
+    source:
+      name: grafana
+      url: https://grafana.github.io/helm-charts
+    description: Log aggregation and querying
+    blueprints:
+      - name: enterprise
+        tier: required
+      - name: observability
+        tier: required
+  - name: mimir
+    path: mimir
+    deployable: true
+    packaging: helmRepository
+    version: 6.2.0
+    namespace: observability
+    requires:
+      - sources
+    source:
+      name: grafana
+      url: https://grafana.github.io/helm-charts
+    description: Horizontally scalable long-term metrics storage
+    blueprints:
+      - name: enterprise
+        tier: recommended
+      - name: observability
+        tier: required
+  - name: tempo
+    path: tempo
+    deployable: true
+    packaging: helmRepository
+    version: 1.61.3
+    namespace: observability
+    requires:
+      - sources
+    source:
+      name: grafana
+      url: https://grafana.github.io/helm-charts
+    description: Distributed tracing backend
+    blueprints:
+      - name: enterprise
+        tier: recommended
+      - name: observability
+        tier: required
+  - name: opentelemetry-kube-stack
+    path: opentelemetry-kube-stack
+    deployable: true
+    packaging: helmRepository
+    version: 0.23.0
+    namespace: observability
+    source:
+      name: open-telemetry
+      url: https://open-telemetry.github.io/opentelemetry-helm-charts
+    description: OpenTelemetry collection framework
+    blueprints:
+      - name: enterprise
+        tier: recommended
+      - name: observability
+        tier: required

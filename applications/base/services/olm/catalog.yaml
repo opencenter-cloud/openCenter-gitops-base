@@ -1,0 +1,15 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: olm
+path: applications/base/services/olm
+packaging: remoteKustomize
+version: v0.34.0
+namespace: olm
+description: Operator Lifecycle Manager
+blueprints:
+  - name: enterprise
+    tier: recommended
+  - name: operator-infrastructure
+    tier: required
+renderOwner: descriptor

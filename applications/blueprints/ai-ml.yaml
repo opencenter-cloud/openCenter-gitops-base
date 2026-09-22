@@ -1,0 +1,29 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: Blueprint
+name: ai-ml
+title: "AI/ML"
+description: Full machine learning and GenAI platform. Includes model training, inference serving, experiment tracking, feature stores, vector databases, notebook environments, job scheduling, and HPC workload management.
+extends: enterprise
+members:
+  - nvidia-gpu-operator
+  - amd-gpu-operator
+  - node-feature-discovery
+  - kueue
+  - kuberay-operator
+  - training-operator
+  - kserve
+  - triton-inference-server
+  - vllm
+  - mlflow-operator
+  - model-registry-operator
+  - data-science-pipelines-operator
+  - feast-operator
+  - trustyai-service-operator
+  - milvus-operator
+  - jupyterhub
+  - slurm-operator
+choices:
+  - name: gpu-vendor
+    description: GPU vendor (select per hardware fleet)
+    oneOf: [nvidia-gpu-operator, amd-gpu-operator]

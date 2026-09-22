@@ -1,0 +1,16 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: kured
+path: applications/base/services/kured
+packaging: helmRepository
+version: 6.1.0
+namespace: kured-system
+source:
+  name: kured
+  url: https://kubereboot.github.io/charts
+description: Kubernetes reboot daemon for node maintenance
+blueprints:
+  - name: enterprise
+    tier: optional
+renderOwner: renderCatalog

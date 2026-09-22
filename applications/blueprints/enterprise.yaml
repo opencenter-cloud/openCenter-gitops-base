@@ -1,0 +1,25 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: Blueprint
+name: enterprise
+title: "Enterprise"
+description: Production-hardened cluster. Adds identity management, policy enforcement, service mesh, container registry, backup/DR, RBAC automation, full observability stack, and database management.
+extends: minimal
+members:
+  - external-dns
+  - keycloak
+  - istio
+  - harbor
+  - kyverno
+  - rbac-manager
+  - velero
+  - headlamp
+  - olm
+  - postgres-operator
+  - redis-operator
+  - strimzi-kafka-operator
+  - kured
+  - observability/loki
+  - observability/mimir
+  - observability/tempo
+  - observability/opentelemetry-kube-stack

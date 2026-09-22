@@ -1,0 +1,33 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: kyverno
+path: applications/base/services/kyverno
+packaging: composite
+deployableAsUnit: false
+description: Kubernetes-native policy engine
+renderOwner: renderCatalog
+blueprints:
+  - name: enterprise
+    tier: recommended
+  - name: security-policy
+    tier: recommended
+subcomponents:
+  - name: policy-engine
+    path: policy-engine
+    deployable: true
+    packaging: helmRepository
+    version: 3.9.1
+    namespace: kyverno
+    source:
+      name: kyverno
+      url: https://kyverno.github.io/kyverno/
+    description: Kyverno admission controller and policy engine
+  - name: default-ruleset
+    path: default-ruleset
+    deployable: true
+    packaging: customResources
+    namespace: kyverno
+    requires:
+      - policy-engine
+    description: Default ClusterPolicy ruleset (raw custom resources)

@@ -1,0 +1,16 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: headlamp
+path: applications/base/services/headlamp
+packaging: helmRepository
+version: 0.45.0
+namespace: headlamp
+source:
+  name: headlamp
+  url: https://kubernetes-sigs.github.io/headlamp/
+description: Modern Kubernetes dashboard
+blueprints:
+  - name: enterprise
+    tier: optional
+renderOwner: renderCatalog

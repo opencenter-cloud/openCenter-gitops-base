@@ -1,0 +1,19 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: amd-gpu-operator
+path: applications/base/services/amd-gpu-operator
+packaging: helmRepository
+version: v1.5.1
+namespace: kube-amd-gpu
+source:
+  name: rocm
+  url: https://rocm.github.io/gpu-operator
+description: AMD Instinct GPU lifecycle management
+requires:
+  - node-feature-discovery
+blueprints:
+  - name: ai-ml
+    tier: optional
+maturity: beta
+renderOwner: none

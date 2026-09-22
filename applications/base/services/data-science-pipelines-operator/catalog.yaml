@@ -1,0 +1,16 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: data-science-pipelines-operator
+path: applications/base/services/data-science-pipelines-operator
+packaging: olmSubscription
+version: alpha
+namespace: opendatahub
+description: ML pipeline orchestration (Kubeflow Pipelines)
+requires:
+  - olm
+blueprints:
+  - name: ai-ml
+    tier: optional
+maturity: alpha
+renderOwner: none

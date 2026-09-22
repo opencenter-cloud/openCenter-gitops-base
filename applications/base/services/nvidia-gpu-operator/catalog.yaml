@@ -1,0 +1,18 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: nvidia-gpu-operator
+path: applications/base/services/nvidia-gpu-operator
+packaging: helmRepository
+version: v26.7.0
+namespace: gpu-operator
+source:
+  name: nvidia
+  url: https://helm.ngc.nvidia.com/nvidia
+description: NVIDIA GPU lifecycle management with MIG support
+requires:
+  - node-feature-discovery
+blueprints:
+  - name: ai-ml
+    tier: recommended
+renderOwner: none

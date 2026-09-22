@@ -1,0 +1,48 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: keycloak
+path: applications/base/services/keycloak
+packaging: composite
+deployableAsUnit: false
+description: Identity and access management (OIDC/SSO)
+renderOwner: descriptor
+blueprints:
+  - name: enterprise
+    tier: recommended
+  - name: security-policy
+    tier: recommended
+subcomponents:
+  - name: 00-postgres
+    path: 00-postgres
+    deployable: true
+    packaging: customResources
+    namespace: keycloak
+    description: PostgreSQL backing store for Keycloak
+  - name: 10-operator
+    path: 10-operator
+    deployable: true
+    packaging: olmSubscription
+    version: keycloak-operator.v26.4.2
+    namespace: keycloak
+    requires:
+      - 00-postgres
+    description: Keycloak operator (OLM subscription)
+  - name: 20-keycloak
+    path: 20-keycloak
+    role: component
+    deployable: true
+    packaging: customResources
+    namespace: keycloak
+    requires:
+      - 10-operator
+    description: Keycloak custom resource
+  - name: 30-oidc-rbac
+    path: 30-oidc-rbac
+    role: component
+    deployable: true
+    packaging: customResources
+    namespace: keycloak
+    requires:
+      - 20-keycloak
+    description: OIDC realm and RBAC group mappings

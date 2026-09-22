@@ -1,0 +1,18 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: vsphere-csi
+path: applications/base/services/vsphere-csi
+packaging: helmRepository
+version: 3.8.1
+namespace: vmware-system-csi
+source:
+  name: vsphere-tmm
+  url: https://vsphere-tmm.github.io/helm-charts
+description: vSphere storage integration
+blueprints:
+  - name: storage
+    tier: optional
+  - name: cloud-provider-integration
+    tier: optional
+renderOwner: renderCatalog

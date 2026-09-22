@@ -1,0 +1,16 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: Blueprint
+name: networking
+title: "Networking"
+description: CNI plugins and network infrastructure services. CNI is mutually exclusive — deploy exactly one.
+members:
+  - metallb
+  - gateway-api
+  - istio
+  - nodelocaldns
+  - external-dns
+choices:
+  - name: cni
+    description: CNI (mutually exclusive)
+    oneOf: [cilium, calico, kube-ovn]

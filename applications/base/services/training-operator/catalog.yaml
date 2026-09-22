@@ -1,0 +1,19 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: training-operator
+path: applications/base/services/training-operator
+packaging: ociHelm
+version: 0.0.1
+namespace: kubeflow-system
+source:
+  name: kubeflow
+  url: oci://ghcr.io/kubeflow/charts
+description: Distributed ML training (PyTorch, TensorFlow, XGBoost)
+blueprints:
+  - name: ai-ml
+    tier: optional
+  - name: hpc-batch
+    tier: optional
+maturity: beta
+renderOwner: none

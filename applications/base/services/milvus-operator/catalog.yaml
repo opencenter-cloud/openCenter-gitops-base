@@ -1,0 +1,21 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: milvus-operator
+path: applications/base/services/milvus-operator
+packaging: helmRepository
+version: 1.3.10
+namespace: milvus-operator
+source:
+  name: milvus-operator
+  url: https://zilliztech.github.io/milvus-operator/
+description: Vector database for RAG/GenAI workloads
+requires:
+  - cert-manager
+blueprints:
+  - name: ai-ml
+    tier: optional
+  - name: data-messaging
+    tier: optional
+maturity: beta
+renderOwner: none

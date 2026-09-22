@@ -1,0 +1,17 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: external-snapshotter
+path: applications/base/services/external-snapshotter
+packaging: remoteKustomize
+version: v8.2.1
+namespace: external-snapshotter
+description: Volume snapshot management
+blueprints:
+  - name: minimal
+    tier: recommended
+  - name: enterprise
+    tier: recommended
+  - name: storage
+    tier: required
+renderOwner: renderCatalog

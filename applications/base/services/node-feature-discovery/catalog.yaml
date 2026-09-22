@@ -1,0 +1,18 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: node-feature-discovery
+path: applications/base/services/node-feature-discovery
+packaging: ociHelm
+version: 0.19.0
+namespace: node-feature-discovery
+source:
+  name: node-feature-discovery
+  url: oci://registry.k8s.io/nfd/charts
+description: Hardware feature detection and node labeling
+blueprints:
+  - name: ai-ml
+    tier: recommended
+  - name: operator-infrastructure
+    tier: recommended
+renderOwner: none

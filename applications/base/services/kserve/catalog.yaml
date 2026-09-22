@@ -1,0 +1,23 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: kserve
+path: applications/base/services/kserve
+packaging: ociHelm
+version: v0.18.0
+namespace: kserve
+source:
+  name: kserve
+  url: oci://ghcr.io/kserve/charts
+description: AI/ML model inference serving (serverless)
+components:
+  - name: kserve-crd
+    kind: crds
+requires:
+  - cert-manager
+  - istio
+blueprints:
+  - name: ai-ml
+    tier: recommended
+maturity: beta
+renderOwner: none

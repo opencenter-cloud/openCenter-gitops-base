@@ -1,0 +1,20 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: nodelocaldns
+path: applications/base/services/nodelocaldns
+packaging: helmRepository
+version: 2.4.0
+namespace: nodelocaldns
+source:
+  name: nodelocaldns
+  url: https://lablabs.github.io/k8s-nodelocaldns-helm/
+description: Per-node DNS caching agent
+blueprints:
+  - name: minimal
+    tier: recommended
+  - name: enterprise
+    tier: recommended
+  - name: networking
+    tier: recommended
+renderOwner: renderCatalog

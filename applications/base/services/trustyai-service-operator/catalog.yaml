@@ -1,0 +1,18 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: trustyai-service-operator
+path: applications/base/services/trustyai-service-operator
+packaging: olmSubscription
+version: alpha
+namespace: opendatahub
+description: AI explainability, fairness, and governance
+requires:
+  - olm
+blueprints:
+  - name: ai-ml
+    tier: optional
+  - name: security-policy
+    tier: optional
+maturity: alpha
+renderOwner: none

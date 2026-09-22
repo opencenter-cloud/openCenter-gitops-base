@@ -1,0 +1,26 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: calico
+path: applications/base/services/calico
+packaging: helmRepository
+version: v3.32.2
+namespace: tigera-operator
+source:
+  name: projectcalico
+  url: https://docs.tigera.io/calico/charts
+description: Standard L3 networking and network policy (Tigera Operator)
+components:
+  - name: calico-crds
+    kind: crds
+    version: v3.32.0
+    versionWaiver: CRD chart is pinned at v3.32.0 while the operator chart is v3.32.2; upstream ships
+      the CRD release on its own cadence.
+blueprints:
+  - name: minimal
+    tier: optional
+  - name: enterprise
+    tier: optional
+  - name: networking
+    tier: optional
+renderOwner: descriptor

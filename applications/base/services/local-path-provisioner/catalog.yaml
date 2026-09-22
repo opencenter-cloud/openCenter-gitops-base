@@ -1,0 +1,18 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: local-path-provisioner
+path: applications/base/services/local-path-provisioner
+packaging: gitRepository
+version: v0.0.37
+namespace: local-path-storage
+source:
+  name: local-path-provisioner
+  url: https://github.com/rancher/local-path-provisioner
+description: Local path dynamic PV provisioner
+blueprints:
+  - name: storage
+    tier: optional
+renderOwner: renderCatalog
+versionWaiver: Sourced from a git tag 'v0.0.37'; the values filename drops the leading 'v' by upstream
+  convention.

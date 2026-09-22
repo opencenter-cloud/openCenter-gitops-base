@@ -1,0 +1,20 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: sealed-secrets
+path: applications/base/services/sealed-secrets
+packaging: helmRepository
+version: 2.20.0
+namespace: sealed-secrets
+source:
+  name: sealed-secrets
+  url: https://bitnami.github.io/sealed-secrets
+description: GitOps-friendly secret management
+blueprints:
+  - name: minimal
+    tier: required
+  - name: enterprise
+    tier: required
+  - name: security-policy
+    tier: required
+renderOwner: renderCatalog

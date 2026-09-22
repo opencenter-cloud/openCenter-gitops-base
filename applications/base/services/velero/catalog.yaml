@@ -1,0 +1,16 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: velero
+path: applications/base/services/velero
+packaging: helmRepository
+version: 12.2.0
+namespace: velero
+source:
+  name: vmware-tanzu
+  url: https://vmware-tanzu.github.io/helm-charts
+description: Backup and disaster recovery
+blueprints:
+  - name: enterprise
+    tier: recommended
+renderOwner: renderCatalog

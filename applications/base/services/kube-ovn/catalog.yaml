@@ -1,0 +1,21 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: kube-ovn
+path: applications/base/services/kube-ovn
+packaging: helmRepository
+version: v1.16.6
+namespace: kube-system
+source:
+  name: kubeovn
+  url: https://kubeovn.github.io/kube-ovn/
+description: OVN/OVS CNI with VPC, subnets, security groups, QoS
+blueprints:
+  - name: minimal
+    tier: optional
+  - name: enterprise
+    tier: optional
+  - name: networking
+    tier: optional
+maturity: beta
+renderOwner: none

@@ -1,0 +1,13 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: Blueprint
+name: storage
+title: "Storage"
+description: Persistent storage drivers and volume management. Choose based on infrastructure (bare-metal, OpenStack, vSphere, Ceph).
+members:
+  - longhorn
+  - ceph-csi
+  - openstack-csi
+  - vsphere-csi
+  - external-snapshotter
+  - local-path-provisioner

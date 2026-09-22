@@ -66,3 +66,16 @@ repos:
           - >-
             -d {extends: default, rules: {line-length: disable},
             ignore: [submodules/]}
+  - repo: local
+    hooks:
+      - id: catalog-gates
+        name: service catalog schema + gates
+        entry: python3 hack/scripts/catalog.py all
+        language: python
+        additional_dependencies:
+          - pyyaml==6.0.3
+          - jsonschema==4.26.0
+        pass_filenames: false
+        always_run: true
+        files: >-
+          ^applications/(base/services/.*/catalog\.yaml|blueprints/.*\.yaml|catalog\.(lock\.yaml|schema\.json))$

@@ -1,0 +1,13 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: Blueprint
+name: security-policy
+title: "Security & Policy"
+description: Identity, secrets, access control, and policy enforcement.
+members:
+  - keycloak
+  - sealed-secrets
+  - kyverno
+  - rbac-manager
+  - cert-manager
+  - trustyai-service-operator

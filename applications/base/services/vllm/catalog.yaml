@@ -1,0 +1,17 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: vllm
+path: applications/base/services/vllm
+packaging: helmRepository
+version: 0.1.12
+namespace: vllm
+source:
+  name: vllm
+  url: https://vllm-project.github.io/production-stack
+description: High-throughput LLM inference (production stack)
+blueprints:
+  - name: ai-ml
+    tier: optional
+maturity: alpha
+renderOwner: none

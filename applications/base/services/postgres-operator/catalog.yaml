@@ -1,0 +1,18 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: postgres-operator
+path: applications/base/services/postgres-operator
+packaging: helmRepository
+version: 2.0.2
+namespace: postgres-operator
+source:
+  name: postgres-operator
+  url: https://opensource.zalando.com/postgres-operator/charts/postgres-operator
+description: PostgreSQL HA cluster management
+blueprints:
+  - name: enterprise
+    tier: optional
+  - name: data-messaging
+    tier: recommended
+renderOwner: renderCatalog

@@ -1,0 +1,17 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: mlflow-operator
+path: applications/base/services/mlflow-operator
+packaging: gitRepository
+version: 1.1.0
+namespace: opendatahub
+source:
+  name: mlflow-operator
+  url: https://github.com/opendatahub-io/mlflow-operator
+description: MLflow experiment and model lifecycle management
+blueprints:
+  - name: ai-ml
+    tier: optional
+maturity: beta
+renderOwner: none

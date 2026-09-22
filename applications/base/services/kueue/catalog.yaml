@@ -1,0 +1,18 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: kueue
+path: applications/base/services/kueue
+packaging: ociHelm
+version: 0.19.5
+namespace: kueue-system
+source:
+  name: kueue
+  url: oci://registry.k8s.io/kueue/charts
+description: Job queueing and GPU resource management
+blueprints:
+  - name: ai-ml
+    tier: recommended
+  - name: hpc-batch
+    tier: recommended
+renderOwner: none

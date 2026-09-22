@@ -1,0 +1,12 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: Blueprint
+name: observability
+title: "Observability"
+description: Full-stack monitoring, logging, tracing, and telemetry collection.
+members:
+  - observability/kube-prometheus-stack
+  - observability/loki
+  - observability/mimir
+  - observability/tempo
+  - observability/opentelemetry-kube-stack

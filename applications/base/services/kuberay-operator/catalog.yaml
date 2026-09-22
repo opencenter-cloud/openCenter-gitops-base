@@ -1,0 +1,19 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: kuberay-operator
+path: applications/base/services/kuberay-operator
+packaging: helmRepository
+version: 1.7.1
+namespace: kuberay-system
+source:
+  name: kuberay
+  url: https://ray-project.github.io/kuberay-helm
+description: Ray cluster orchestration for distributed compute
+blueprints:
+  - name: ai-ml
+    tier: optional
+  - name: hpc-batch
+    tier: optional
+maturity: beta
+renderOwner: none

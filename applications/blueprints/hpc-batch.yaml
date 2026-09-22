@@ -1,0 +1,11 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: Blueprint
+name: hpc-batch
+title: "HPC & Batch"
+description: High-performance computing and batch job scheduling.
+members:
+  - slurm-operator
+  - kueue
+  - training-operator
+  - kuberay-operator

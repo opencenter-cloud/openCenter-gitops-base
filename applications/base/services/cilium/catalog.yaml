@@ -1,0 +1,20 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: cilium
+path: applications/base/services/cilium
+packaging: helmRepository
+version: 1.20.2
+namespace: kube-system
+source:
+  name: cilium
+  url: https://helm.cilium.io/
+description: eBPF-based CNI with observability and security
+blueprints:
+  - name: minimal
+    tier: optional
+  - name: enterprise
+    tier: optional
+  - name: networking
+    tier: recommended
+renderOwner: renderCatalog

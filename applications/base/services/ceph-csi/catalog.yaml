@@ -1,0 +1,27 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: ceph-csi
+path: applications/base/services/ceph-csi
+packaging: composite
+deployableAsUnit: false
+description: Ceph RBD CSI storage driver
+renderOwner: renderCatalog
+blueprints:
+  - name: storage
+    tier: optional
+subcomponents:
+  - name: namespace
+    path: namespace
+    role: prerequisite
+    deployable: false
+  - name: ceph-csi-rbd
+    path: ceph-csi-rbd
+    deployable: true
+    packaging: helmRepository
+    version: 3.17.1
+    namespace: ceph-csi
+    source:
+      name: ceph-csi
+      url: https://ceph.github.io/csi-charts/
+    description: Ceph RBD CSI driver

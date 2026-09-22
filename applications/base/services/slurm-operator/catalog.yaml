@@ -1,0 +1,27 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: slurm-operator
+path: applications/base/services/slurm-operator
+packaging: ociHelm
+version: v1.2.0
+namespace: slinky
+source:
+  name: slinkyproject
+  url: oci://ghcr.io/slinkyproject/charts
+description: HPC workload management (Slurm on Kubernetes)
+components:
+  - name: slurm-operator-crds
+    kind: crds
+    version: v1.1.1
+    versionWaiver: CRD chart is pinned at v1.1.1 while the operator chart is v1.2.0; upstream ships the
+      CRD release on its own cadence.
+requires:
+  - cert-manager
+blueprints:
+  - name: ai-ml
+    tier: optional
+  - name: hpc-batch
+    tier: optional
+maturity: alpha
+renderOwner: none

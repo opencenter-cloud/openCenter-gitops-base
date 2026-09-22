@@ -1,0 +1,16 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: openstack-ccm
+path: applications/base/services/openstack-ccm
+packaging: helmRepository
+version: 2.36.5
+namespace: openstack-ccm
+source:
+  name: cpo
+  url: https://kubernetes.github.io/cloud-provider-openstack
+description: OpenStack Cloud Controller Manager
+blueprints:
+  - name: cloud-provider-integration
+    tier: optional
+renderOwner: renderCatalog

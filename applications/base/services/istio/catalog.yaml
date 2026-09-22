@@ -1,0 +1,60 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: istio
+path: applications/base/services/istio
+packaging: composite
+deployableAsUnit: false
+description: Service mesh for traffic management, security, and observability
+renderOwner: renderCatalog
+blueprints:
+  - name: enterprise
+    tier: recommended
+  - name: networking
+    tier: optional
+subcomponents:
+  - name: namespace
+    path: namespace
+    role: prerequisite
+    deployable: false
+  - name: sources
+    path: sources
+    role: prerequisite
+    deployable: false
+  - name: base
+    path: base
+    deployable: true
+    packaging: helmRepository
+    version: 1.30.5
+    namespace: istio-system
+    source:
+      name: istio
+      url: https://istio-release.storage.googleapis.com/charts
+    description: Istio base CRDs and cluster roles
+    components:
+      - name: istio-base
+        kind: crds
+  - name: istiod
+    path: istiod
+    deployable: true
+    packaging: helmRepository
+    version: 1.30.5
+    namespace: istio-system
+    requires:
+      - base
+    source:
+      name: istio
+      url: https://istio-release.storage.googleapis.com/charts
+    description: Istio control plane
+  - name: gateway
+    path: gateway
+    deployable: true
+    packaging: helmRepository
+    version: 1.30.5
+    namespace: istio-system
+    requires:
+      - istiod
+    source:
+      name: istio
+      url: https://istio-release.storage.googleapis.com/charts
+    description: Istio ingress gateway

@@ -1,0 +1,22 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: metallb
+path: applications/base/services/metallb
+packaging: helmRepository
+version: 0.16.1
+namespace: metallb-system
+source:
+  name: metallb
+  url: https://metallb.github.io/metallb
+description: Load balancer for bare-metal clusters (L2/BGP)
+blueprints:
+  - name: minimal
+    tier: required
+  - name: enterprise
+    tier: required
+  - name: networking
+    tier: recommended
+  - name: cloud-provider-integration
+    tier: optional
+renderOwner: renderCatalog
