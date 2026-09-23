@@ -1,0 +1,3 @@
+# Keep KEDA CRDs managed by the Helm chart.
+crds:
+  install: true
