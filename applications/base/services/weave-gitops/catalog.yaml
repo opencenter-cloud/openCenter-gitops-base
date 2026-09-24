@@ -1,0 +1,14 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: weave-gitops
+path: applications/base/services/weave-gitops
+packaging: ociHelm
+version: 4.0.36
+namespace: flux-system
+source:
+  name: weave-gitops
+  url: oci://ghcr.io/weaveworks/charts
+description: Weave GitOps dashboard (web UI for Flux)
+maturity: beta
+renderOwner: none

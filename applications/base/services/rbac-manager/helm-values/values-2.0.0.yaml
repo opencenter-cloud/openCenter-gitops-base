@@ -4,8 +4,12 @@
 # Based on official Fairwinds chart values and documentation
 
 # Image configuration
+# The legacy quay.io/reactiveops/rbac-manager registry is deprecated and no
+# longer publishes tags (v1.10.0 returns "not found"). Fairwinds moved the
+# image to us-docker.pkg.dev/fairwinds-ops/oss/rbac-manager, which is the
+# chart v2.0.0 default.
 image:
-  repository: quay.io/reactiveops/rbac-manager
+  repository: us-docker.pkg.dev/fairwinds-ops/oss/rbac-manager
   tag: v1.10.0
   digest: ""
   pullPolicy: Always

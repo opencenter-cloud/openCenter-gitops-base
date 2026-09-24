@@ -1,0 +1,14 @@
+---
+apiVersion: catalog.opencenter.dev/v1alpha1
+kind: ServiceEntry
+name: keda
+path: applications/base/services/keda
+packaging: helmRepository
+version: 2.21.0
+namespace: keda
+source:
+  name: keda
+  url: https://kedacore.github.io/charts
+description: Kubernetes Event-driven Autoscaling
+maturity: beta
+renderOwner: none

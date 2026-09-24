@@ -46,6 +46,9 @@ oc_controlplane_nodes:
 %{endfor ~}
 
 oc_worker_nodes:
+  vars:
+    node_labels:
+      "node-role.kubernetes.io/worker": "worker"
   hosts:
 %{ for worker in worker_nodes ~}
     ${worker.name}:
