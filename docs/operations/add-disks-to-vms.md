@@ -54,12 +54,6 @@ export TF_VAR_os_application_credential_secret="<REPLACE ME>"
 module.kubespray-cluster.null_resource.run_kubespray[0]: Refreshing state... [id=2694448614732380735]
 module.kubespray-cluster.null_resource.copy_and_update_kubeconfig: Refreshing state... [id=812292398106547937]
 
-**Purpose:** For platform engineers, operators, shows how to steps to add additional disks to Kubernetes worker node VMs using OpenTofu and Kubespray.
-
-**Purpose:** For platform engineers, operators, shows how to steps to add additional disks to Kubernetes worker node VMs using OpenTofu and Kubespray.
-
-**Purpose:** For platform engineers, operators, shows how to steps to add additional disks to Kubernetes worker node VMs using OpenTofu and Kubespray.
-
 No changes. Your infrastructure matches the configuration.
 
 # kubectl get nodes
