@@ -52,7 +52,7 @@ Recommended flow:
 
 Validate and adjust these in the example manifests:
 
-1. Source paths currently use `./applications/overlays/dev/...` in some Flux files; if you keep `dev-cluster`, update paths accordingly.
+1. `examples/applications/overlays/dev-cluster/services/fluxcd/sources.yaml` intentionally demonstrates a copied-cluster path of `./applications/overlays/dev/services/sources`; update it to the actual path (normally `./applications/overlays/dev-cluster/services/sources`) in a copied repository.
 2. GitRepository URLs/branches under `services/sources/` should match your repo strategy.
 3. Domain names, hostnames, and IP ranges in service overrides must be environment-specific.
 4. Encrypted secrets (if added) require your SOPS/Age setup.
@@ -64,7 +64,14 @@ Run local checks before committing:
 ```bash
 kustomize build examples/applications/overlays/dev-cluster/services/sources
 kustomize build examples/applications/overlays/dev-cluster/services/fluxcd
-kustomize build examples/applications/overlays/dev-cluster
+kustomize build examples/applications/overlays/dev-cluster/services/cert-manager
+kustomize build examples/applications/overlays/dev-cluster/services/metallb
 ```
 
-Then let Flux reconcile from your cluster repo path.
+The top-level example is a template and does not include a local `flux-system/` bootstrap directory, so build the checked-in service directories individually. Then let Flux reconcile from your copied cluster-repository path.
+
+## Repository implementation and limitations
+
+- Infrastructure source: `examples/iac/dev-cluster/` and `examples/iac/undercloud/`; these are example Terraform/OpenTofu roots, not reusable modules.
+- Application source: `examples/applications/overlays/dev-cluster/`; Flux objects reference the `openCenter-gitops-base` service sources and are intended to be copied and edited.
+- The examples contain environment-specific OpenStack IDs, domains, paths, and placeholder credentials. They are not safe to apply unchanged and do not represent a complete production cluster repository.

@@ -30,13 +30,15 @@ Use this pattern when:
 - `VolumeSnapshotClass` must exist for the vSphere CSI driver
 - the `cloud-credentials` Secret must expose the required `OS_*` environment variables
 
+This is an environment-specific pattern, not a default enabled by the base. The current base values leave backup and snapshot locations disabled; supply the Swift container, auth endpoint, project/tenant values, credentials, and vSphere `VolumeSnapshotClass` from the consumer repository.
+
 ## Example Fragments
 
 ```yaml
 backupStorageLocations:
   - name: default
     provider: community.openstack.org/openstack
-    bucket: k8s-dr-velero
+    bucket: <swift-container>
 ```
 
 ```yaml

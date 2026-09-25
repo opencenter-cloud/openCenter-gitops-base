@@ -19,6 +19,8 @@ tags: [sops, age, secrets, gitops]
 - Git access to repository
 - kubectl access to cluster
 
+This repository documents the workflow but does not provide a consumer `.sops.yaml`, age recipient, cluster key, provider credential, or secret value. Those are private, cluster-specific inputs. The example values below are placeholders only.
+
 ## Install Tools
 
 ### Install SOPS
@@ -62,9 +64,8 @@ age-keygen -o ~/.config/sops/age/<cluster>_keys.txt
 
 Output:
 ```
-# created: 2024-02-14T10:30:00Z
-# public key: age1abc123def456ghi789jkl012mno345pqr678stu901vwx234yz567
-AGE-SECRET-KEY-1ABC123DEF456GHI789JKL012MNO345PQR678STU901VWX234YZ567
+# public key: age1<generated-recipient>
+AGE-SECRET-KEY-1<generated-private-key>
 ```
 
 Save the public key (starts with `age1`).
@@ -77,16 +78,16 @@ Create `.sops.yaml` in repository root:
 creation_rules:
   # Encrypt all YAML files in secrets/ directory
   - path_regex: secrets/.*\.yaml$
-    age: age1abc123def456ghi789jkl012mno345pqr678stu901vwx234yz567
+    age: age1<generated-recipient>
   
   # Encrypt override values with sensitive data
   - path_regex: .*/services/.*/helm-values/.*override.*\.ya?ml$
     encrypted_regex: ^(data|stringData|password|token|key|secret|cert|ca|tls)$
-    age: age1abc123def456ghi789jkl012mno345pqr678stu901vwx234yz567
+    age: age1<generated-recipient>
   
   # Encrypt all files in infrastructure/credentials/
   - path_regex: infrastructure/.*/credentials/.*
-    age: age1abc123def456ghi789jkl012mno345pqr678stu901vwx234yz567
+    age: age1<generated-recipient>
 ```
 
 Commit `.sops.yaml`:
@@ -99,29 +100,28 @@ git push origin main
 
 ### 3. Create secret file
 
-Create `secrets/database-credentials.yaml`:
+In the consumer repository, create the manifest beneath the path reconciled by the consumer-source Kustomization:
+`applications/overlays/<cluster>/services/cert-manager/secrets/database-credentials.yaml`.
+The base repository does not contain this consumer file.
 
 ```yaml
 apiVersion: v1
 kind: Secret
 metadata:
   name: database-credentials
-  namespace: my-service
+  namespace: cert-manager
 type: Opaque
 stringData:
-  username: admin
-  password: super-secret-password
-  connection-string: postgresql://admin:super-secret-password@postgres:5432/mydb
+  username: <database-user>
+  password: <secret-value>
+  connection-string: <consumer-specific-connection-string>
 ```
 
 ### 4. Encrypt secret
 
 ```bash
-# Encrypt in place
-sops -e -i secrets/database-credentials.yaml
-
-# Or encrypt to new file
-sops -e secrets/database-credentials.yaml > secrets/database-credentials.enc.yaml
+# Encrypt in place at the consumer-source path.
+sops -e -i applications/overlays/<cluster>/services/cert-manager/secrets/database-credentials.yaml
 ```
 
 Encrypted file looks like:
@@ -131,7 +131,7 @@ apiVersion: v1
 kind: Secret
 metadata:
     name: database-credentials
-    namespace: my-service
+    namespace: cert-manager
 type: Opaque
 stringData:
     username: ENC[AES256_GCM,data:abc123,iv:def456,tag:ghi789,type:str]
@@ -143,7 +143,7 @@ sops:
     azure_kv: []
     hc_vault: []
     age:
-        - recipient: age1abc123def456ghi789jkl012mno345pqr678stu901vwx234yz567
+        - recipient: age1<generated-recipient>
           enc: |
             -----BEGIN AGE ENCRYPTED FILE-----
             abc123def456ghi789jkl012mno345pqr678stu901vwx234yz567
@@ -155,15 +155,30 @@ sops:
     version: 3.8.1
 ```
 
-### 5. Commit encrypted secret
+### 5. Add the encrypted manifest to the consumer Kustomization
+
+In `applications/overlays/<cluster>/services/cert-manager/kustomization.yaml`, add the encrypted manifest as a resource:
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: cert-manager
+resources:
+  - secrets/database-credentials.yaml
+```
+
+The Flux Kustomization in Step 8 reconciles this consumer path and supplies SOPS decryption. The checked-in base example contains no `cert-manager-override` file and no encrypted consumer Secret; create both in the consumer repository.
+
+### 6. Commit encrypted secret
 
 ```bash
-git add secrets/database-credentials.yaml
+git add applications/overlays/<cluster>/services/cert-manager/kustomization.yaml
+git add applications/overlays/<cluster>/services/cert-manager/secrets/database-credentials.yaml
 git commit -m "feat(secrets): add database credentials"
 git push origin main
 ```
 
-### 6. Create age key secret in cluster
+### 7. Create age key secret in cluster
 
 ```bash
 # Create namespace if needed
@@ -181,23 +196,31 @@ Verify:
 kubectl get secret sops-age -n flux-system
 ```
 
-### 7. Configure FluxCD Kustomization for decryption
+### 8. Configure the consumer-source Kustomization for decryption
 
-In your cluster repo, update the `Kustomization` that reconciles the service overlay. In the common layout used in these examples, that is `applications/overlays/<cluster>/services/fluxcd/my-service.yaml`:
+Do not add consumer encrypted Secrets to the base-source install Kustomization. The checked-in base install is `cert-manager-base`, sourced from `opencenter-cert-manager`; consumer encrypted values require a second Kustomization sourced from the consumer's Flux `GitRepository` (`flux-system`). The checked-in example does not contain this consumer override file; create `applications/overlays/<cluster>/services/fluxcd/cert-manager-override.yaml` in the consumer repository:
 
 ```yaml
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: my-service
+  name: cert-manager-override
   namespace: flux-system
 spec:
-  interval: 5m
-  path: ./applications/overlays/<cluster>/services/my-service
+  dependsOn:
+    - name: sources
+      namespace: flux-system
+  interval: 15m
+  retryInterval: 1m
+  timeout: 10m
+  path: applications/overlays/<cluster>/services/cert-manager
+  targetNamespace: cert-manager
   prune: true
+  wait: true
   sourceRef:
     kind: GitRepository
-    name: platform-config
+    name: flux-system
+    namespace: flux-system
   
   # Enable SOPS decryption
   decryption:
@@ -206,17 +229,27 @@ spec:
       name: sops-age
 ```
 
-### 8. Apply and verify
+Register that Flux object from the consumer repository's activation Kustomization at `applications/overlays/<cluster>/services/fluxcd/kustomization.yaml`:
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./cert-manager-override.yaml
+```
+
+### 9. Apply and verify
 
 ```bash
-# Force reconciliation
-flux reconcile kustomization my-service -n flux-system
+# Force reconciliation of the consumer source and its encrypted Secret.
+flux reconcile source git flux-system -n flux-system
+flux reconcile kustomization cert-manager-override -n flux-system --with-source
 
 # Check secret was decrypted and applied
-kubectl get secret database-credentials -n my-service
+kubectl get secret database-credentials -n cert-manager
 
 # Verify decrypted values (base64 encoded)
-kubectl get secret database-credentials -n my-service -o jsonpath='{.data.username}' | base64 -d
+kubectl get secret database-credentials -n cert-manager -o jsonpath='{.data.username}' | base64 -d
 ```
 
 ## Decrypt Locally
@@ -225,13 +258,13 @@ To view or edit encrypted secrets:
 
 ```bash
 # View decrypted content
-sops -d secrets/database-credentials.yaml
+sops -d applications/overlays/<cluster>/services/cert-manager/secrets/database-credentials.yaml
 
 # Edit encrypted file (decrypts, opens editor, re-encrypts on save)
-sops secrets/database-credentials.yaml
+sops applications/overlays/<cluster>/services/cert-manager/secrets/database-credentials.yaml
 
 # Decrypt to file
-sops -d secrets/database-credentials.yaml > /tmp/decrypted.yaml
+sops -d applications/overlays/<cluster>/services/cert-manager/secrets/database-credentials.yaml > /tmp/decrypted.yaml
 ```
 
 ## Rotate Age Keys
@@ -242,39 +275,115 @@ sops -d secrets/database-credentials.yaml > /tmp/decrypted.yaml
 age-keygen -o ~/.config/sops/age/<cluster>_keys_new.txt
 ```
 
-### 2. Update .sops.yaml with new public key
+### 2. Add both recipients to `.sops.yaml`
+
+Keep the old recipient while the files and cluster are being migrated. Replace the placeholders with the existing and newly generated public recipients.
 
 ```yaml
 creation_rules:
   - path_regex: secrets/.*\.yaml$
-    age: age1NEW_PUBLIC_KEY_HERE
+    age: >-
+      age1<old-recipient>,
+      age1<new-recipient>
 ```
 
-### 3. Re-encrypt all secrets
+Apply the same two-recipient rule to every relevant creation rule, including encrypted Helm overrides. Do not remove the old recipient yet.
+
+### 3. Rewrap every encrypted file with `sops updatekeys`
 
 ```bash
-# Re-encrypt with new key
-find secrets/ -name "*.yaml" -exec sops updatekeys -y {} \;
+# Rewrap every tracked SOPS file for both recipients. `sops filestatus`
+# skips tracked plaintext files while covering secrets, credentials, and
+# encrypted Helm overrides wherever they are stored.
+while IFS= read -r -d '' file; do
+  if sops filestatus "$file" >/dev/null 2>&1; then
+    sops updatekeys -y "$file"
+  fi
+done < <(git ls-files -z)
 
-# Or use rotate command
-sops rotate -i secrets/database-credentials.yaml
+# Test that the new private key can decrypt a representative file before
+# changing the in-cluster key Secret.
+SOPS_AGE_KEY_FILE=${HOME}/.config/sops/age/<cluster>_keys_new.txt \
+  sops -d applications/overlays/<cluster>/services/cert-manager/secrets/database-credentials.yaml >/dev/null
 ```
 
-### 4. Update cluster secret
+### 4. Commit, push, and reconcile while both keys are valid
 
 ```bash
-kubectl delete secret sops-age -n flux-system
+# Stage the updated recipient rules and every tracked file that SOPS rewrote.
+git add .sops.yaml
+while IFS= read -r -d '' file; do
+  if sops filestatus "$file" >/dev/null 2>&1; then
+    git add -- "$file"
+  fi
+done < <(git ls-files -z)
+git commit -m "chore(security): add rotated age recipient"
+git push origin main
 
+# Install both private keys without deleting the working key. The temporary
+# file is private and is removed even if the pipeline fails or is interrupted.
+COMBINED_KEY_FILE=$(mktemp "${TMPDIR:-/tmp}/sops-age-XXXXXX")
+chmod 600 "$COMBINED_KEY_FILE"
+cleanup() { rm -f "$COMBINED_KEY_FILE"; }
+trap cleanup EXIT HUP INT TERM
+cat ~/.config/sops/age/<cluster>_keys.txt \
+    ~/.config/sops/age/<cluster>_keys_new.txt \
+    > "$COMBINED_KEY_FILE"
 kubectl create secret generic sops-age \
-  --from-file=age.agekey=${HOME}/.config/sops/age/<cluster>_keys_new.txt \
-  -n flux-system
+  --from-file=age.agekey="$COMBINED_KEY_FILE" \
+  -n flux-system --dry-run=client -o yaml | kubectl apply -f -
 ```
 
-### 5. Verify decryption still works
+Reconcile the consumer source Kustomization. In the checked-in cert-manager example, the base source is `opencenter-cert-manager` with install Kustomization `cert-manager-base`, while the consumer GitRepository is `flux-system` with override Kustomization `cert-manager-override`; use the corresponding actual names for another overlay.
 
 ```bash
-flux reconcile kustomization my-service -n flux-system
-kubectl get secret database-credentials -n my-service
+flux reconcile source git flux-system -n flux-system
+flux reconcile kustomization cert-manager-override -n flux-system --with-source
+kubectl get kustomization cert-manager-override -n flux-system
+kubectl get secret database-credentials -n cert-manager
+```
+
+Verify the Kustomization is `Ready=True` and decrypt a representative file with the new private key. Do not remove the old recipient or old private key until the pushed commit has reconciled successfully and this verification passes.
+
+### 5. Remove the old recipient only after verification
+
+Edit every applicable `.sops.yaml` creation rule to contain only `age1<new-recipient>`, then rewrap the files again:
+
+```bash
+while IFS= read -r -d '' file; do
+  if sops filestatus "$file" >/dev/null 2>&1; then
+    sops updatekeys -y "$file"
+  fi
+done < <(git ls-files -z)
+
+git add .sops.yaml
+while IFS= read -r -d '' file; do
+  if sops filestatus "$file" >/dev/null 2>&1; then
+    git add -- "$file"
+  fi
+done < <(git ls-files -z)
+git commit -m "chore(security): retire old age recipient"
+git push origin main
+flux reconcile source git flux-system -n flux-system
+flux reconcile kustomization cert-manager-override -n flux-system --with-source
+kubectl get kustomization cert-manager-override -n flux-system
+SOPS_AGE_KEY_FILE=${HOME}/.config/sops/age/<cluster>_keys_new.txt \
+  sops -d applications/overlays/<cluster>/services/cert-manager/secrets/database-credentials.yaml >/dev/null
+```
+
+After this second reconciliation and verification, replace the cluster Secret with only the new private key. Use a mode-0600 temporary copy with trap cleanup, then retain the old private key in secure recovery storage until the retention policy permits destruction:
+
+```bash
+NEW_KEY_FILE=$(mktemp "${TMPDIR:-/tmp}/sops-age-new-XXXXXX")
+chmod 600 "$NEW_KEY_FILE"
+cleanup() { rm -f "$NEW_KEY_FILE"; }
+trap cleanup EXIT HUP INT TERM
+cp ~/.config/sops/age/<cluster>_keys_new.txt "$NEW_KEY_FILE"
+kubectl create secret generic sops-age \
+  --from-file=age.agekey="$NEW_KEY_FILE" \
+  -n flux-system --dry-run=client -o yaml | kubectl apply -f -
+flux reconcile kustomization cert-manager-override -n flux-system --with-source
+kubectl get kustomization cert-manager-override -n flux-system
 ```
 
 ## Partial Encryption
@@ -287,7 +396,7 @@ Encrypt only specific fields using `encrypted_regex`:
 creation_rules:
   - path_regex: .*/services/.*/helm-values/override-values\.ya?ml$
     encrypted_regex: ^(password|token|apiKey|secret|privateKey)$
-    age: age1abc123def456ghi789jkl012mno345pqr678stu901vwx234yz567
+    age: age1<generated-recipient>
 ```
 
 File `override-values.yaml`:
@@ -299,12 +408,12 @@ logLevel: info
 
 # Encrypted (matches regex)
 database:
-  password: super-secret  # Will be encrypted
-  host: postgres.example.com  # Will NOT be encrypted
+  password: <secret-value>  # Will be encrypted
+  host: <database-host>  # Will NOT be encrypted
   
 api:
-  token: abc123  # Will be encrypted
-  endpoint: https://api.example.com  # Will NOT be encrypted
+  token: <secret-token>  # Will be encrypted
+  endpoint: <api-endpoint>  # Will NOT be encrypted
 ```
 
 After `sops -e -i override-values.yaml`:
@@ -314,10 +423,10 @@ replicaCount: 3
 logLevel: info
 database:
     password: ENC[AES256_GCM,data:abc123,iv:def456,tag:ghi789,type:str]
-    host: postgres.example.com
+    host: <database-host>
 api:
     token: ENC[AES256_GCM,data:jkl012,iv:mno345,tag:pqr678,type:str]
-    endpoint: https://api.example.com
+    endpoint: <api-endpoint>
 sops:
     # ... encryption metadata
 ```
@@ -336,7 +445,7 @@ Set SOPS_AGE_KEY_FILE environment variable:
 
 ```bash
 export SOPS_AGE_KEY_FILE=${HOME}/.config/sops/age/<cluster>_keys.txt
-sops -d secrets/database-credentials.yaml
+sops -d applications/overlays/<cluster>/services/cert-manager/secrets/database-credentials.yaml
 ```
 
 ### FluxCD decryption fails
@@ -364,8 +473,8 @@ flux logs --kind=Kustomization --name=my-service
 File was modified after encryption. Re-encrypt:
 
 ```bash
-sops -d secrets/database-credentials.yaml > /tmp/decrypted.yaml
-sops -e /tmp/decrypted.yaml > secrets/database-credentials.yaml
+sops -d applications/overlays/<cluster>/services/cert-manager/secrets/database-credentials.yaml > /tmp/decrypted.yaml
+sops -e /tmp/decrypted.yaml > applications/overlays/<cluster>/services/cert-manager/secrets/database-credentials.yaml
 rm /tmp/decrypted.yaml
 ```
 
@@ -377,8 +486,8 @@ To decrypt with multiple keys, add all public keys to `.sops.yaml`:
 creation_rules:
   - path_regex: secrets/.*\.yaml$
     age: >-
-      age1abc123def456ghi789jkl012mno345pqr678stu901vwx234yz567,
-      age1xyz789abc012def345ghi678jkl901mno234pqr567stu890vwx123
+      age1<recipient-one>,
+      age1<recipient-two>
 ```
 
 ## Best Practices

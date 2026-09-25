@@ -14,7 +14,7 @@ tags: [directory, structure, repository, reference]
 
 **Type:** Reference  
 **Audience:** All users  
-**Last Updated:** 2026-04-01
+**Last Updated:** 2026-09-25
 
 This document describes the directory structure of `openCenter-gitops-base`.
 
@@ -40,7 +40,9 @@ openCenter-gitops-base/
 ```text
 applications/
 ├── base/
+│   ├── managed-services/
 │   └── services/
+├── blueprints/
 └── policies/
 ```
 
@@ -108,7 +110,9 @@ For example, `observability/` contains components such as:
 
 ## Managed Services
 
-Managed services are not part of the public base repository layout. They belong in the private enterprise repository when they are required for a deployment.
+`applications/base/managed-services/` is present in this repository but is a separate delivery boundary from the cataloged paths under `applications/base/services/`. The committed `alert-proxy/` path consumes a GitRepository source, deploys to the `rackspace` namespace, and uses a chart from that source. It is not one of the cataloged platform service entries and should not be assumed to be available from the service blueprints.
+
+Cluster-specific overlays and private enterprise components remain consumer-owned; they are not implied by the presence of this managed-service path.
 
 ## Policies
 

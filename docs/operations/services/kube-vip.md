@@ -34,6 +34,8 @@ Kube-VIP runs as a static pod on each control plane node and:
 
 ## Configuration Variables
 
+The values below are environment-specific examples. Reserve the VIP outside the DHCP/allocation pool, confirm the interface on every control-plane node, and choose either kube-vip or Octavia; do not copy the sample addresses into a cluster without network approval.
+
 ### Required Variables
 
 ```hcl
@@ -43,11 +45,11 @@ kube_vip_enabled = true
 # The Virtual IP address for the Kubernetes API
 # Must be from the same subnet as your nodes (subnet_nodes)
 # Should NOT be in the DHCP/allocation pool range
-vrrp_ip = "10.2.184.10"
+vrrp_ip = "<reserved-api-vip>"
 
 # Network interface where kube-vip will bind
 # This should match your primary node network interface
-cni_iface = "enp3s0"
+cni_iface = "<control-plane-interface>"
 
 # Enable Kube-vip and the creation of its required infrastructure resources. Eg In Openstack a dummy port with a floating IP associated.
 vrrp_enabled = true
@@ -63,17 +65,17 @@ When planning your network, reserve IP addresses appropriately:
 
 ```hcl
 # Example network layout
-subnet_nodes = "10.2.184.0/22"
+subnet_nodes = "<node-subnet-cidr>"
 
 # Reserve IPs outside the allocation pool
-allocation_pool_start = "10.2.184.50"   # Start DHCP range here
-allocation_pool_end   = "10.2.184.254"  # End DHCP range here
+allocation_pool_start = "<allocation-pool-start>"
+allocation_pool_end   = "<allocation-pool-end>"
 
 # VIP should be outside the allocation pool
-vrrp_ip = "10.2.184.10"  # Reserved for kube-vip
+vrrp_ip = "<reserved-api-vip>"  # Reserved for kube-vip
 
 # Optional: Reserve range for MetalLB or other services
-# e.g., 10.2.184.11-10.2.184.49
+# e.g., <service-load-balancer-range>
 ```
 
 ## Implementation Example
@@ -85,7 +87,7 @@ From `000000-opencenter-example/infrastructure/clusters/stage-cluster/main.tf`:
 ```hcl
 locals {
   # Network configuration
-  subnet_nodes          = "10.2.184.0/22"
+  subnet_nodes          = "<node-subnet-cidr>"
   subnet_nodes_oct      = join(".", slice(split(".", split("/", local.subnet_nodes)[0]), 0, 3))
   
   # Reserve VIP outside allocation pool
@@ -99,7 +101,7 @@ locals {
   use_octavia          = false
   
   # Network interface
-  cni_iface            = "enp3s0"
+  cni_iface            = "<control-plane-interface>"
   
   # API configuration
   k8s_api_port         = 443
@@ -129,8 +131,8 @@ The kubespray opentofu module automatically configures kube-vip through the addo
 kube_vip_enabled: true
 kube_vip_arp_enabled: true
 kube_vip_controlplane_enabled: true
-kube_vip_address: 10.2.184.10
-kube_vip_interface: "enp3s0"
+kube_vip_address: "<reserved-api-vip>"
+kube_vip_interface: "<control-plane-interface>"
 kube_vip_services_enabled: false
 ```
 

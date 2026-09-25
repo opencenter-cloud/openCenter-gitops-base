@@ -71,8 +71,8 @@ In the cluster overlay repo, using the common layout shown in these examples:
 
 Use the correct source path:
 
-- Community: `./applications/base/services/<service>`
-- Enterprise: `./applications/enterprise/services/<service>/overlays/install`
+- Community: `applications/base/services/<service>`
+- Enterprise: `applications/enterprise/services/<service>/overlays/install`
 
 If the enterprise repo is used, the cluster repo must also provide the required Git and registry credentials.
 
@@ -128,7 +128,7 @@ spec:
     kind: GitRepository
     name: flux-system
     namespace: flux-system
-  path: ./applications/overlays/<cluster>/services/kafka-cluster
+  path: applications/overlays/<cluster>/services/kafka-cluster
   targetNamespace: kafka-system
   prune: true
   wait: true
@@ -185,8 +185,8 @@ If a shared baseline change is required, raise an issue in the relevant reposito
 Check the Flux resources first:
 
 ```bash
-flux get sources git -n flux-system
-flux get kustomizations -n flux-system
+flux get sources git --all-namespaces
+flux get kustomizations --all-namespaces
 ```
 
 Then check the operator:

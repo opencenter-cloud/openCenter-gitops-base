@@ -2,7 +2,7 @@
 id: opentelemetry-architecture
 title: "OpenTelemetry Architecture Diagram"
 sidebar_label: OTel Architecture
-description: Visual architecture diagram showing the OpenTelemetry observability pipeline for Kubernetes workloads.
+description: Conceptual view of the OpenTelemetry service path present in the observability catalog.
 doc_type: explanation
 audience: "platform engineers, operators"
 tags: [opentelemetry, observability, architecture, telemetry]
@@ -10,76 +10,41 @@ tags: [opentelemetry, observability, architecture, telemetry]
 
 # OpenTelemetry Architecture Diagram
 
-**Purpose:** For platform engineers and operators, shows the high-level telemetry flow for workloads that send traces, metrics, and logs through the OpenTelemetry stack used with the openCenter observability platform.
+**Purpose:** Show the repository-level relationship between the OpenTelemetry service and the other observability service paths. This is not a rendered-cluster topology.
 
-This page is a conceptual diagram, not an exact manifest-level deployment reference. For service-specific configuration and operational details, use:
+## Implemented repository structure
 
-- [OpenTelemetry Kube Stack Configuration Guide](../operations/services/opentelemetry-kube-stack.md)
-- [OpenTelemetry Kube Stack Service Reference](../reference/services/opentelemetry-kube-stack.md)
+The catalog defines `observability/opentelemetry-kube-stack` as a deployable child of the composite `observability` service. Its current base chart version is `0.23.0`, in namespace `observability`. The manifest-backed source is `HelmRepository/opentelemetry`, and the child `HelmRelease` uses `sourceRef.name: opentelemetry` for that source. The catalog fragment and generated lock instead record the source name as `open-telemetry`; this is catalog naming drift, not evidence that the service is deployed. The child has base values and an optional override Secret reference.
 
-## Diagram
+The same composite contains deployable paths for kube-prometheus-stack, Loki, Mimir, and Tempo, plus prerequisite namespace and source paths. Those paths are separate releases; the repository does not assert that every cluster enables all of them.
 
 ```text
-┌─────────────────────────────────────────────────────────────┐
-│                     Application Layer                       │
-│  ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐  │
-│  │   Apps   │   │   Apps   │   │   Apps   │   │   Apps   │  │
-│  │  (OTEL   │   │  (OTEL   │   │  (OTEL   │   │  (OTEL   │  │
-│  │   SDK)   │   │   SDK)   │   │   SDK)   │   │   SDK)   │  │
-│  └─────┬────┘   └─────┬────┘   └─────┬────┘   └─────┬────┘  │
-│        │              │              │              │       │
-└────────┼──────────────┼──────────────┼──────────────┼───────┘
-         │              │              │              │
-    ┌────▼──────────────▼──────────────▼──────────────▼──────┐
-    │          OpenTelemetry Collector (DaemonSet)           │
-    │         ┌─────────┐  ┌─────────┐  ┌─────────┐          │
-    │         │ Traces  │  │ Metrics │  │  Logs   │          │
-    │         │Receiver │  │Receiver │  │Receiver │          │
-    │         └────┬────┘  └────┬────┘  └────┬────┘          │
-    │              │            │            │               │
-    │         ┌────▼────────────▼────────────▼────┐          │
-    │         │      Processing Pipeline          │          │
-    │         └────┬────────────┬────────────┬────┘          │
-    │              │            │            │               │
-    │         ┌────▼────┐  ┌────▼────┐  ┌────▼────┐          │
-    │         │ Traces  │  │ Metrics │  │  Logs   │          │
-    │         │Exporter │  │Exporter │  │Exporter │          │
-    │         └─────────┘  └─────────┘  └─────────┘          │
-    └─────────────┬────────────┬────────────┬────────────────┘
-                  │            │            │
-                  │       ┌────▼─────┐      │
-                  │       │Prometheus│      │
-                  │       │ Scraper  │      │
-                  │       └────┬─────┘      │
-                  │            │            │
-          ┌───────▼────────────▼────────────▼──────┐
-          │         Storage Layer                  │
-          │  ┌──────────┐ ┌────────────┐ ┌────────┐│
-          │  │  Traces  │ │ Metrics    │ │  Logs  ││
-          │  │ Backend  │ │(Prometheus │ │Backend ││
-          │  │          │ │   TSDB)    │ │        ││
-          │  └──────────┘ └─────┬──────┘ └────────┘│
-          └─────────────────────┼──────────────────┘
-                                │
-                          ┌─────▼──────┐
-                          │AlertManager│
-                          └─────┬──────┘
-                                │
-                          ┌─────▼───────┐
-                          │Visualization│
-                          │  (Grafana)  │
-                          └─────────────┘
+                         consumer workload telemetry
+                                   |
+                                   v
+              observability/opentelemetry-kube-stack
+                 HelmRelease + base/optional values
+                                   |
+                 routing and exporters depend on values
+                                   |
+        +--------------------------+--------------------------+
+        |                          |                          |
+        v                          v                          v
+   Tempo path                 Mimir path                 Loki path
+   (traces)                  (metrics)                   (logs)
+        \                          |                          /
+         +------------ kube-prometheus-stack ---------------+
+                      (Prometheus/Grafana/Alertmanager)
 ```
 
-## How to Read This Diagram
+The arrows are conceptual relationships, not guaranteed exporter configuration. The checked-in values and Helm charts determine actual receivers, processors, exporters, storage, and dashboards for a selected deployment.
 
-- Applications emit telemetry through OpenTelemetry SDKs or compatible endpoints.
-- OpenTelemetry collectors receive and process traces, metrics, and logs.
-- Metrics are typically scraped or forwarded into the Prometheus-based metrics layer.
-- Logs and traces are exported to the observability backends used by the platform.
-- Grafana sits at the visualization layer for dashboards, exploration, and troubleshooting.
+## Boundary and limitations
 
-## Notes
+The repository does not contain application SDK configuration, a cluster-wide telemetry contract, or evidence that all observability children are enabled together. Consumers own workload instrumentation, override values, credentials, storage choices, and Flux activation. Use the service manifests and values as the authoritative deployment detail.
 
-- This diagram is intentionally simplified. Actual service composition, Helm values, and collector settings live under `applications/base/services/observability/opentelemetry-kube-stack/`.
-- Depending on cluster configuration, exact routing and storage backends may vary.
+## Related
+
+- [Architecture Explanation](architecture.md)
+- [GitOps Workflow](gitops-workflow.md)
+- [Service Catalog](../catalog/index.md)

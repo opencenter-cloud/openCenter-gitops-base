@@ -14,3 +14,13 @@ For service overview, use cases, examples, and upstream references, see the [ser
 - Integrates with **Alertmanager** for alert routing, notification management, and on-call workflows.  
 - Supports **custom alerting rules**, **recording rules**, and **Prometheus remote write** configurations.  
 - Commonly used to gain real-time visibility into cluster performance, resource utilization, and application health.  
+
+## Repository implementation
+
+- Source path: `applications/base/services/observability/kube-prometheus-stack/`.
+- Flux entrypoint: `kustomization.yaml`; the HelmRelease runs in `observability` and reads `kube-prometheus-stack-values-base` plus the optional `kube-prometheus-stack-values-override` Secret.
+- Base values: `helm-values/values-91.4.1.yaml`; the base also includes the checked-in alertmanager, Prometheus, and alerting-rule override fragments.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/observability/kube-prometheus-stack/` to validate the local manifests. The base does not guarantee scrape target discovery, notification credentials, or remote-write storage. Review selectors, retention, and alert routing in the cluster override before production use.

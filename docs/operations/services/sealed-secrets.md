@@ -23,6 +23,8 @@ The base service deploys:
 - base values from the service `helm-values/` directory
 - optional `Secret/sealed-secrets-values-override`
 
+Current base evidence: chart `sealed-secrets` version `2.20.0`; base values come from `helm-values/values-2.20.0.yaml`.
+
 The base does not create any `SealedSecret` application objects; those belong in the cluster repo.
 
 ## Typical Workflow
@@ -75,6 +77,8 @@ SealedSecret never becomes a Secret:
 
 `kubeseal --fetch-cert` fails:
 - verify service reachability and correct controller namespace/name
+
+The sealing certificate and controller private key are cluster-specific. Back up controller key material before rebuilding a cluster if existing `SealedSecret` objects must remain decryptable; otherwise previously sealed data may require resealing.
 
 ## Related Docs
 

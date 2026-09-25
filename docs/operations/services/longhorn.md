@@ -20,10 +20,12 @@ The base service deploys:
 
 - `Namespace/longhorn-system`
 - `HelmRelease/longhorn`
-- `longhorn-general-storageclass.yaml`
-- `longhorn-general-multi-attach-storageclass.yaml`
+- `general` storage class
+- `general-encrypted` storage class
 - base values from the service `helm-values/` directory
 - optional `Secret/longhorn-values-override`
+
+Current base evidence: chart `longhorn` version `1.12.1`; base values come from `helm-values/values-1.12.1.yaml`.
 
 ## Common Cluster-Specific Configuration
 
@@ -42,12 +44,12 @@ Example `override.yaml`:
 ```yaml
 defaultSettings:
   defaultReplicaCount: 2
-  backupTarget: s3://longhorn-backups@us-east-1/
+  backupTarget: <cluster-backup-target>
   createDefaultDiskLabeledNodes: true
 
 ingress:
   enabled: true
-  host: longhorn.example.com
+  host: <longhorn-hostname>
 ```
 
 ## Operational Notes
@@ -80,6 +82,8 @@ Backups fail:
 
 PVCs do not bind:
 - verify the intended storage class exists and is allowed by workload policies
+
+The base storage classes are named `general` and `general-encrypted` (not `longhorn-general`). They use the Longhorn provisioner, allow expansion, and use `Delete` reclaim policy. The encrypted class references `Secret/longhorn-crypto`; replace its placeholder passphrase in consumer-managed configuration before using it.
 
 ## Related Docs
 

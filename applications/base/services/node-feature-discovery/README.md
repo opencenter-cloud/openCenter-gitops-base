@@ -27,3 +27,13 @@ This directory contains the **base manifests** for deploying [Node Feature Disco
 | `master.replicaCount` | NFD master replicas | `1` |
 | `gc.enable` | Enable garbage collector | `true` |
 | `worker.config` | Worker feature detection config | `{}` |
+
+## Repository implementation
+
+- Source path: `applications/base/services/node-feature-discovery/`.
+- Flux entrypoint: `kustomization.yaml`; the HelmRelease runs in `node-feature-discovery` and reads `nfd-values-base` plus the optional `nfd-values-override` Secret.
+- Base values: `helm-values/values-0.19.0.yaml`; the chart source is declared in `source.yaml` and `catalog.yaml`.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/node-feature-discovery/` to validate the local manifests. NFD reports detected features but does not install device drivers or schedule workloads. Avoid running the standalone deployment together with an enabled GPU-operator NFD sub-chart unless the cluster design explicitly accounts for both.

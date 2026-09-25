@@ -489,3 +489,13 @@ demo-cluster-wn1   Ready    <none>          17h   v1.31.4
 - Review Git Tokens as a method of giving Flux access to the cluster repo.
 - Document upgrade process
 - Add Windows nodes to cluster
+
+## Repository implementation and limitations
+
+- Source paths: `iac/cloud/openstack/`, `iac/cni/calico/`, and `iac/provider/kubespray/`.
+- OpenStack roots provision infrastructure; the Kubespray provider renders inventory and can run cluster playbooks; the Calico module renders CNI values. These are separate Terraform/OpenTofu roots/modules and must be wired by a consuming cluster root.
+- The deployment guide is an operational example for the repository's OpenStack workflow. Its sample domains, IDs, paths, credentials, version values, and password-safe references are environment-specific and must not be copied unchanged.
+
+## Validation
+
+For each Terraform root or module, run `terraform fmt -check` and `terraform validate` after initialization. Use `terraform plan` with environment credentials for provider-level validation, then validate generated inventory and Helm values before applying. No local validation provisions infrastructure or proves that target nodes are reachable.

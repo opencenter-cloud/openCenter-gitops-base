@@ -17,7 +17,7 @@ This service deploys the [Zero to JupyterHub](https://z2jh.jupyter.org/) Helm ch
 | Field | Value |
 |-------|-------|
 | Chart | `jupyterhub` |
-| Version | `4.4.0` |
+| Version | `4.4.2` |
 | AppVersion | `5.5.0` |
 | Repository | https://hub.jupyter.org/helm-chart/ |
 | Namespace | `jupyterhub` |
@@ -78,6 +78,16 @@ jupyterhub/
 ├── helmrelease.yaml
 ├── kustomization.yaml
 ├── helm-values/
-│   └── values-4.4.0.yaml
+│   └── values-4.4.2.yaml
 └── README.md
 ```
+
+## Repository implementation
+
+- Source path: `applications/base/services/jupyterhub/`.
+- Flux entrypoint: `kustomization.yaml`; the HelmRelease targets namespace `jupyterhub` and reads `jupyterhub-values-base` followed by the optional `jupyterhub-values-override` Secret.
+- Base values: `helm-values/values-4.4.2.yaml`.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/jupyterhub/` to validate the local manifests. The base does not provide an identity provider, user database, notebook image, GPU capacity, or persistent-volume implementation; configure these in the cluster override and provide the required cluster resources. Helm rendering and runtime authentication must be validated after Flux reconciliation.

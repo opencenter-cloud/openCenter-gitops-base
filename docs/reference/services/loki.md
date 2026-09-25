@@ -46,6 +46,10 @@ tags: [loki, logs, observability]
 - Base values Secret: `loki-values-base`
 - Override values Secret: `loki-values-override`
 - Source: Grafana Helm repository
+- Source URL: `https://grafana.github.io/helm-charts`
+- Chart version: `7.3.0`
+
+The base path does not commit object-storage credentials, tenant configuration, retention policy, or log collector resources. The LogQL example assumes a workload and labels supplied by the consumer.
 
 ## Related Docs
 

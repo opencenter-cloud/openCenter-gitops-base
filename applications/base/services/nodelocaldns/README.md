@@ -15,3 +15,13 @@ For service overview, use cases, examples, and upstream references, see the [ser
 - Reduces load on the cluster DNS service (CoreDNS / kube-dns).
 - Improves DNS reliability for pods that make frequent DNS queries.
 - Uses CoreDNS as the caching engine with configurable zones and upstream forwarding.
+
+## Repository implementation
+
+- Source path: `applications/base/services/nodelocaldns/`.
+- Flux entrypoint: `kustomization.yaml`; the HelmRelease runs in `nodelocaldns` and reads `nodelocaldns-values-base` plus the optional `nodelocaldns-values-override` Secret.
+- Base values: `helm-values/values-2.4.0.yaml`; the chart source is declared in `source.yaml` and `catalog.yaml`.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/nodelocaldns/` to validate the local manifests. The base does not replace CoreDNS/kube-dns or configure cluster-specific upstreams and service CIDRs. Validate the node-local address and kube-proxy/CoreDNS integration in the target cluster.

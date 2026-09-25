@@ -16,7 +16,7 @@ tags: [kube-ovn, cni, networking, ovn, ovs]
 
 ## What This Repo Deploys
 
-- A `Namespace/kube-system` (pre-existing)
+- A `Namespace/kube-system` with the `name: kube-system` label
 - A `HelmRepository/kubeovn`
 - A `HelmRelease/kube-ovn` (includes CRDs via `crds: CreateReplace`)
 - Base chart values from the service `helm-values/` directory
@@ -45,6 +45,9 @@ tags: [kube-ovn, cni, networking, ovn, ovs]
 - Base values Secret: `kube-ovn-values-base`
 - Override values Secret: `kube-ovn-values-override`
 - Source: Kube-OVN Helm repository (`https://kubeovn.github.io/kube-ovn/`)
+- Chart version: `v1.16.6`
+
+The committed base values do not create a cluster-specific `MASTER_NODES` override or application VPC objects. Control-plane labels, node IPs, VPCs, subnets, and other cluster topology inputs belong in the consumer override/resources.
 
 ## Upstream References
 

@@ -1,3 +1,13 @@
+---
+id: entra-id-configuration-customer-guide
+sidebar_label: Entra ID Configuration
+description: Customer-side Microsoft Entra ID actions for Keycloak OIDC federation.
+doc_type: how-to
+title: "Microsoft Entra ID Configuration Guide"
+audience: "customer identity administrators"
+tags: [entra-id, oidc, keycloak, identity]
+---
+
 # Microsoft Entra ID Configuration Guide
 
 ## Customer Action Items for Keycloak OIDC Integration

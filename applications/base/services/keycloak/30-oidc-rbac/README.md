@@ -74,3 +74,13 @@ Just make sure the required **OIDC groups** (`oidc:cluster-admins`, `oidc:observ
 This RBAC configuration provides a **secure, modular, and OIDC-driven access model** for Kubernetes clusters.  
 It separates team privileges, leverages **namespace labels for delegated control**, and uses **rbac-manager** to keep bindings synchronized automatically.  
 Whether you're running an **in-cluster Keycloak** or connecting to an **external IdP**, this setup ensures consistent, auditable, and GitOps-friendly RBAC management across all environments.
+
+## Repository implementation
+
+- Source path: `applications/base/services/keycloak/30-oidc-rbac/`.
+- Kustomize entrypoint: `kustomization.yaml`; it renders the ClusterRoles, RBACDefinitions, and namespace-label-driven bindings in this stage.
+- This stage is optional and is consumed after `rbac-manager` and the Kubernetes API-server OIDC configuration are available.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/keycloak/30-oidc-rbac/` to validate the local manifests. Rendering does not verify OIDC group claims or rbac-manager reconciliation. The configuration grants only the roles represented by its manifests; it does not create Keycloak realms/groups or configure API-server OIDC flags.

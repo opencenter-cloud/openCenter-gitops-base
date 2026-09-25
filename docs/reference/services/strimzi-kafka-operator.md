@@ -43,6 +43,9 @@ spec:
 - Namespace: `kafka-system`
 - Flux object: `HelmRelease/strimzi-kafka-operator`
 - Source: `oci://quay.io/strimzi-helm`
+- Chart version: `0.50.0`
+
+The base path installs the operator only; it does not create Kafka clusters, topics, users, or listener certificates. The values Secret is named `kafka-api-values-base` because that is the committed manifest name, not `strimzi-kafka-operator-values-base`.
 
 ## Upstream References
 

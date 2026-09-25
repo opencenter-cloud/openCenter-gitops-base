@@ -228,3 +228,13 @@ rm -f cluster.rkestate kube_config_cluster.yml cluster.yml
 
 # Contributions
 Follow the repository's standard review and contribution workflow when updating this module.
+
+## Repository implementation
+
+- Source path: `iac/cloud/openstack/openstack-nova/`.
+- Terraform entrypoint: `main.tf`; networking, DNS, variables, outputs, provider, and version constraints are maintained in the adjacent `.tf` files.
+- The module provisions the Nova-side OpenStack resources and exposes node/API outputs consumed by the Kubespray provider in a cluster root.
+
+## Validation and limitations
+
+Run `terraform fmt -check` and `terraform validate` from this directory after `terraform init`. A plan/apply requires valid OpenStack credentials, images, flavors, quotas, network IDs, and SSH keys. Kubernetes resources may need a later apply after kubeconfig creation as described above; this module is not a substitute for the Kubespray or GitOps stages.

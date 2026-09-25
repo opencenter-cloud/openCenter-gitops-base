@@ -36,10 +36,21 @@ These are configured per-instance via the `Milvus` or `MilvusCluster` custom res
 
 | Field | Value |
 |-------|-------|
-| Chart version | 1.3.7 |
-| App version | 1.3.7 |
+| Chart version | 1.3.10 |
+| App version | 1.3.10 |
 | Namespace | `milvus-operator` |
 
 ## Customization
 
 Place cluster-specific overrides in a sealed secret named `milvus-operator-values-override` in the `milvus-operator` namespace. The override secret is optional and merged on top of the base values.
+
+## Repository implementation
+
+- Source path: `applications/base/services/milvus-operator/`.
+- Flux entrypoint: `kustomization.yaml`; it renders the namespace, HelmRepository, HelmRelease, and `milvus-operator-values-base` Secret.
+- Base values: `helm-values/values-1.3.10.yaml`.
+- The optional `milvus-operator-values-override` Secret is merged after the base values.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/milvus-operator/` to validate the local manifests. This deploys the operator only; it does not create a Milvus instance or its etcd, object-storage, and message-queue dependencies. Those dependencies and their credentials must be configured by the consuming cluster/application overlay.

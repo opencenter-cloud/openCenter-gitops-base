@@ -27,3 +27,13 @@ This directory contains the **base manifests** for deploying the [Kubeflow Train
 | `controllerManager.image.repository` | Controller image | chart default |
 | `controllerManager.image.tag` | Controller version | chart default |
 | `controllerManager.resources.limits.memory` | Memory limit | `512Mi` |
+
+## Repository implementation
+
+- Source path: `applications/base/services/training-operator/`.
+- Flux entrypoint: `kustomization.yaml`; the HelmRelease runs in `kubeflow-system` and reads `training-operator-values-base` plus the optional `training-operator-values-override` Secret.
+- Base values: `helm-values/values-0.0.1.yaml`; the OCI chart source is declared in `source.yaml` and `catalog.yaml`.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/training-operator/` to validate the local manifests. The base installs the Trainer controller but does not provide GPU drivers, training datasets, queues, or TrainJob resources. Kueue is recommended for admission but is not installed by this service.

@@ -20,7 +20,7 @@ tags: [istio, service-mesh, traffic-management]
 - `HelmRelease/istio-base`
 - `HelmRelease/istiod`
 - `HelmRelease/istio-gateway`
-- separate base and override Secrets for each stage
+- separate base and optional override Secrets for each stage
 
 ## When to Use It
 
@@ -47,6 +47,9 @@ spec:
 - Namespace: `istio-system`
 - Flux objects: `istio-base`, `istiod`, `istio-gateway`
 - Source: Istio Helm repository declared under `sources/`
+- Chart version: `1.30.5` for `base`, `istiod`, and `gateway`
+
+Deployment is composite and not a single deployable unit: apply `namespace/`, `sources/`, then `base`, `istiod`, and `gateway` in dependency order. The base paths do not create application `Gateway`, `VirtualService`, or `DestinationRule` resources; those interfaces remain consumer-owned.
 
 ## Upstream References
 

@@ -23,3 +23,13 @@ For service overview, use cases, examples, and upstream references, see the [ser
 - cert-manager 1.15+ (for webhook certificates).
 - For Knative mode: Knative Serving + Istio networking layer.
 - For Standard mode: no additional dependencies beyond cert-manager.
+
+## Repository implementation
+
+- Source path: `applications/base/services/kserve/`.
+- Flux entrypoint: `kustomization.yaml`; the CRD HelmRelease is reconciled before the `kserve-resources` HelmRelease, which runs in `kserve` and reads `kserve-values-base` plus the optional `kserve-values-override` Secret.
+- Base values: `helm-values/values-v0.18.0.yaml`; the OCI chart source is declared in `source.yaml` and `catalog.yaml`.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/kserve/` to validate the local manifests. This installs KServe resources but does not create `InferenceService` objects, model storage credentials, runtimes, Knative, or an ingress. Select Standard or Knative mode and configure serving workloads in a consuming overlay.

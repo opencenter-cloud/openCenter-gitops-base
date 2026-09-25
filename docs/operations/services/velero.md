@@ -23,6 +23,8 @@ The base service deploys:
 - base values from the service `helm-values/` directory
 - optional `Secret/velero-values-override`
 
+Current base evidence: chart `velero` version `12.2.0` from `https://vmware-tanzu.github.io/helm-charts`, with base values from `helm-values/values-12.2.0.yaml`. The shipped values enable `EnableCSI`, but leave backup and snapshot locations disabled until the consumer supplies them.
+
 ## Common Cluster-Specific Configuration
 
 Most clusters need to configure:
@@ -43,10 +45,10 @@ configuration:
 
 credentials:
   useSecret: true
-  existingSecret: cloud-credentials
+  existingSecret: <existing-secret-name>
 
-backupsEnabled: true
-snapshotsEnabled: true
+backupsEnabled: false
+snapshotsEnabled: false
 ```
 
 ## Operational Guidance
@@ -80,6 +82,8 @@ Volume snapshots fail:
 
 Restores partially succeed:
 - inspect restore logs and ordering of dependent resources
+
+Before enabling backups, provide provider-specific `BackupStorageLocation` configuration and credentials. The repository does not contain a bucket, endpoint, credential, schedule, or restore target.
 
 ## Related Docs
 

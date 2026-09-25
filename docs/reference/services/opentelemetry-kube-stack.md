@@ -50,6 +50,8 @@ spec:
 - Flux object: `HelmRelease/opentelemetry-kube-stack`
 - Base values Secret: `opentelemetry-kube-stack-values-base`
 - Override values Secret: `opentelemetry-kube-stack-values-override`
+- Source: OpenTelemetry Helm repository (`https://open-telemetry.github.io/opentelemetry-helm-charts`)
+- Chart version: `0.23.0`
 
 ## Related Docs
 
@@ -61,3 +63,5 @@ spec:
 - [OpenTelemetry docs](https://opentelemetry.io/docs/)
 - [OpenTelemetry Operator docs](https://opentelemetry.io/docs/platforms/kubernetes/operator/)
 - [OpenTelemetry Helm charts](https://github.com/open-telemetry/opentelemetry-helm-charts)
+
+The base path installs the chart but does not commit application-specific `OpenTelemetryCollector` resources, exporter credentials, or backend endpoints. The example custom resource must be supplied by the consumer and match the CRDs available in the selected chart.

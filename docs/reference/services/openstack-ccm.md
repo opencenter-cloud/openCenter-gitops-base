@@ -42,6 +42,9 @@ spec:
 - Namespace: `openstack-ccm`
 - Flux object: `HelmRelease/openstack-cloud-controller-manager`
 - Source: Kubernetes cloud-provider-openstack Helm repository
+- Chart version: `2.36.5`
+
+The committed hardened values enable the `cloud-node`, `cloud-node-lifecycle`, `route`, and `service` controllers and create a `cloud-config` Secret from chart values. Cloud credentials and the actual cloud configuration remain consumer-owned; the example `LoadBalancer` Service does not by itself prove that a provider is configured.
 
 ## Upstream References
 

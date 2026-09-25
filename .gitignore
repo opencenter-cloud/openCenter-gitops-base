@@ -77,3 +77,6 @@ gitea/
 testdata/
 tests/features/steps/tmp/
 .mygitignore
+
+# Local orchestration state
+.slim/deepwork/

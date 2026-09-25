@@ -19,6 +19,12 @@ tags: [observability, prometheus, loki, tempo]
 - Service exposes metrics endpoint
 - kubectl access to cluster
 
+The requirements in this guide are platform conventions, not resources automatically created for every application. The base observability values configure the collector and backends; consumer repositories still provide application labels, ServiceMonitors, dashboards, alert rules, credentials, and external endpoints.
+
+Repository evidence: the HelmRelease names are `kube-prometheus-stack`, `loki`, `tempo`, and `opentelemetry-kube-stack`, all in namespace `observability`. Consumer-rendered kube-prometheus-stack resources use the effective release label `app.kubernetes.io/instance=observability-kube-prometheus-stack`; use that label for rendered-resource diagnostics.
+
+Consumer overlays use namespace-prefixed rendered Loki, Tempo, and kube-prometheus-stack release/service names, for example `observability-loki-gateway`, `observability-tempo-distributor`, or `observability-kube-prometheus-stack-prometheus`. Discover the rendered Service before port-forwarding and use the consumer's effective prefix. OpenTelemetry is the exception in this repository: its HelmRelease/release name is exactly `opentelemetry-kube-stack`, and its selector should use `app.kubernetes.io/instance=opentelemetry-kube-stack`.
+
 ## Observability Requirements
 
 All platform services must provide:
@@ -88,7 +94,9 @@ Verify scraping:
 kubectl get servicemonitor my-service -n my-service
 
 # Check Prometheus targets
-kubectl port-forward -n observability svc/kube-prometheus-stack-prometheus 9090:9090
+PROMETHEUS_SERVICE=$(kubectl get svc -n observability -o name | \
+  grep -m1 '/observability-kube-prometheus-stack.*prometheus$' | cut -d/ -f2)
+kubectl port-forward -n observability "svc/${PROMETHEUS_SERVICE}" 9090:9090
 
 # Open browser: http://localhost:9090/targets
 # Search for "my-service"
@@ -141,17 +149,18 @@ Required log fields:
 
 ### 3. Configure Loki log collection
 
-OpenTelemetry collector automatically scrapes pod logs. Verify configuration:
+The repository's OpenTelemetry values enable a DaemonSet `filelog` receiver for node/container logs. Verify the actual collector resources before adding application-specific annotations:
 
 ```bash
-# Check OpenTelemetry collector
-kubectl get pods -n observability -l app.kubernetes.io/name=opentelemetry-collector
+# Check OpenTelemetry collector resources for the actual Helm release
+kubectl get pods,svc -n observability \
+  -l app.kubernetes.io/instance=opentelemetry-kube-stack
 
 # Check collector configuration
-kubectl get configmap opentelemetry-collector -n observability -o yaml
+kubectl get configmaps -n observability
 ```
 
-Add log parsing annotations to pod:
+If the application needs annotations or a custom log parser, add them only when supported by the deployed collector configuration. The base filelog pipeline does not make the example annotations below universally effective.
 
 ```yaml
 apiVersion: v1
@@ -172,7 +181,9 @@ Query logs in Grafana:
 
 ```bash
 # Port-forward to Grafana
-kubectl port-forward -n observability svc/kube-prometheus-stack-grafana 3000:80
+GRAFANA_SERVICE=$(kubectl get svc -n observability -o name | \
+  grep -m1 '/observability-kube-prometheus-stack.*grafana$' | cut -d/ -f2)
+kubectl port-forward -n observability "svc/${GRAFANA_SERVICE}" 3000:80
 
 # Open browser: http://localhost:3000
 # Navigate to Explore > Loki
@@ -195,7 +206,7 @@ import (
 func initTracer() {
     exporter, _ := otlptracegrpc.New(
         context.Background(),
-        otlptracegrpc.WithEndpoint("opentelemetry-collector.observability.svc.cluster.local:4317"),
+        otlptracegrpc.WithEndpoint("<collector-service>.observability.svc.cluster.local:4317"),
         otlptracegrpc.WithInsecure(),
     )
     
@@ -213,11 +224,18 @@ func initTracer() {
 
 Configure service to send traces:
 
+First identify the collector Service created for the `opentelemetry-kube-stack` release and select the one exposing OTLP/gRPC port `4317`. The chart's base values do not hard-code an application-facing collector DNS name.
+
+```bash
+kubectl get svc -n observability \
+  -l app.kubernetes.io/instance=opentelemetry-kube-stack
+```
+
 ```yaml
 # Environment variables for OpenTelemetry
 env:
   - name: OTEL_EXPORTER_OTLP_ENDPOINT
-    value: "http://opentelemetry-collector.observability.svc.cluster.local:4317"
+    value: "http://<collector-service>.observability.svc.cluster.local:4317"
   - name: OTEL_SERVICE_NAME
     value: "my-service"
   - name: OTEL_TRACES_SAMPLER
@@ -366,7 +384,9 @@ Verify:
 kubectl get prometheusrule my-service-alerts -n my-service
 
 # Check in Prometheus UI
-kubectl port-forward -n observability svc/kube-prometheus-stack-prometheus 9090:9090
+PROMETHEUS_SERVICE=$(kubectl get svc -n observability -o name | \
+  grep -m1 '/observability-kube-prometheus-stack.*prometheus$' | cut -d/ -f2)
+kubectl port-forward -n observability "svc/${PROMETHEUS_SERVICE}" 9090:9090
 # Open: http://localhost:9090/alerts
 ```
 
@@ -378,7 +398,7 @@ Update Alertmanager configuration:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: alertmanager-kube-prometheus-stack-alertmanager
+  name: alertmanager-observability-kube-prometheus-stack-alertmanager
   namespace: observability
 type: Opaque
 stringData:
@@ -485,7 +505,8 @@ Labels must match.
 Check Prometheus logs:
 
 ```bash
-kubectl logs -n observability -l app.kubernetes.io/name=prometheus
+kubectl logs -n observability \
+  -l app.kubernetes.io/instance=observability-kube-prometheus-stack
 ```
 
 ### Logs not in Loki
@@ -493,7 +514,7 @@ kubectl logs -n observability -l app.kubernetes.io/name=prometheus
 Check OpenTelemetry collector:
 
 ```bash
-kubectl logs -n observability -l app.kubernetes.io/name=opentelemetry-collector
+kubectl logs -n observability -l app.kubernetes.io/instance=opentelemetry-kube-stack
 ```
 
 Verify log format is JSON:
@@ -508,7 +529,7 @@ Check OTLP endpoint is reachable:
 
 ```bash
 kubectl run -it --rm debug --image=curlimages/curl --restart=Never -- \
-  curl -v http://opentelemetry-collector.observability.svc.cluster.local:4317
+  curl -v "http://<collector-service>.observability.svc.cluster.local:4317"
 ```
 
 Check application trace configuration:
@@ -535,7 +556,8 @@ Check alert expression in Prometheus UI:
 Check Alertmanager configuration:
 
 ```bash
-kubectl get secret alertmanager-kube-prometheus-stack-alertmanager -n observability -o yaml
+kubectl get secret -n observability -o name | \
+  grep 'alertmanager-observability-kube-prometheus-stack'
 ```
 
 ## Best Practices

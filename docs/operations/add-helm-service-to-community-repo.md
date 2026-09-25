@@ -19,6 +19,8 @@ tags: [services, helmrelease, kustomize, onboarding]
 - FluxCD CLI installed (`flux version`)
 - Basic understanding of Helm and Kustomize
 
+This is a contributor template, not a deployable service. Replace every `example.com`, image, chart, version, and service-specific value with data verified from the selected upstream chart and repository; do not treat the sample registry or image as an openCenter endpoint.
+
 ## Steps
 
 ### 1. Create service directory structure
@@ -297,10 +299,10 @@ After FluxCD reconciles:
 
 ```bash
 # Check GitRepository sync
-flux get sources git
+flux get sources git --all-namespaces
 
 # Check HelmRelease status
-flux get helmreleases -n my-service
+flux get helmreleases --all-namespaces
 
 # Verify service is running
 kubectl get all -n my-service
@@ -319,7 +321,7 @@ Expected output:
 Check Helm repository access:
 
 ```bash
-flux get sources helm
+flux get sources helm --all-namespaces
 kubectl describe helmrepository my-service -n flux-system
 ```
 

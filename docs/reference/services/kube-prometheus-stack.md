@@ -21,6 +21,7 @@ tags: [prometheus, grafana, alertmanager, observability]
   - `values.yaml`
   - `alertmanager-overrides.yaml`
   - `prometheus-overrides.yaml`
+  - `alerting-rules-overrides.yaml`
 - Optional `kube-prometheus-stack-values-override`
 
 ## When to Use It
@@ -56,6 +57,12 @@ spec:
 - Base values Secret: `kube-prometheus-stack-values-base`
 - Override values Secret: `kube-prometheus-stack-values-override`
 - Source: Prometheus Community Helm repository
+- Source URL: `https://prometheus-community.github.io/helm-charts`
+- Chart version: `91.4.1`
+
+The HelmRelease consumes three keys from the base Secret: `values.yaml`, plus the two additional keys `alertmanager-overrides.yaml` and `prometheus-overrides.yaml`. The generated `alerting-rules-overrides.yaml` key is retained in the Secret but is not consumed by the committed HelmRelease. The base path does not configure consumer-specific alert routing, remote-write credentials, Grafana ingress, or identity-provider settings. The example `ServiceMonitor` is a consumer resource.
+
+Although `alerting-rules-overrides.yaml` is included in the generated base Secret, the committed HelmRelease currently references only `values.yaml`, `alertmanager-overrides.yaml`, and `prometheus-overrides.yaml` from that Secret. It is not currently passed through `valuesFrom`.
 
 ## Related Docs
 

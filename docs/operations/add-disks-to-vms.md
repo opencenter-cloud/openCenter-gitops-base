@@ -14,6 +14,8 @@ tags: [storage, vms, openstack, disks, maintenance]
 Maintenance objective:
 Add a 100GB disk to each of the worker nodes.
 
+The cluster paths, hostnames, provider credentials, node names, image versions, and OpenStack module ref in this runbook are environment-specific examples. Retrieve current values from the target cluster repository and password manager; never copy credentials from the example.
+
  Departments involved: RPC support, RPC Manage Kubernetes SME's 
  Owning department: RPC support, RPC Managed Kubernetes SME's 
  Amount of time estimated for maintenance: 4 hours
@@ -51,12 +53,6 @@ export TF_VAR_os_application_credential_secret="<REPLACE ME>"
 ...
 module.kubespray-cluster.null_resource.run_kubespray[0]: Refreshing state... [id=2694448614732380735]
 module.kubespray-cluster.null_resource.copy_and_update_kubeconfig: Refreshing state... [id=812292398106547937]
-
-**Purpose:** For platform engineers, operators, shows how to steps to add additional disks to Kubernetes worker node VMs using OpenTofu and Kubespray.
-
-**Purpose:** For platform engineers, operators, shows how to steps to add additional disks to Kubernetes worker node VMs using OpenTofu and Kubespray.
-
-**Purpose:** For platform engineers, operators, shows how to steps to add additional disks to Kubernetes worker node VMs using OpenTofu and Kubespray.
 
 No changes. Your infrastructure matches the configuration.
 
@@ -201,7 +197,7 @@ I/O size (minimum/optimal): 512 bytes / 512 bytes
 ```yaml
 # cat inventory/group_vars/oc_worker_nodes.yaml
 disk_config:
-  - device: "/dev/vdd" <----- set the device name accordingly
+  - device: "/dev/vdd" # Set the device name accordingly
     label: "longhorn-vol"
     mountpoint: "/var/lib/longhorn"
     filesystem: "ext4"
@@ -241,4 +237,3 @@ prosys-prod-wn2   Ready    <none>          31d   v1.32.8
 prosys-prod-wn3   Ready    <none>          31d   v1.32.8
 prosys-prod-wn4   Ready    <none>          20m   v1.32.8 <---- New Node Ready
 ```
-

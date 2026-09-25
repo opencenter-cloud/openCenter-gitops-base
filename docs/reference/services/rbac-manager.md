@@ -41,6 +41,9 @@ metadata:
 - Namespace: `rbac-system`
 - Flux object: `HelmRelease/rbac-manager`
 - Source: Fairwinds stable Helm repository
+- Chart version: `2.0.0`
+
+The base path does not create `RBACDefinition` resources or bind identity-provider groups. The example is a consumer resource and must use the CRD schema installed by the selected chart version.
 
 ## Upstream References
 

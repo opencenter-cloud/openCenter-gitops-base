@@ -1,7 +1,7 @@
 Calico
 
 The Calico IaC module takes inputs to generate the Calico Operator Helm values file.
-filename: cni-values.yaml
+The module writes `applications/overlays/<cluster_name>/services/calico/helm-values/override_values.yaml` relative to the consuming Terraform root (`path.root`); it does not produce a file named `cni-values.yaml` in this module directory.
 
 
 | Key | Type | Default | Description |
@@ -42,7 +42,8 @@ installation:
       interface: "${cni_iface}"
 %{ endif ~}
 %{ if calico_interface_autodetect == "cidr" ~}
-      cidr: "${calico_interface_autodetect_cidr}"
+      cidrs:
+        - "${calico_interface_autodetect_cidr}"
 %{ endif ~}
 %{ if calico_interface_autodetect == "first-found" ~}
       firstFound: true
@@ -142,3 +143,13 @@ kubernetesServiceEndpoint:
 
 
 ```
+
+## Repository implementation
+
+- Source path: `iac/cni/calico/`.
+- `main.tf` renders `calico-values.tpl` from `variables.tf` and writes the generated overlay file at the path described above; the values are consumed by the Calico operator Helm deployment in a cluster root.
+- The module configures interface or CIDR autodetection, pod/service CIDRs, encapsulation, NAT, Windows dataplane selection, and the Kubernetes API endpoint. It does not create the cluster or the HelmRepository.
+
+## Validation and limitations
+
+From this directory, run `terraform fmt -check` and `terraform validate` after `terraform init`. The module only renders a local file and does not require a reachable Kubernetes API or make Kubernetes API calls. Validate the rendered overlay in the consuming deployment before applying; the later Calico deployment must still reach the configured API endpoint and does not verify that the selected interface, CIDRs, image registry, or Windows dataplane exist on target nodes.

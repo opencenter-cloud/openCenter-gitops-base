@@ -93,3 +93,13 @@ module "openstack-nova-kaas-config" {
 }
 
 ```
+
+## Repository implementation
+
+- Source path: `iac/cloud/openstack/openstack-identity/`.
+- Terraform entrypoint: `main.tf`; inputs and provider constraints are declared in `variables.tf`, `provider.tf`, and `versions.tf`.
+- The module creates the OpenStack identity/project prerequisites consumed by the Nova and Ironic roots; the long example also shows how those outputs feed external module configurations.
+
+## Validation and limitations
+
+Run `terraform fmt -check` and `terraform validate` from this directory after `terraform init`. A plan/apply requires OpenStack credentials, an existing admin context, and environment-specific networking/flavor inputs. The example contains placeholders and historical external module references; do not apply it unchanged.

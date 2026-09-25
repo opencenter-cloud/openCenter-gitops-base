@@ -10,7 +10,7 @@ tags: [fluxcd, troubleshooting, gitops, reconciliation]
 
 # Troubleshoot FluxCD Reconciliation
 
-**Purpose:** For platform engineers, shows how to debug FluxCD reconciliation issues, covering status checks, log analysis, common errors, and remediation steps.
+**Purpose:** For platform engineers, shows how to debug FluxCD reconciliation issues, covering status checks, log analysis, common errors, and remediation steps. The checked-in example uses GitRepository `opencenter-cert-manager` and install Kustomization `cert-manager-base`, both in `flux-system`; substitute names only after checking the full consumer overlay.
 
 ## Prerequisites
 
@@ -42,14 +42,14 @@ Expected output:
 ### Check resource status
 
 ```bash
-# Check all Flux resources
-flux get all
+# Check all Flux resources in every namespace
+flux get all --all-namespaces
 
-# Check specific resource types
-flux get sources git
-flux get sources helm
-flux get helmreleases
-flux get kustomizations
+# Check specific resource types in every namespace
+flux get sources git --all-namespaces
+flux get sources helm --all-namespaces
+flux get helmreleases --all-namespaces
+flux get kustomizations --all-namespaces
 ```
 
 ## Common Issues and Solutions
@@ -59,15 +59,15 @@ flux get kustomizations
 **Symptom:**
 
 ```bash
-flux get sources git
+flux get sources git --all-namespaces
 NAME                    READY   MESSAGE
-opencenter-base         False   fetch failed
+opencenter-cert-manager         False   fetch failed
 ```
 
 **Diagnosis:**
 
 ```bash
-kubectl describe gitrepository opencenter-base -n flux-system
+kubectl describe gitrepository opencenter-cert-manager -n flux-system
 ```
 
 Look for:
@@ -77,17 +77,17 @@ Message: failed to checkout and determine revision
 
 **Solution:**
 
-Use HTTPS in the base-repo `GitRepository` and do not attach a `secretRef`.
+Check the URL, ref, and credentials against the consumer repository's source definition. Public sources may use HTTPS without a `secretRef`; private Git sources require the consumer's configured authentication Secret. Do not replace a working private source with an invented URL.
 
 ```yaml
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: GitRepository
 metadata:
-  name: opencenter-base
+  name: opencenter-cert-manager
   namespace: flux-system
 spec:
   interval: 15m
-  url: https://github.com/opencenter-cloud/openCenter-gitops-base
+  url: https://github.com/rackerlabs/openCenter-gitops-base.git
   ref:
     branch: main
 ```
@@ -95,7 +95,7 @@ spec:
 Force reconciliation:
 
 ```bash
-flux reconcile source git opencenter-base
+flux reconcile source git opencenter-cert-manager -n flux-system
 ```
 
 ### Issue 2: HelmRelease Stuck in "Installing"
@@ -103,7 +103,7 @@ flux reconcile source git opencenter-base
 **Symptom:**
 
 ```bash
-flux get helmreleases -n cert-manager
+flux get helmreleases --all-namespaces
 NAME            READY   MESSAGE
 cert-manager    False   install retries exhausted
 ```
@@ -131,8 +131,8 @@ flux logs --kind=HelmRelease --name=cert-manager --namespace=cert-manager
 1. **Helm repository not accessible**
 
 ```bash
-flux get sources helm
-kubectl describe helmrepository cert-manager -n flux-system
+flux get sources helm --all-namespaces
+kubectl describe helmrepository jetstack -n cert-manager
 ```
 
 2. **Chart version not found**
@@ -146,7 +146,9 @@ kubectl get helmrelease cert-manager -n cert-manager -o jsonpath='{.spec.chart.s
 Check available versions:
 
 ```bash
-helm search repo cert-manager --versions
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
+helm search repo jetstack/cert-manager --versions
 ```
 
 3. **Values validation failed**
@@ -160,7 +162,7 @@ kubectl get secret cert-manager-values-base -n cert-manager
 Decode and validate:
 
 ```bash
-kubectl get secret cert-manager-values-base -n cert-manager -o jsonpath='{.data.values\.yaml}' | base64 -d | yq eval
+kubectl get secret cert-manager-values-base -n cert-manager -o jsonpath='{.data.values\.yaml}' | base64 -d | yq eval '.' -
 ```
 
 **Solution:**
@@ -172,33 +174,22 @@ flux suspend helmrelease cert-manager -n cert-manager
 flux resume helmrelease cert-manager -n cert-manager
 ```
 
-Or delete and let Flux recreate:
+Use suspend/resume or fix the declared source and values first. Deleting a HelmRelease is a destructive break-glass action and is not required for normal reconciliation.
 
-```bash
-kubectl delete helmrelease cert-manager -n cert-manager
-flux reconcile kustomization cert-manager
-```
-
-### Issue 3: Kustomization Drift Detected
+### Issue 3: Resources differ from the declared state
 
 **Symptom:**
 
 ```bash
-flux get kustomizations
+flux get kustomizations --all-namespaces
 NAME            READY   MESSAGE
-cert-manager    True    Applied revision: main@sha1:abc123, drift detected
+cert-manager-base    True    Applied revision: main@sha1:abc123, drift detected
 ```
 
 **Diagnosis:**
 
 ```bash
-kubectl describe kustomization cert-manager -n flux-system
-```
-
-Check drift detection mode:
-
-```bash
-kubectl get kustomization cert-manager -n flux-system -o jsonpath='{.spec.driftDetection.mode}'
+kubectl describe kustomization cert-manager-base -n flux-system
 ```
 
 **Cause:**
@@ -210,39 +201,37 @@ Resources were modified outside of Git (manual kubectl apply or Helm upgrade).
 View drifted resources:
 
 ```bash
-flux diff kustomization cert-manager
+flux diff kustomization cert-manager-base
 ```
 
 Force reconciliation to restore Git state:
 
 ```bash
-flux reconcile kustomization cert-manager --with-source
+flux reconcile kustomization cert-manager-base -n flux-system --with-source
 ```
 
-Prevent drift by enabling remediation:
+For Helm-managed resources, inspect drift detection on the `HelmRelease`, not the Flux `Kustomization`:
 
-```yaml
-spec:
-  driftDetection:
-    mode: enabled
-  prune: true
-  force: true  # Force apply even if resources exist
+```bash
+kubectl get helmrelease cert-manager -n cert-manager -o jsonpath='{.spec.driftDetection.mode}'
 ```
+
+The base HelmRelease manifests set `driftDetection.mode: enabled`; the consumer overlay must still reconcile the correct source and install Kustomization.
 
 ### Issue 4: SOPS Decryption Failed
 
 **Symptom:**
 
 ```bash
-flux get kustomizations
+flux get kustomizations --all-namespaces
 NAME            READY   MESSAGE
-my-service      False   decryption failed
+cert-manager-base      False   decryption failed
 ```
 
 **Diagnosis:**
 
 ```bash
-kubectl describe kustomization my-service -n flux-system
+kubectl describe kustomization cert-manager-base -n flux-system
 ```
 
 Look for:
@@ -269,7 +258,7 @@ kubectl create secret generic sops-age \
 Verify Kustomization references secret:
 
 ```bash
-kubectl get kustomization my-service -n flux-system -o jsonpath='{.spec.decryption}'
+kubectl get kustomization cert-manager-base -n flux-system -o jsonpath='{.spec.decryption}'
 ```
 
 Should show:
@@ -280,7 +269,7 @@ Should show:
 Force reconciliation:
 
 ```bash
-flux reconcile kustomization my-service
+flux reconcile kustomization cert-manager-base -n flux-system
 ```
 
 ### Issue 5: Dependency Wait Timeout
@@ -288,21 +277,21 @@ flux reconcile kustomization my-service
 **Symptom:**
 
 ```bash
-flux get kustomizations
+flux get kustomizations --all-namespaces
 NAME                READY   MESSAGE
-cert-manager-certs  False   dependency 'cert-manager' is not ready
+cert-manager-base  False   dependency 'sources' is not ready
 ```
 
 **Diagnosis:**
 
 ```bash
-kubectl describe kustomization cert-manager-certs -n flux-system
+kubectl describe kustomization cert-manager-base -n flux-system
 ```
 
 Check dependency status:
 
 ```bash
-flux get kustomizations | grep cert-manager
+flux get kustomizations -n flux-system
 ```
 
 **Solution:**
@@ -310,7 +299,7 @@ flux get kustomizations | grep cert-manager
 Check dependency is healthy:
 
 ```bash
-kubectl get kustomization cert-manager -n flux-system
+kubectl get kustomization sources -n flux-system
 ```
 
 If dependency is stuck, troubleshoot it first.
@@ -318,8 +307,8 @@ If dependency is stuck, troubleshoot it first.
 If dependency is ready but not detected, force reconciliation:
 
 ```bash
-flux reconcile kustomization cert-manager
-flux reconcile kustomization cert-manager-certs
+flux reconcile kustomization sources -n flux-system
+flux reconcile kustomization cert-manager-base -n flux-system
 ```
 
 Increase timeout if needed:
@@ -327,7 +316,7 @@ Increase timeout if needed:
 ```yaml
 spec:
   dependsOn:
-    - name: cert-manager
+    - name: sources
   timeout: 10m  # Increase from default 5m
 ```
 
@@ -370,9 +359,9 @@ Create image pull secret if needed:
 
 ```bash
 kubectl create secret docker-registry regcred \
-  --docker-server=registry.example.com \
-  --docker-username=user \
-  --docker-password=pass \
+  --docker-server=<registry-host> \
+  --docker-username=<registry-user> \
+  --docker-password=<registry-password> \
   -n cert-manager
 ```
 
@@ -469,7 +458,7 @@ spec:
 flux logs
 
 # Specific controller
-flux logs --kind=Kustomization --name=my-service
+flux logs --kind=Kustomization --name=cert-manager-base --namespace=flux-system
 
 # Follow logs
 flux logs --follow
@@ -482,13 +471,13 @@ flux logs --tail=100
 
 ```bash
 # Reconcile source
-flux reconcile source git opencenter-base
+flux reconcile source git opencenter-cert-manager -n flux-system
 
 # Reconcile Kustomization
-flux reconcile kustomization my-service
+flux reconcile kustomization cert-manager-base -n flux-system
 
 # Reconcile with source update
-flux reconcile kustomization my-service --with-source
+flux reconcile kustomization cert-manager-base -n flux-system --with-source
 
 # Reconcile HelmRelease
 flux reconcile helmrelease my-service -n my-service
@@ -498,30 +487,30 @@ flux reconcile helmrelease my-service -n my-service
 
 ```bash
 # Suspend (stop reconciliation)
-flux suspend kustomization my-service
+flux suspend kustomization cert-manager-base -n flux-system
 
 # Resume
-flux resume kustomization my-service
+flux resume kustomization cert-manager-base -n flux-system
 ```
 
 ### Export and inspect resources
 
 ```bash
 # Export GitRepository
-flux export source git opencenter-base
+flux export source git opencenter-cert-manager -n flux-system
 
 # Export HelmRelease
 flux export helmrelease cert-manager -n cert-manager
 
 # Export Kustomization
-flux export kustomization my-service
+flux export kustomization cert-manager-base -n flux-system
 ```
 
 ### Trace reconciliation
 
 ```bash
 # Trace Kustomization
-flux trace kustomization my-service
+flux trace kustomization cert-manager-base -n flux-system
 
 # Shows:
 # - Source
@@ -536,17 +525,17 @@ After resolving issues:
 
 ```bash
 # 1. All sources are ready
-flux get sources git
-flux get sources helm
+flux get sources git --all-namespaces
+flux get sources helm --all-namespaces
 
 # 2. All Kustomizations are ready
-flux get kustomizations
+flux get kustomizations --all-namespaces
 
 # 3. All HelmReleases are ready
 flux get helmreleases --all-namespaces
 
-# 4. No suspended resources
-flux get all | grep -i suspended
+# 4. Inspect for suspended resources
+flux get all --all-namespaces
 
 # 5. Check recent events
 kubectl get events -n flux-system --sort-by='.lastTimestamp' | tail -20
@@ -575,16 +564,20 @@ If all Flux controllers are down:
 # Check controller pods
 kubectl get pods -n flux-system
 
-# Restart controllers
-kubectl rollout restart deployment -n flux-system
+# Reapply the committed Flux installation manifests from the cluster repo.
+# Run from the cluster-repo root; do not uninstall Flux to recover it.
+FLUX_MANIFEST_PATH="clusters/<cluster>/flux-system"
+kubectl apply -k "$FLUX_MANIFEST_PATH"
 
-# If that fails, reinstall Flux
-flux uninstall --silent
+# If the installation manifests are unavailable, bootstrap the approved
+# cluster repository and path instead of deleting the existing installation.
 flux bootstrap git \
-  --url=ssh://git@github.com/${GIT_REPO}.git \
-  --branch=main \
-  --path=<cluster-repo-bootstrap-path>
+  --url="<approved-git-url>" \
+  --branch="<approved-branch>" \
+  --path="<cluster-repo-bootstrap-path>"
 ```
+
+After controllers recover, verify `flux check`, the `GitRepository`, and the `sources` and `cert-manager-base` Kustomizations before reconciling workloads.
 
 ### Rollback to previous version
 
@@ -597,8 +590,8 @@ git revert HEAD
 git push origin main
 
 # Force reconciliation
-flux reconcile source git opencenter-base
-flux reconcile kustomization my-service
+flux reconcile source git opencenter-cert-manager -n flux-system
+flux reconcile kustomization cert-manager-base -n flux-system --with-source
 ```
 
 ### Manual intervention required
@@ -606,14 +599,13 @@ flux reconcile kustomization my-service
 If Flux cannot recover:
 
 ```bash
-# Suspend Flux
-flux suspend kustomization my-service
+# Reapply the reviewed, declarative service overlay from the cluster-repo root.
+# This is a break-glass action; commit the same correction to Git immediately.
+SERVICE_OVERLAY_PATH="applications/overlays/<cluster>/services/<service>"
+kubectl apply -k "$SERVICE_OVERLAY_PATH"
 
-# Apply manually
-kubectl apply -f <cluster-service-overlay-path>/
-
-# Resume Flux
-flux resume kustomization my-service
+# Reconcile the declared install object after the repository is corrected.
+flux reconcile kustomization cert-manager-base -n flux-system --with-source
 ```
 
 ## Next Steps

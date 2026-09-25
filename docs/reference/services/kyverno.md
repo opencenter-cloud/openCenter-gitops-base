@@ -51,6 +51,8 @@ spec:
 - Flux object: `HelmRelease/kyverno` under `policy-engine/`
 - Policy bundle: `default-ruleset/`
 
+The policy engine chart is version `3.9.1` from `https://kyverno.github.io/kyverno/`, and the default ruleset is a separate Kustomize component that depends on the engine. The base path commits the listed ClusterPolicy resources, but it does not guarantee that consumer workloads satisfy them; admission behavior depends on the installed policy configuration.
+
 ## Related Docs
 
 - [Kyverno Configuration Guide](../../operations/services/kyverno.md)

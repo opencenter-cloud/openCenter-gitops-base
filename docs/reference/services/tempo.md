@@ -32,6 +32,8 @@ tags: [tempo, tracing, observability]
 - Grafana queries Tempo for trace views and correlations.
 - Object storage configuration is a major cluster-specific concern.
 
+The base path does not commit object-storage credentials or an OpenTelemetry collector configuration. The example endpoint is illustrative and depends on the chart's enabled receiver and the consumer's service exposure.
+
 ## Example
 
 ```yaml
@@ -47,6 +49,8 @@ exporters:
 - Flux object: `HelmRelease/tempo`
 - Base values Secret: `tempo-values-base`
 - Override values Secret: `tempo-values-override`
+- Source: Grafana Helm repository (`https://grafana.github.io/helm-charts`)
+- Chart version: `1.61.3`
 
 ## Related Docs
 

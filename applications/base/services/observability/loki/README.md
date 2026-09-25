@@ -15,3 +15,15 @@ For service overview, use cases, examples, and upstream references, see the [ser
 - Supports **multi-tenancy**, **retention policies**, and **compaction** for efficient long-term log storage.
 - Automatically integrates with **Grafana** for unified visualization of logs alongside metrics and traces.
 - Commonly used for troubleshooting application issues, audit logging, security analysis, and operational insights.
+
+## Repository implementation
+
+- Source path: `applications/base/services/observability/loki/`.
+- Flux entrypoint: `kustomization.yaml`; the HelmRelease runs in `observability` and reads `loki-values-base` plus the optional `loki-values-override` Secret.
+- Base values: `helm-values/values-7.3.0.yaml`; the chart source is declared in `source.yaml` and `catalog.yaml`.
+
+The active base values set the global Loki retention period to `30d`. Retention deletion is disabled in the chart values (`retention_deletes_enabled: false`), so do not treat the configured period as proof that stored data will be automatically deleted.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/observability/loki/` to validate the local manifests. The base supplies the `30d` retention setting above, while object-storage credentials, tenant/authentication settings, and log collection pipelines remain cluster-specific. OpenTelemetry or another collector must be configured to send logs.

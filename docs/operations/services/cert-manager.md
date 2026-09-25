@@ -23,6 +23,8 @@ The base service deploys:
 - `HelmRelease/cert-manager`
 - base chart values from the service `helm-values/` directory
 
+Current base evidence: chart `cert-manager` version `v1.21.2` from `https://charts.jetstack.io`, with base values from `helm-values/values-v1.21.2.yaml`.
+
 The base `HelmRelease` reads:
 
 - `Secret/cert-manager-values-base` using key `values.yaml`
@@ -89,13 +91,13 @@ metadata:
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
-    email: platform@example.com
+    email: <environment-contact-email>
     privateKeySecretRef:
       name: letsencrypt-prod
     solvers:
       - http01:
           ingress:
-            class: nginx
+             class: <environment-ingress-class>
 ```
 
 Use `dns01` instead of `http01` when:
@@ -142,6 +144,8 @@ Healthy signs:
 
 Webhook timeouts or admission failures:
 - check the cert-manager webhook Pod and confirm the cluster can resolve and reach the webhook service
+
+The base does not create an issuer, provider credential, DNS zone, ingress class, or public hostname. Those are consumer/environment-specific inputs.
 
 ## Related Docs
 

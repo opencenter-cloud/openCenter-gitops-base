@@ -19,3 +19,13 @@ For service overview, use cases, examples, and upstream references, see the [ser
 - Minimizes manual intervention and prevents downtime from expired certificates.
 - Commonly used to secure ingress controllers, internal services, and any workloads requiring TLS.
 - Simplifies certificate lifecycle management and enhances overall cluster security.
+
+## Repository implementation
+
+- Source path: `applications/base/services/cert-manager/`.
+- Flux entrypoint: `kustomization.yaml`; the HelmRelease runs in `cert-manager` and reads `cert-manager-values-base` plus the optional `cert-manager-values-override` Secret.
+- Base values: `helm-values/values-v1.21.2.yaml`; the chart source is declared in `source.yaml` and `catalog.yaml`.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/cert-manager/` to validate the local manifests. This installs the controller and CRDs but does not create an issuer, DNS credentials, or application certificates. Configure issuers and private credentials in a consuming cluster overlay.

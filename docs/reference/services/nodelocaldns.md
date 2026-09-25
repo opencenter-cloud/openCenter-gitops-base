@@ -28,7 +28,7 @@ tags: [dns, cache, nodelocal, networking]
 ## Example
 
 ```yaml
-# Override the local DNS IP or resource requests via the override secret
+# The committed base values use these settings; override values are consumer-owned.
 image:
   tag: "1.23.1"
 config:
@@ -41,6 +41,9 @@ config:
 - Namespace: `nodelocaldns`
 - Flux object: `HelmRelease/nodelocaldns`
 - Source: `https://lablabs.github.io/k8s-nodelocaldns-helm/`
+- Chart version: `2.4.0`
+
+The base values set image tag `1.23.1`, local DNS IP `169.254.20.11`, and resource requests of `30m` CPU and `50Mi` memory. The local DNS IP must be compatible with the cluster's DNS and node configuration; this repository does not validate that cluster-specific choice.
 
 ## Upstream References
 

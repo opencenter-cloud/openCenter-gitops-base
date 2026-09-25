@@ -37,18 +37,7 @@ This directory contains the **base manifests** for deploying the [NVIDIA GPU Ope
 
 ## MIG Support
 
-A MIG-enabled values variant is provided at `helm-values/values-v26.3.2-mig.yaml`. To use it, reference this file in your cluster kustomization:
-
-```yaml
-secretGenerator:
-    - name: gpu-operator-values-base
-      namespace: gpu-operator
-      type: Opaque
-      files:
-        - values.yaml=helm-values/values-v26.3.2-mig.yaml
-      options:
-        disableNameSuffixHash: true
-```
+The base values document `mig.strategy` and `migManager.enabled`, but the referenced MIG-specific values variant is not present in this repository. Enable MIG by supplying those keys through the cluster's `gpu-operator-values-override` Secret; the base does not select a MIG profile by itself.
 
 After deployment, label nodes with the desired MIG profile:
 
@@ -57,3 +46,14 @@ kubectl label nodes <node-name> nvidia.com/mig.config=all-1g.10gb --overwrite
 ```
 
 MIG Manager auto-generates profiles per node. For custom profiles, provide a ConfigMap via `migManager.config` in the override values. See the [NVIDIA MIG documentation](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/gpu-operator-mig.html) for details.
+
+## Repository implementation
+
+- Source path: `applications/base/services/nvidia-gpu-operator/`.
+- Flux entrypoint: `kustomization.yaml`; it renders the `gpu-operator` namespace reference, HelmRepository, HelmRelease, and `gpu-operator-values-base` Secret.
+- Base values: `helm-values/values-v26.7.0.yaml`.
+- The optional `gpu-operator-values-override` Secret is merged after the base values.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/nvidia-gpu-operator/` to validate the local manifests. GPU nodes, compatible drivers/runtime, privileged pod security, and any MIG profile remain cluster prerequisites. The base does not label nodes, provide GPU hardware, or guarantee that a selected driver is compatible with every node image. The checked-in values file still contains an upstream comment referring to a missing `values-v26.3.2-mig.yaml`; do not treat that comment as an available repository file.

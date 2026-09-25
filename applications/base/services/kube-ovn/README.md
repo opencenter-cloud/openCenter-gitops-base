@@ -13,7 +13,7 @@ Kube-OVN provides OVN/OVS-based advanced container networking with support for V
 
 ## Version
 
-- Chart: `v1.16.2`
+- Chart: `v1.16.6`
 - Source: [Kube-OVN Helm Charts](https://kubeovn.github.io/kube-ovn/)
 
 ## Prerequisites
@@ -24,3 +24,14 @@ Kube-OVN provides OVN/OVS-based advanced container networking with support for V
 ## Overrides
 
 Cluster-specific overrides (MASTER_NODES IPs, IFACE, CIDRs) are supplied via the `kube-ovn-values-override` Secret (optional).
+
+## Repository implementation
+
+- Source path: `applications/base/services/kube-ovn/`.
+- Flux entrypoint: `kustomization.yaml`; it renders the `kube-system` namespace reference, HelmRepository, HelmRelease, and `kube-ovn-values-base` Secret.
+- Base values: `helm-values/values-v1.16.6.yaml`.
+- The optional `kube-ovn-values-override` Secret is merged after the base values.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/kube-ovn/` to validate the local manifests. The base does not discover the cluster's master IPs, interface, pod CIDR, or service CIDR; supply them in the override Secret. Do not deploy this CNI concurrently with another active cluster CNI unless the cluster design explicitly supports that combination.

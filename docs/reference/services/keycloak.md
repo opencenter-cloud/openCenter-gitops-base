@@ -49,6 +49,8 @@ spec:
 - Stages: `00-postgres/`, `10-operator/`, `20-keycloak/`, `30-oidc-rbac/`
 - Deployment method: operator-managed Keycloak instance
 
+The committed operator subscription uses OLM channel `fast`, manual install-plan approval, and starting CSV `keycloak-operator.v26.4.2`. The Keycloak custom resource uses three instances and a PostgreSQL service in the `keycloak` namespace. The hostname remains a placeholder (`https://auth.example.com`); realms, clients, credentials, and production FQDNs are not provisioned by this base path.
+
 ## Related Docs
 
 - [Keycloak Configuration Guide](../../operations/services/keycloak.md)

@@ -14,3 +14,15 @@ For service overview, use cases, examples, and upstream references, see the [ser
 - Persists incoming spans using a **Write-Ahead Log (WAL)** and periodically compacts data into **Parquet blocks** for efficient long-term retention.
 - Supports querying through **TraceQL**, a query language purpose-built for filtering and analyzing trace data.
 - Automatically integrates with **Grafana** for unified visualization of **traces, logs, and metrics**.
+
+## Repository implementation
+
+- Source path: `applications/base/services/observability/tempo/`.
+- Flux entrypoint: `kustomization.yaml`; the HelmRelease runs in `observability` and reads `tempo-values-base` plus the optional `tempo-values-override` Secret.
+- Base values: `helm-values/hardened-values-1.61.3.yaml`; the chart source is declared in `source.yaml` and `catalog.yaml`.
+
+The active base values enable both OTLP/HTTP and OTLP/gRPC receivers (gRPC port `4317`) and configure compactor block retention to `48h`.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/observability/tempo/` to validate the local manifests. The base supplies the OTLP receivers and `48h` block-retention setting above; object-storage credentials and trace-producing workloads remain cluster-specific. The base does not configure Grafana data sources or OpenTelemetry instrumentation.

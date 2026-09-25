@@ -23,6 +23,8 @@ The base service deploys:
 - base values from the service `helm-values/` directory
 - optional `Secret/metallb-values-override`
 
+Current base evidence: chart `metallb` version `0.16.1` from `https://metallb.github.io/metallb`, with base values from `helm-values/values-0.16.1.yaml`.
+
 The base does not define your cluster’s `IPAddressPool`, `L2Advertisement`, or `BGPPeer` resources.
 
 ## Common Cluster-Specific Configuration
@@ -44,7 +46,7 @@ metadata:
   namespace: metallb-system
 spec:
   addresses:
-    - 192.0.2.100-192.0.2.120
+    - <reserved-address-range>
 ---
 apiVersion: metallb.io/v1beta1
 kind: L2Advertisement
@@ -77,13 +79,15 @@ Healthy signs:
 ## Common Failure Modes
 
 Services stay pending:
-- verify an IP pool exists and is advertised
+- verify an `IPAddressPool` exists, contains addresses valid for the consumer network, and is referenced by an `L2Advertisement` or BGP configuration
 
 Announced IPs are not reachable:
 - verify Layer 2 adjacency or BGP peering configuration outside the cluster
 
 Speaker Pods do not run on needed nodes:
 - verify taints, tolerations, and node selectors
+
+The base intentionally does not allocate an address range or create an advertisement. The address range and network advertisement mode are environment-specific.
 
 ## Related Docs
 

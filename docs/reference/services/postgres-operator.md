@@ -43,6 +43,10 @@ spec:
 - Namespace: `postgres-operator`
 - Flux object: `HelmRelease/postgres-operator`
 - Source: Zalando Postgres Operator Helm repository
+- Source URL: `https://opensource.zalando.com/postgres-operator/charts/postgres-operator`
+- Chart version: `2.0.2`
+
+The base path installs the operator but does not create a PostgreSQL cluster. The example custom resource is consumer-owned and requires the operator's supported storage, access, and secret configuration.
 
 ## Upstream References
 

@@ -25,6 +25,10 @@ The base service deploys:
   - `prometheus-overrides.yaml`
 - an optional `kube-prometheus-stack-values-override` Secret
 
+Current base evidence: chart `kube-prometheus-stack` version `91.4.1`. The base generator reads `values-91.4.1.yaml`, `alertmanager-overrides.yaml`, `prometheus-overrides.yaml`, and `alerting-rules-overrides.yaml`; the HelmRelease consumes the first three plus an optional consumer override. The shipped Alertmanager example has an empty Microsoft Teams webhook value and is not a working notification destination until configured.
+
+The base HelmRelease is named `kube-prometheus-stack`. Consumer overlays may use a namespace-prefixed rendered release/service such as `observability-kube-prometheus-stack-prometheus`; discover the actual Prometheus, Grafana, and Alertmanager Services in namespace `observability` before port-forwarding or wiring clients.
+
 This means cluster repos normally supply only the delta in `override.yaml`.
 
 ## Common Cluster-Specific Configuration
@@ -59,7 +63,7 @@ grafana:
   ingress:
     enabled: true
     hosts:
-      - grafana.example.com
+      - <grafana-hostname>
 
 prometheus:
   prometheusSpec:
@@ -67,7 +71,7 @@ prometheus:
     storageSpec:
       volumeClaimTemplate:
         spec:
-          storageClassName: longhorn-general
+          storageClassName: <cluster-storage-class>
           resources:
             requests:
               storage: 100Gi
@@ -82,8 +86,9 @@ prometheus:
 ## Verification
 
 ```bash
-kubectl get helmrelease -n observability kube-prometheus-stack
+kubectl get helmreleases -n observability
 kubectl get pods -n observability
+kubectl get services -n observability
 kubectl get servicemonitors,podmonitors,prometheusrules -A
 kubectl get prometheus,alertmanager -n observability
 ```
@@ -107,6 +112,8 @@ Alerts do not send:
 
 Expected metrics missing:
 - check label selectors and namespaces on `ServiceMonitor` / `PodMonitor`
+
+The base does not create a consumer's ServiceMonitors, ingress hostname, storage class, receiver credentials, or remote-write endpoint. Those inputs are environment-specific.
 
 ## Related Docs
 

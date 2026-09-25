@@ -25,14 +25,11 @@ tags: [nvidia, gpu, mig, operator]
 
 - Nodes with NVIDIA GPUs need automated driver and toolkit management.
 
-## MIG Support
+## GPU and MIG Configuration
 
-A MIG-enabled values variant (`values-v26.3.2-mig.yaml`) is included for clusters with MIG-capable GPUs (A100, A30, H100, H200). It enables:
+The committed values file is `helm-values/values-v26.7.0.yaml`. It enables NFD, the GPU driver, toolkit, CDI, and DCGM exporter; `devicePlugin` is empty. The file contains commented MIG guidance, but no MIG-specific values variant is committed. MIG configuration is therefore **consumer-supplied/planned**, not a base-repository deployment feature.
 
-- `mig.strategy: mixed` — allows both MIG and non-MIG GPUs on the same node
-- `migManager.enabled: true` — deploys MIG Manager to handle MIG reconfiguration
-
-After deployment, label nodes with the desired profile:
+If a consumer enables a supported MIG configuration, it must apply the matching node configuration after deployment, for example:
 
 ```bash
 kubectl label nodes <node-name> nvidia.com/mig.config=all-1g.10gb --overwrite
@@ -44,6 +41,9 @@ kubectl label nodes <node-name> nvidia.com/mig.config=all-1g.10gb --overwrite
 - Namespace: `gpu-operator`
 - Flux object: `HelmRelease/gpu-operator`
 - Source: `https://helm.ngc.nvidia.com/nvidia`
+- Chart version: `v26.7.0`
+
+The catalog declares `node-feature-discovery` as a prerequisite, although the committed chart values also enable NFD as a subchart. GPU driver installation, node taints, MIG profiles, and workload scheduling remain hardware- and consumer-specific.
 
 ## Upstream References
 

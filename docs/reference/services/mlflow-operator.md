@@ -52,6 +52,8 @@ spec:
 - Flux object: `HelmRelease/mlflow-operator`
 - Source: `GitRepository/mlflow-operator` (tag `1.1.0`)
 
+The Git source is consumed as chart `charts/mlflow`; the HelmRelease has no chart version field because the chart is sourced from the GitRepository tag. The base path does not provide an MLflow database, artifact store, credentials, or an instance custom resource; those are consumer-owned.
+
 ## Upstream References
 
 - [MLflow Operator GitHub](https://github.com/opendatahub-io/mlflow-operator)

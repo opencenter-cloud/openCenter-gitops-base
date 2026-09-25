@@ -41,9 +41,12 @@ tags: [calico, cni, networking, tigera-operator]
 - Service path: `applications/base/services/calico/`
 - Namespace: `tigera-operator`
 - Flux objects: `HelmRelease/calico-crds`, `HelmRelease/calico`
+- Chart versions: CRDs `v3.32.0`; operator `v3.32.2`
 - Base values Secret: `calico-values-base`
 - Override values Secret: `calico-values-override`
 - Source: Project Calico Helm repository (`https://docs.tigera.io/calico/charts`)
+
+The CRD and operator releases are intentionally pinned to different upstream versions in the committed manifests. Calico is mutually exclusive with the other CNI service paths; the base repo does not select a CNI for a cluster.
 
 ## Related Docs
 

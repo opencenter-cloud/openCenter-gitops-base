@@ -22,56 +22,77 @@ The `applications/` tree is managed with Flux CD and follows declarative, versio
 
 For the complete directory layout, see [Directory Structure](docs/reference/directory-structure.md).
 
-## Available Applications
+## Service Inventory
 
-### Core Services
+The base currently contains **47 service directories** under `applications/base/services/`. The list below is a filesystem inventory, not a statement that every entry is enabled or deployable by every consumer. Packaging and the declared catalog metadata are recorded in the generated [catalog lock](applications/catalog.lock.yaml) when a catalog fragment exists. `renderOwner` is catalog metadata; it does not verify an external CLI, consumer, or live-cluster deployment.
 
-| Service | Namespace | Version | Purpose | Documentation |
-|---------|-----------|---------|---------|---------------|
-| **[cert-manager](applications/base/services/cert-manager/)** | `cert-manager` | `v1.18.2` | Automated TLS certificate management | [README](applications/base/services/cert-manager/README.md) |
-| **[ceph-csi](applications/base/services/ceph-csi/)** | `ceph-csi` | `3.17.0` | Ceph RBD CSI storage driver | [README](applications/base/services/ceph-csi/README.md) |
-| **[data-science-pipelines-operator](applications/base/services/data-science-pipelines-operator/)** | `opendatahub` | `OLM` | ML pipeline orchestration (Kubeflow Pipelines) | [README](applications/base/services/data-science-pipelines-operator/README.md) |
-| **[external-snapshotter](applications/base/services/external-snapshotter/)** | `external-snapshotter` | `v8.2.1` | Volume snapshot management | [README](applications/base/services/external-snapshotter/README.md) |
-| **[feast-operator](applications/base/services/feast-operator/)** | `opendatahub` | `OLM` | Feature store for consistent feature serving | [README](applications/base/services/feast-operator/README.md) |
-| **[gateway-api](applications/base/services/gateway-api/)** | `envoy-gateway-system` | `v0.0.0-latest` | Next-generation ingress API | [README](applications/base/services/gateway-api/README.md) |
-| **[harbor](applications/base/services/harbor/)** | `harbor` | `1.17.2` | Container registry with security scanning | [README](applications/base/services/harbor/README.md) |
-| **[headlamp](applications/base/services/headlamp/)** | `headlamp` | `0.35.0` | Modern Kubernetes dashboard | [README](applications/base/services/headlamp/README.md) |
-| **[istio](applications/base/services/istio/)** | `istio-system` | `1.28.3` | Service mesh for traffic management, security, and observability | [README](applications/base/services/istio/README.md) |
-| **[keycloak](applications/base/services/keycloak/)** | `keycloak` | `26.4.2` | Identity and access management | [README](applications/base/services/keycloak/README.md) |
-| **[kserve](applications/base/services/kserve/)** | `kserve` | `v0.18.0` | AI/ML model inference serving | [README](applications/base/services/kserve/README.md) |
-| **[kuberay-operator](applications/base/services/kuberay-operator/)** | `kuberay-system` | `1.4.2` | Distributed computing framework (Ray) | [README](applications/base/services/kuberay-operator/README.md) |
-| **[kueue](applications/base/services/kueue/)** | `kueue-system` | `0.18.0` | Job queueing and GPU resource management | [README](applications/base/services/kueue/README.md) |
-| **[kyverno](applications/base/services/kyverno/)** | `kyverno` | `3.6.0` | Kubernetes-native policy engine | [README](applications/base/services/kyverno/README.md) |
-| **[longhorn](applications/base/services/longhorn/)** | `longhorn-system` | `1.11.0` | Distributed block storage | [README](applications/base/services/longhorn/README.md) |
-| **[metallb](applications/base/services/metallb/)** | `metallb-system` | `0.15.2` | Load balancer for bare-metal clusters | [README](applications/base/services/metallb/README.md) |
-| **[mlflow-operator](applications/base/services/mlflow-operator/)** | `opendatahub` | `1.1.0` | MLflow lifecycle management operator | [README](applications/base/services/mlflow-operator/README.md) |
-| **[model-registry-operator](applications/base/services/model-registry-operator/)** | `opendatahub` | `OLM` | Model versioning and lifecycle management | [README](applications/base/services/model-registry-operator/README.md) |
-| **[nodelocaldns](applications/base/services/nodelocaldns/)** | `nodelocaldns` | `2.4.0` | Per-node DNS caching agent | [README](applications/base/services/nodelocaldns/README.md) |
-| **[nvidia-gpu-operator](applications/base/services/nvidia-gpu-operator/)** | `gpu-operator` | `v26.3.2` | NVIDIA GPU lifecycle management with MIG support | [README](applications/base/services/nvidia-gpu-operator/README.md) |
-| **[olm](applications/base/services/olm/)** | `olm` | `v0.46.0` | Operator Lifecycle Manager | [README](applications/base/services/olm/README.md) |
-| **[openstack-ccm](applications/base/services/openstack-ccm/)** | `openstack-ccm` | `2.33.1` | OpenStack Cloud Controller Manager | [README](applications/base/services/openstack-ccm/README.md) |
-| **[openstack-csi](applications/base/services/openstack-csi/)** | `openstack-csi` | `2.33.1` | OpenStack Cinder CSI driver | [README](applications/base/services/openstack-csi/README.md) |
-| **[postgres-operator](applications/base/services/postgres-operator/)** | `postgres-operator` | `1.14.0` | PostgreSQL cluster management | [README](applications/base/services/postgres-operator/README.md) |
-| **[rbac-manager](applications/base/services/rbac-manager/)** | `rbac-manager` | `1.21.1` | RBAC management automation | [README](applications/base/services/rbac-manager/README.md) |
-| **[sealed-secrets](applications/base/services/sealed-secrets/)** | `sealed-secrets` | `2.17.3` | GitOps-friendly secret management | [README](applications/base/services/sealed-secrets/README.md) |
-| **[strimzi-kafka-operator](applications/base/services/strimzi-kafka-operator/)** | `kafka-system` | `0.50.0` | Kubernetes operator for Apache Kafka | [README](applications/base/services/strimzi-kafka-operator/README.md) |
-| **[training-operator](applications/base/services/training-operator/)** | `kubeflow-system` | `0.0.1` | Distributed ML training (PyTorch, TensorFlow, XGBoost) | [README](applications/base/services/training-operator/README.md) |
-| **[triton-inference-server](applications/base/services/triton-inference-server/)** | `triton-inference-server` | `v2.69.0` | NVIDIA high-performance model inference server | [README](applications/base/services/triton-inference-server/README.md) |
-| **[trustyai-service-operator](applications/base/services/trustyai-service-operator/)** | `opendatahub` | `OLM` | AI explainability, fairness, and governance | [README](applications/base/services/trustyai-service-operator/README.md) |
-| **[velero](applications/base/services/velero/)** | `velero` | `10.1.1` | Backup and disaster recovery | [README](applications/base/services/velero/README.md) |
-| **[vsphere-csi](applications/base/services/vsphere-csi/)** | `vmware-system-csi` | `3.8.1` | vSphere storage integration | [README](applications/base/services/vsphere-csi/README.md) |
+### Standalone service directories
 
-> **Note:** Open Data Hub Dashboard and Workbenches (Jupyter notebook environments) are not included. Both are tightly coupled to OpenShift APIs (Routes, OAuth proxy, ImageStreams) and are not practical for non-OpenShift clusters.
+| Service | Path | Declared catalog metadata (`renderOwner`) |
+|---------|------|---------------------------|
+| [amd-gpu-operator](applications/base/services/amd-gpu-operator/) | `applications/base/services/amd-gpu-operator/` | `renderOwner: none` |
+| [calico](applications/base/services/calico/) | `applications/base/services/calico/` | `renderOwner: descriptor` |
+| [cert-manager](applications/base/services/cert-manager/) | `applications/base/services/cert-manager/` | `renderOwner: descriptor` |
+| [cilium](applications/base/services/cilium/) | `applications/base/services/cilium/` | `renderOwner: renderCatalog` |
+| [data-science-pipelines-operator](applications/base/services/data-science-pipelines-operator/) | `applications/base/services/data-science-pipelines-operator/` | `renderOwner: none` |
+| [external-dns](applications/base/services/external-dns/) | `applications/base/services/external-dns/` | `renderOwner: renderCatalog` |
+| [external-snapshotter](applications/base/services/external-snapshotter/) | `applications/base/services/external-snapshotter/` | `renderOwner: renderCatalog` |
+| [feast-operator](applications/base/services/feast-operator/) | `applications/base/services/feast-operator/` | `renderOwner: none` |
+| [gateway-api](applications/base/services/gateway-api/) | `applications/base/services/gateway-api/` | `renderOwner: renderCatalog` |
+| [harbor](applications/base/services/harbor/) | `applications/base/services/harbor/` | `renderOwner: descriptor` |
+| [headlamp](applications/base/services/headlamp/) | `applications/base/services/headlamp/` | `renderOwner: renderCatalog` |
+| [jupyterhub](applications/base/services/jupyterhub/) | `applications/base/services/jupyterhub/` | `renderOwner: none` |
+| [keda](applications/base/services/keda/) | `applications/base/services/keda/` | `catalog.yaml` present; `renderOwner` not declared |
+| [kserve](applications/base/services/kserve/) | `applications/base/services/kserve/` | `renderOwner: none` |
+| [kube-ovn](applications/base/services/kube-ovn/) | `applications/base/services/kube-ovn/` | `renderOwner: none` |
+| [kuberay-operator](applications/base/services/kuberay-operator/) | `applications/base/services/kuberay-operator/` | `renderOwner: none` |
+| [kueue](applications/base/services/kueue/) | `applications/base/services/kueue/` | `renderOwner: none` |
+| [kured](applications/base/services/kured/) | `applications/base/services/kured/` | `renderOwner: renderCatalog` |
+| [local-path-provisioner](applications/base/services/local-path-provisioner/) | `applications/base/services/local-path-provisioner/` | `renderOwner: renderCatalog` |
+| [longhorn](applications/base/services/longhorn/) | `applications/base/services/longhorn/` | `renderOwner: renderCatalog` |
+| [metallb](applications/base/services/metallb/) | `applications/base/services/metallb/` | `renderOwner: renderCatalog` |
+| [milvus-operator](applications/base/services/milvus-operator/) | `applications/base/services/milvus-operator/` | `renderOwner: none` |
+| [mlflow-operator](applications/base/services/mlflow-operator/) | `applications/base/services/mlflow-operator/` | `renderOwner: none` |
+| [model-registry-operator](applications/base/services/model-registry-operator/) | `applications/base/services/model-registry-operator/` | `renderOwner: none` |
+| [node-feature-discovery](applications/base/services/node-feature-discovery/) | `applications/base/services/node-feature-discovery/` | `renderOwner: none` |
+| [nodelocaldns](applications/base/services/nodelocaldns/) | `applications/base/services/nodelocaldns/` | `renderOwner: renderCatalog` |
+| [nvidia-gpu-operator](applications/base/services/nvidia-gpu-operator/) | `applications/base/services/nvidia-gpu-operator/` | `renderOwner: none` |
+| [olm](applications/base/services/olm/) | `applications/base/services/olm/` | `renderOwner: descriptor` |
+| [openstack-ccm](applications/base/services/openstack-ccm/) | `applications/base/services/openstack-ccm/` | `renderOwner: renderCatalog` |
+| [openstack-csi](applications/base/services/openstack-csi/) | `applications/base/services/openstack-csi/` | `renderOwner: renderCatalog` |
+| [postgres-operator](applications/base/services/postgres-operator/) | `applications/base/services/postgres-operator/` | `renderOwner: renderCatalog` |
+| [rbac-manager](applications/base/services/rbac-manager/) | `applications/base/services/rbac-manager/` | `renderOwner: renderCatalog` |
+| [redis-operator](applications/base/services/redis-operator/) | `applications/base/services/redis-operator/` | `renderOwner: none` |
+| [sealed-secrets](applications/base/services/sealed-secrets/) | `applications/base/services/sealed-secrets/` | `renderOwner: renderCatalog` |
+| [slurm-operator](applications/base/services/slurm-operator/) | `applications/base/services/slurm-operator/` | `renderOwner: none` |
+| [strimzi-kafka-operator](applications/base/services/strimzi-kafka-operator/) | `applications/base/services/strimzi-kafka-operator/` | `renderOwner: renderCatalog` |
+| [training-operator](applications/base/services/training-operator/) | `applications/base/services/training-operator/` | `renderOwner: none` |
+| [triton-inference-server](applications/base/services/triton-inference-server/) | `applications/base/services/triton-inference-server/` | `renderOwner: none` |
+| [trustyai-service-operator](applications/base/services/trustyai-service-operator/) | `applications/base/services/trustyai-service-operator/` | `renderOwner: none` |
+| [velero](applications/base/services/velero/) | `applications/base/services/velero/` | `renderOwner: renderCatalog` |
+| [vllm](applications/base/services/vllm/) | `applications/base/services/vllm/` | `renderOwner: none` |
+| [vsphere-csi](applications/base/services/vsphere-csi/) | `applications/base/services/vsphere-csi/` | `renderOwner: renderCatalog` |
 
-### Observability Stack
+### Composite service directories
 
-| Component | Namespace | Version | Purpose | Documentation |
-|-----------|-----------|---------|---------|---------------|
-| **[kube-prometheus-stack](applications/base/services/observability/kube-prometheus-stack/)** | `observability` | `77.6.0` | Prometheus, Grafana, Alertmanager | [README](applications/base/services/observability/kube-prometheus-stack/README.md) |
-| **[loki](applications/base/services/observability/loki/)** | `observability` | `6.45.2` | Log aggregation and storage | [README](applications/base/services/observability/loki/README.md) |
-| **[mimir](applications/base/services/observability/mimir/)** | `observability` | `6.0.3` | Horizontally scalable long-term metrics storage | [README](applications/base/services/observability/mimir/README.md) |
-| **[tempo](applications/base/services/observability/tempo/)** | `observability` | `1.55.0` | Distributed tracing backend | [README](applications/base/services/observability/tempo/README.md) |
-| **[opentelemetry-kube-stack](applications/base/services/observability/opentelemetry-kube-stack/)** | `observability` | `0.11.1` | OpenTelemetry collection framework | [README](applications/base/services/observability/opentelemetry-kube-stack/README.md) |
+These directories contain separately addressed child paths and are not a single root deployment target. The child paths below are taken from their catalog fragments and directory contents.
+
+| Service | Deployable or staged children | Declared catalog metadata (`renderOwner`) |
+|---------|-------------------------------|---------------------------------------------|
+| [ceph-csi](applications/base/services/ceph-csi/) | [`ceph-csi-rbd`](applications/base/services/ceph-csi/ceph-csi-rbd/); `namespace` is a prerequisite | `renderOwner: renderCatalog` |
+| [istio](applications/base/services/istio/) | `base`, `istiod`, `gateway`; `namespace` and `sources` are prerequisites | `renderOwner: renderCatalog` |
+| [keycloak](applications/base/services/keycloak/) | `00-postgres`, `10-operator`, `20-keycloak`, `30-oidc-rbac` | `renderOwner: descriptor` |
+| [kyverno](applications/base/services/kyverno/) | `policy-engine`, `default-ruleset` | `renderOwner: renderCatalog` |
+| [observability](applications/base/services/observability/) | `kube-prometheus-stack`, `loki`, `mimir`, `tempo`, `opentelemetry-kube-stack`; `namespace` and `sources` are prerequisites | `renderOwner: renderCatalog` |
+
+### Inventory boundaries
+
+- **Implemented here:** A directory means that this repository contains a base manifest set at that path. The base may be Helm-, OLM-, remote-kustomize-, Git-, or composite-shaped; inspect the path and its catalog fragment rather than assuming one deployment pattern.
+- **Catalog metadata:** `renderOwner` is a declared catalog field whose enum values are `renderCatalog`, `descriptor`, and `none`. These values describe metadata in this repository; they do not verify an external CLI, consumer, or live-cluster deployment.
+- **Planned work:** This repository does not turn `renderOwner: none` or a missing catalog entry into a roadmap commitment. Future catalog changes must be established by the owning tooling or consumer project.
+- **Consumer-owned configuration:** Cluster overlays own cluster-specific values, secrets, custom resources, and activation. The private enterprise repository owns private source, image, values, and enterprise-component rewrites. This base repository does not promise those consumer-side resources.
+
+The catalog currently has fragments and aggregate entries for all 47 service directories, including `keda`. Keep the inventory and generated aggregate synchronized instead of inventing version or deployment claims.
 
 ### Security Policies
 
