@@ -9,6 +9,6 @@ namespace: keda
 source:
   name: keda
   url: https://kedacore.github.io/charts
-description: Kubernetes Event-driven Autoscaling
+description: Event-driven autoscaling for Kubernetes workloads
 maturity: beta
 renderOwner: none

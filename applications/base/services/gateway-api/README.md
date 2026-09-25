@@ -17,3 +17,13 @@ For service overview, use cases, examples, and upstream references, see the [ser
 - Integrates seamlessly with **Cert-Manager** for automatic TLS certificate provisioning.  
 - Supports advanced traffic management features such as path-based routing, header manipulation, timeouts, retries, and rate limiting.  
 - Commonly used to expose applications, APIs, and services securely to external clients.  
+
+## Repository implementation
+
+- Source path: `applications/base/services/gateway-api/`.
+- Flux entrypoint: `kustomization.yaml`; the HelmRelease runs in `envoy-gateway-system` and reads `envoy-gateway-api-values-base` plus the optional `envoy-gateway-api-values-override` Secret.
+- Base values: `helm-values/values-v0.0.0.yaml`; the OCI chart source is declared in `source.yaml` and `catalog.yaml`.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/gateway-api/` to validate the local manifests. This installs the Envoy Gateway controller but does not create `GatewayClass`, `Gateway`, routes, certificates, or an application endpoint. Configure those resources and the cluster's exposure mechanism in the consuming overlay.

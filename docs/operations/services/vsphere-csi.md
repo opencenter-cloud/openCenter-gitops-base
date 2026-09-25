@@ -23,13 +23,15 @@ The base service deploys:
 - base values from the service `helm-values/` directory
 - optional `Secret/vsphere-csi-values-override`
 
+Current base evidence: chart `vsphere-csi` version `3.8.1`, with values from `helm-values/values-3.8.1.yaml`. The base values leave `global.config.vcenter` empty, enable the CSI driver, and disable chart-created storage classes.
+
 The base does not create the vCenter credential Secrets required by the driver.
 
 ## Required Supporting Inputs
 
 Cluster repos normally provide:
 
-- `vsphere-config-secret` with `csi-vsphere.conf`
+- an existing Secret selected through the chart's `global.config.existingSecret`, containing `csi-vsphere.conf`
 - CPI configuration and working node `ProviderID`s
 - storage classes appropriate for the environment
 - snapshot classes if Velero or application workflows need CSI snapshots
@@ -84,6 +86,8 @@ Snapshots do not work:
 
 Topology-aware placement fails:
 - verify zone labels in both vSphere and driver config
+
+The vCenter address, user, password, datacenter, ProviderID/CPI setup, storage policy, and snapshot class are environment-specific and are not supplied here. Do not copy example credentials into a consumer repository.
 
 ## Related Docs
 

@@ -60,7 +60,10 @@ spec:
 - Flux object: `HelmRelease/cert-manager`
 - Base values Secret: `cert-manager-values-base`
 - Override values Secret: `cert-manager-values-override`
-- Source: Jetstack Helm repository
+- Source: Jetstack Helm repository (`https://charts.jetstack.io`)
+- Chart version: `v1.21.2`
+
+The base path installs the controller only. Issuers, DNS credentials, ACME solver configuration, and the resulting certificate Secrets are consumer-owned resources; the example `ClusterIssuer` is not committed by this repository.
 
 ## Related Docs
 

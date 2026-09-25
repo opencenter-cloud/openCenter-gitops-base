@@ -22,6 +22,10 @@ The base service deploys:
 - base values from the service `helm-values/` directory
 - optional `Secret/tempo-values-override`
 
+Current base evidence: Helm chart `tempo-distributed` version `1.61.3`, with values from `helm-values/hardened-values-1.61.3.yaml`. The base values configure three ingesters, distributors, and queriers, plus a one-replica metrics generator; component services are `ClusterIP` by default.
+
+The base HelmRelease is named `tempo`. Consumer overlays may render a namespace-prefixed service such as `observability-tempo-distributor`; discover the actual Service in namespace `observability` before configuring OTLP clients. The repository OpenTelemetry default uses `observability-tempo-distributor` for OTLP/gRPC.
+
 ## Common Cluster-Specific Configuration
 
 Most clusters need to define:
@@ -40,8 +44,8 @@ storage:
   trace:
     backend: s3
     s3:
-      bucket: tempo-traces
-      region: us-east-1
+       bucket: <trace-bucket>
+       region: <object-storage-region>
 
 traces:
   otlp:
@@ -57,9 +61,9 @@ traces:
 ## Verification
 
 ```bash
-kubectl get helmrelease -n observability tempo
+kubectl get helmreleases -n observability
 kubectl get pods -n observability -l app.kubernetes.io/name=tempo
-kubectl logs -n observability deploy/tempo-distributor
+kubectl logs -n observability -l app.kubernetes.io/name=tempo --all-containers
 ```
 
 Healthy signs:
@@ -77,6 +81,8 @@ Storage errors:
 
 Trace queries are slow:
 - review scaling and retention strategy, especially for large volumes
+
+Object-storage credentials, bucket names, storage class, and any externally reachable query endpoint are consumer/environment-specific. The base does not provide them.
 
 ## Related Docs
 

@@ -25,3 +25,13 @@ This directory contains the **base manifests** for deploying the [TrustyAI Servi
 ## Install Mechanism
 
 This service uses OLM Subscription with `installPlanApproval: Manual` to give operators control over upgrades. After OLM creates an InstallPlan, it must be manually approved (or automated via cluster overlay).
+
+## Repository implementation
+
+- Source path: `applications/base/services/trustyai-service-operator/`.
+- Kustomize entrypoint: `kustomization.yaml`; it renders the OperatorGroup, Subscription, and related OLM resources in the checked-in manifests. It does not create the `operatorhubio-catalog` CatalogSource.
+- The Subscription's runtime `source` is `operatorhubio-catalog`; `catalog.yaml` is OpenCenter inventory metadata, not a Kubernetes CatalogSource. No Helm values file is used by this service.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/trustyai-service-operator/` to validate the local manifests. OLM and a model-serving endpoint must exist in the target cluster. The base installs the operator but does not create a `TrustyAIService`, model endpoint, credentials, or monitoring policy.

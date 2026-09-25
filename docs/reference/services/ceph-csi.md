@@ -44,10 +44,13 @@ allowVolumeExpansion: true
 
 ## Configuration Surfaces
 
-- Service path: `applications/base/services/ceph-csi/`
+- Service paths: `applications/base/services/ceph-csi/namespace/` and `applications/base/services/ceph-csi/ceph-csi-rbd/`
 - Namespace: `ceph-csi`
 - Flux object: `HelmRelease/ceph-csi-rbd`
 - Source: `https://ceph.github.io/csi-charts/`
+- Chart version: `3.17.1`
+
+This is a composite service and is not deployable as one root Kustomization: apply the namespace prerequisite and the `ceph-csi-rbd` component separately. Ceph cluster identity, monitor endpoints, credentials, StorageClasses, and the referenced Secrets are consumer-owned; no Ceph connection data is committed here.
 
 ## Upstream References
 

@@ -142,8 +142,8 @@ This object should:
 
 Typical service paths:
 
-- Community: `./applications/base/services/<service>`
-- Enterprise: `./applications/enterprise/services/<service>/overlays/install`
+- Community: `applications/base/services/<service>`
+- Enterprise: `applications/enterprise/services/<service>/overlays/install`
 
 ---
 
@@ -179,19 +179,19 @@ The cluster overlay can also contain additional manifests, Secrets, or service-s
 
 One real cluster pattern uses a service source plus a separate override reconciliation. For a community-based example, the cluster repo can define:
 
-Example `sources/opencenter-cert-manager-community.yaml`:
+Example source `opencenter-cert-manager.yaml` (the checked-in example path is `examples/applications/overlays/dev-cluster/services/sources/opencenter-cert-manager.yaml`):
 
 ```yaml
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: GitRepository
 metadata:
-  name: opencenter-cert-manager-community
+  name: opencenter-cert-manager
   namespace: flux-system
 spec:
   interval: 15m
-  url: https://github.com/opencenter-cloud/openCenter-gitops-base
+  url: https://github.com/rackerlabs/openCenter-gitops-base.git
   ref:
-    tag: <release-tag>
+    branch: main
 ```
 
 Example `sources/kustomization.yaml`:
@@ -200,7 +200,7 @@ Example `sources/kustomization.yaml`:
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - ./opencenter-cert-manager-community.yaml
+  - ./opencenter-cert-manager.yaml
 ```
 
 Example `fluxcd/cert-manager.yaml`:
@@ -220,9 +220,9 @@ spec:
   timeout: 10m
   sourceRef:
     kind: GitRepository
-    name: opencenter-cert-manager-community
+    name: opencenter-cert-manager
     namespace: flux-system
-  path: ./applications/base/services/cert-manager
+  path: applications/base/services/cert-manager
   targetNamespace: cert-manager
   prune: true
   healthChecks:
@@ -262,7 +262,7 @@ spec:
     kind: GitRepository
     name: flux-system
     namespace: flux-system
-  path: ./applications/overlays/<cluster>/services/cert-manager
+  path: applications/overlays/<cluster>/services/cert-manager
   targetNamespace: cert-manager
   prune: true
   wait: true
@@ -322,13 +322,13 @@ metadata:
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
-    email: platform@example.com
+    email: <environment-contact-email>
     privateKeySecretRef:
       name: letsencrypt-prod
     solvers:
       - http01:
           ingress:
-            class: nginx
+            class: <environment-ingress-class>
 ```
 
 For service-specific guidance, see [Cert-manager Configuration Guide](services/cert-manager.md).
@@ -355,8 +355,8 @@ If a shared baseline change is required, raise an issue in the relevant reposito
 Check:
 
 ```bash
-flux get sources git -n flux-system
-flux get kustomizations -n flux-system
+flux get sources git --all-namespaces
+flux get kustomizations --all-namespaces
 kubectl get helmreleases -A
 kubectl get pods -n <namespace>
 ```

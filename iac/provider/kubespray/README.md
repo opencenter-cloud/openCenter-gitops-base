@@ -17,7 +17,7 @@
 | os_hardening_enabled | bool | false | Enable OS security hardening. Will run ansible-hardening playbook on the ansible group k8s_cluster |
 | ssh_user | string | "ubuntu" | SSH username for node access |
 | subnet_nodes | string | "" | CIDR for node network servers|
-| subnet_pods | string | "10.42.0.0/16 | CIDR for pod network |
+| subnet_pods | string | "10.42.0.0/16" | CIDR for pod network |
 | subnet_services | string | "10.43.0.0/16" | CIDR for service network |
 | sysctl_file_path | string | "" | Optional sysctl configuration file path; when empty Kubespray uses its default |
 | sysctl_ignore_unknown_keys | bool | null | Whether Kubespray ignores unknown sysctl keys; null omits the setting |
@@ -40,3 +40,13 @@
 | kube_oidc_username_prefix | string | 'oidc:' | Prefix for OIDC usernames |
 | kube_oidc_groups_claim | string | "groups" | JWT claim for groups |
 | kube_oidc_groups_prefix | string | 'oidc:' | Prefix for OIDC groups |
+
+## Repository implementation
+
+- Source path: `iac/provider/kubespray/`.
+- `main.tf` renders the Kubespray inventory and group variables from the supplied node objects and can optionally run the Kubespray playbooks when `deploy_cluster` is enabled; `hosts.tpl` is the inventory template and `variables.tf` is the input contract.
+- The default CNI is `none`; a separate CNI module or service deployment must be selected when the cluster requires networking.
+
+## Validation and limitations
+
+From this directory, run `terraform fmt -check` and `terraform validate` after `terraform init` with the required provider credentials/configuration available. The module requires reachable nodes, SSH access, compatible OS images, and cloud/provider outputs from a consuming root; validation alone does not deploy a cluster. Review mutually exclusive VIP/Octavia settings and OIDC credentials before apply.

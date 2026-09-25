@@ -16,7 +16,7 @@ tags: [cilium, cni, networking, ebpf]
 
 ## What This Repo Deploys
 
-- A `Namespace/kube-system` (pre-existing)
+- A `Namespace/kube-system` with the `name: kube-system` label
 - A `HelmRepository/cilium`
 - A `HelmRelease/cilium`
 - Base chart values from the service `helm-values/` directory
@@ -45,6 +45,9 @@ tags: [cilium, cni, networking, ebpf]
 - Base values Secret: `cilium-values-base`
 - Override values Secret: `cilium-values-override`
 - Source: Cilium Helm repository (`https://helm.cilium.io/`)
+- Chart version: `1.20.2`
+
+The base path does not configure a kube-proxy replacement, Hubble, encryption, or Cluster Mesh by itself; those are chart settings and/or consumer-owned cluster configuration. If kube-proxy is omitted, the cluster bootstrap configuration must account for that dependency.
 
 ## Related Docs
 

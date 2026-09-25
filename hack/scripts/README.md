@@ -19,3 +19,13 @@ python3 hack/scripts/audit_doc_frontmatter.py
 python3 hack/scripts/refresh_docs.py
 python3 hack/scripts/add_purpose_line.py
 ```
+
+## Repository implementation and limitations
+
+- Source path: `hack/scripts/`; each command is a standalone Python utility in this directory.
+- The scripts operate on repository documentation, primarily `docs/**/*.md`; they do not alter service manifests or deploy cluster resources.
+- Run commands from the repository root. Review the working tree after any repair script because the scripts can rewrite documentation in place; `convert_adoc_to_md.py` additionally requires the external `downdoc` executable when conversion is needed.
+
+## Validation
+
+Use `python3 hack/scripts/audit_doc_frontmatter.py` as the non-mutating documentation audit. For the mutating utilities, use their idempotent behavior and inspect `git diff` before accepting changes.

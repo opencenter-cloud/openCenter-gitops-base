@@ -41,7 +41,9 @@ numGpus: 2
 - Service path: `applications/base/services/triton-inference-server/`
 - Namespace: `triton-inference-server`
 - Flux object: `HelmRelease/triton-inference-server`
-- Source: `GitRepository/triton-inference-server` (tag `v2.69.0`)
+- Source: `GitRepository/triton-inference-server` (tag `v2.72.0`)
+
+The chart is sourced from the Triton GitRepository as `deploy/k8s-onprem`; the base path does not create a model repository, GPU resource claim, or model-serving workload. The repository's values file is `helm-values/values-v2.72.0.yaml`.
 
 ## Upstream References
 

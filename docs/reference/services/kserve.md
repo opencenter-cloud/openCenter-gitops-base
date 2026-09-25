@@ -47,6 +47,9 @@ spec:
 - Namespace: `kserve`
 - Flux objects: `HelmRelease/kserve-crd`, `HelmRelease/kserve-resources`
 - Source: `oci://ghcr.io/kserve/charts`
+- Chart version: `v0.18.0`
+
+`kserve-resources` depends on `kserve-crd` in the committed HelmRelease. The catalog declares `cert-manager` and `istio` as service prerequisites. The base path does not provide model storage credentials, runtimes, or an `InferenceService`; the example is consumer-owned.
 
 ## Upstream References
 

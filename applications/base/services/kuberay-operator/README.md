@@ -25,3 +25,13 @@ This directory contains the **base manifests** for deploying the [KubeRay Operat
 | `image.repository` | Operator image | `quay.io/kuberay/operator` |
 | `image.tag` | Operator version | chart default |
 | `resources.limits.memory` | Memory limit | `512Mi` |
+
+## Repository implementation
+
+- Source path: `applications/base/services/kuberay-operator/`.
+- Flux entrypoint: `kustomization.yaml`; the HelmRelease runs in `kuberay-system` and reads `kuberay-operator-values-base` plus the optional `kuberay-operator-values-override` Secret.
+- Base values: `helm-values/values-1.7.1.yaml`; the chart source is declared in `source.yaml` and `catalog.yaml`.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/kuberay-operator/` to validate the local manifests. The base installs the operator but does not create Ray clusters, jobs, services, GPU resources, or queues. Ray workloads require compatible node resources and should be defined in the consuming overlay.

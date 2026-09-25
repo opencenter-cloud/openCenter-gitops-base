@@ -22,6 +22,10 @@ The base service deploys:
 - base chart values from the service `helm-values/` directory
 - optional `Secret/loki-values-override`
 
+Current base evidence: chart `loki` version `7.3.0`, with values from `helm-values/values-7.3.0.yaml`. The base uses `SimpleScalable` mode, Swift as the schema object store, a 30-day retention period, replication factor 3, and a ClusterIP gateway enabled by default.
+
+The base HelmRelease is named `loki`. Consumer overlays may render a namespace-prefixed release/service such as `observability-loki-gateway`; discover the actual Service in namespace `observability` before wiring clients. The repository OpenTelemetry default uses `observability-loki-gateway` as its internal endpoint.
+
 The base does not create cluster-specific storage credentials or log shipping pipelines.
 
 ## Common Cluster-Specific Configuration
@@ -45,9 +49,9 @@ loki:
   storage:
     type: s3
     bucketNames:
-      chunks: loki-chunks
-      ruler: loki-ruler
-      admin: loki-admin
+       chunks: <chunks-container>
+       ruler: <ruler-container>
+       admin: <admin-container>
 ```
 
 ## Integration Notes
@@ -58,9 +62,9 @@ loki:
 ## Verification
 
 ```bash
-kubectl get helmrelease -n observability loki
+kubectl get helmreleases -n observability
 kubectl get pods -n observability -l app.kubernetes.io/name=loki
-kubectl logs -n observability deploy/loki-read
+kubectl logs -n observability -l app.kubernetes.io/name=loki --all-containers
 ```
 
 Healthy signs:
@@ -79,6 +83,8 @@ Writes fail:
 
 Queries are slow:
 - reduce label cardinality and confirm read path scaling
+
+The base contains no Swift credentials, container names, public hostname, or tenant credentials. Supply those in the consumer repo and keep sensitive values encrypted.
 
 ## Related Docs
 

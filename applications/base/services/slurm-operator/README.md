@@ -25,3 +25,14 @@ This directory contains the **base manifests** for deploying the [Slinky Slurm O
 - The operator is split into two Helm charts: `slurm-operator-crds` (CRDs) and `slurm-operator` (controller).
 - The operator HelmRelease depends on the CRDs HelmRelease via `dependsOn`.
 - To deploy actual Slurm clusters, install the separate `slurm` Helm chart with appropriate NodeSet and partition configuration.
+
+## Repository implementation
+
+- Source path: `applications/base/services/slurm-operator/`.
+- Flux entrypoint: `kustomization.yaml`; the controller runs in `slinky` and its HelmRelease depends on `slurm-operator-crds`.
+- Base values: `helm-values/values-v1.2.0.yaml`; chart sources and CRD version are declared in `source.yaml`, `helmrelease.yaml`, and `helmrelease-crds.yaml`.
+- The optional `slurm-operator-values-override` Secret is merged after the base values.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/slurm-operator/` to validate the local manifests. This installs the operator and CRDs only; it does not create a Slurm control plane, compute nodes, login nodes, partitions, or scheduler configuration.

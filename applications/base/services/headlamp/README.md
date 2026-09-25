@@ -70,3 +70,13 @@ config:
 ```
 
 - Further manage RBAC using the `rbac-manager` service.
+
+## Repository implementation
+
+- Source path: `applications/base/services/headlamp/`.
+- Flux entrypoint: `kustomization.yaml`; the HelmRelease runs in `headlamp` and reads `headlamp-values-base` plus the optional `headlamp-values-override` Secret.
+- Base values: `helm-values/values-0.45.0.yaml`; the chart source is declared in `source.yaml` and `catalog.yaml`.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/headlamp/` to validate the local manifests. The OIDC example is illustrative: the base does not create an identity-provider client, ingress, TLS certificate, or Kubernetes RBAC grants. Replace placeholders and provide those resources through the cluster overlay before exposing Headlamp.

@@ -30,9 +30,9 @@ If the service also has enterprise-specific hardening or private artifact rewrit
 
 For a standard Helm service in this base repo, you usually update these files:
 
-1. `helm-values/values-v<new-version>.yaml` - New base values
-2. `kustomization.yaml` - Update secretGenerator filename
-3. `helmrelease.yaml` - Update chart version
+1. `applications/base/services/<service>/helm-values/<new-values-file>.yaml` - New base values (the repository uses both `values-<version>.yaml` and `values-v<version>.yaml` conventions)
+2. `applications/base/services/<service>/kustomization.yaml` - Update secretGenerator filename
+3. `applications/base/services/<service>/helmrelease.yaml` - Update chart version
 
 If an enterprise variant exists, the corresponding enterprise repo may also need updates to:
 
@@ -41,6 +41,8 @@ If an enterprise variant exists, the corresponding enterprise repo may also need
 6. private image or chart source alignment
 
 ### Step-by-Step Process
+
+Run the commands below from the repository root. Each path is intentionally fully qualified so the values Secret generator and HelmRelease being changed are unambiguous.
 
 #### Step 1: Obtain New Helm Values
 
@@ -60,20 +62,21 @@ helm show values <repo-name>/<chart-name> --version <new-version> > /tmp/default
 
 ```bash
 # Copy previous version as starting point
-cp helm-values/values-v<old-version>.yaml helm-values/values-v<new-version>.yaml
+cp applications/base/services/<service>/helm-values/<old-values-file>.yaml \
+   applications/base/services/<service>/helm-values/<new-values-file>.yaml
 
 # Review changes in default values
-diff /tmp/default-values.yaml helm-values/values-v<old-version>.yaml
+diff /tmp/default-values.yaml applications/base/services/<service>/helm-values/<old-values-file>.yaml
 
 # Update new values file with any necessary changes
-vim helm-values/values-v<new-version>.yaml
+vim applications/base/services/<service>/helm-values/<new-values-file>.yaml
 ```
 
 #### Step 3: Update Root Kustomization
 
 ```bash
 # Edit kustomization.yaml
-vim kustomization.yaml
+vim applications/base/services/<service>/kustomization.yaml
 ```
 
 Update the secretGenerator filename:
@@ -85,7 +88,7 @@ secretGenerator:
     namespace: <namespace>
     type: Opaque
     files:
-      - values.yaml=helm-values/values-v<old-version>.yaml  # Old version
+      - values.yaml=helm-values/<old-values-file>.yaml  # Old version
     options:
       disableNameSuffixHash: true
 
@@ -95,7 +98,7 @@ secretGenerator:
     namespace: <namespace>
     type: Opaque
     files:
-      - values.yaml=helm-values/values-v<new-version>.yaml  # New version
+      - values.yaml=helm-values/<new-values-file>.yaml  # New version
     options:
       disableNameSuffixHash: true
 ```
@@ -104,7 +107,7 @@ secretGenerator:
 
 ```bash
 # Edit helmrelease.yaml
-vim helmrelease.yaml
+vim applications/base/services/<service>/helmrelease.yaml
 ```
 
 Update the chart version:
@@ -115,37 +118,37 @@ spec:
   chart:
     spec:
       chart: <chart-name>
-      version: v<old-version>  # Old version
+      version: <old-version>  # Old version
 
 # After
 spec:
   chart:
     spec:
       chart: <chart-name>
-      version: v<new-version>  # New version
+      version: <new-version>  # New version
 ```
 
 #### Step 5: Validate Changes
 
 ```bash
-# Validate kustomization builds
-kubectl kustomize .
+# Validate kustomization builds from the service directory
+kubectl kustomize applications/base/services/<service>
 
 # Check for syntax errors
-kubectl apply --dry-run=client -f helmrelease.yaml
+kubectl apply --dry-run=client -f applications/base/services/<service>/helmrelease.yaml
 ```
 
 #### Step 6: Test in Non-Production
 
 ```bash
-# Commit changes
-git add .
+# Commit only the reviewed service change
+git add applications/base/services/<service>
 git commit -m "Upgrade <service> from v<old> to v<new>"
 git push
 
 # Deploy to test cluster
-flux reconcile source git opencenter-gitops-base
-flux reconcile kustomization <service> --with-source
+flux reconcile source git <source-name> -n flux-system
+flux reconcile kustomization <install-kustomization-name> -n flux-system --with-source
 
 # Monitor deployment
 kubectl get helmrelease <service> -n <namespace> -w
@@ -183,15 +186,16 @@ kubectl logs -n <namespace> <pod-name>
 ```bash
 helm repo add <repo-name> <repo-url>
 helm repo update
-helm show values <repo-name>/<chart-name> --version v<new-version> > /tmp/<chart-name>-v<new-version>.yaml
+helm show values <repo-name>/<chart-name> --version <new-version> > /tmp/<chart-name>-<new-version>.yaml
 ```
 
 ### Step 2: Create New Base Values
 
 ```bash
-cp helm-values/values-v<old-version>.yaml helm-values/values-v<new-version>.yaml
-diff /tmp/<chart-name>-v<new-version>.yaml helm-values/values-v<old-version>.yaml
-# Review differences and update values-v<new-version>.yaml as needed
+cp applications/base/services/<service>/helm-values/<old-values-file>.yaml \
+   applications/base/services/<service>/helm-values/<new-values-file>.yaml
+diff /tmp/<chart-name>-<new-version>.yaml applications/base/services/<service>/helm-values/<old-values-file>.yaml
+# Review differences and update applications/base/services/<service>/helm-values/<new-values-file>.yaml as needed
 ```
 
 ### Step 3: Update Root Kustomization
@@ -203,7 +207,7 @@ secretGenerator:
     namespace: <namespace>
     type: Opaque
     files:
-      - values.yaml=helm-values/values-v<new-version>.yaml  # Updated
+      - values.yaml=helm-values/<new-values-file>.yaml  # Updated
     options:
       disableNameSuffixHash: true
 ```
@@ -216,7 +220,7 @@ spec:
   chart:
     spec:
       chart: <chart-name>
-      version: v<new-version>  # Updated
+      version: <new-version>  # Updated
 ```
 
 ### Step 5: Validate and Deploy
@@ -226,6 +230,8 @@ kubectl kustomize applications/base/services/<service>
 git add applications/base/services/<service>
 git commit -m "Upgrade <service> from v<old-version> to v<new-version>"
 git push
+flux reconcile source git <source-name> -n flux-system
+flux reconcile kustomization <install-kustomization-name> -n flux-system --with-source
 ```
 
 ### Enterprise Follow-Up
@@ -284,15 +290,46 @@ resources:
 # - Migration requirements
 ```
 
-### Handling CRD Changes
+### Service-Specific CRD Policy and Staging
+
+CRD changes are not ordinary application rollbacks. Preserve existing custom resources and never delete a CRD as an upgrade or rollback step. Use the service's owner and staging boundary rather than applying a vendor CRD URL directly.
+
+| Service | Repository evidence | Upgrade/staging policy |
+| --- | --- | --- |
+| cert-manager | `applications/base/services/cert-manager/helm-values/values-v1.21.2.yaml` sets `crds.enabled: true` and `crds.keep: true`. | Let the HelmRelease own the CRDs. Review the base change, then reconcile the actual example install Kustomization `cert-manager-base -n flux-system`; do not create a second CRD Kustomization. |
+| Keycloak | `applications/base/services/keycloak/10-operator/subscription.yaml` uses manual InstallPlan approval; the flow is `keycloak-operator` then `keycloak-cr`. | Review and approve the OLM InstallPlan in the operator stage first, wait for the CSV/CRDs, then reconcile the Keycloak CR stage. Do not apply or roll back operator CRDs independently. |
+| OpenTelemetry Kube Stack | `applications/base/services/observability/opentelemetry-kube-stack/helm-values/values-0.23.0.yaml` enables `crds.installOtel` and `crds.installPrometheus`. | Keep CRDs chart-owned and stage the consumer's actual install Kustomization after the chart change is reviewed. Discover that Kustomization; do not invent a separate CRD object. |
+
+### GitOps-Safe CRD Upgrade
+
+Run from the repository root. Render for review, back up live state, commit and push the repository change, then reconcile the source and the install Kustomization. `kubectl kustomize` is for rendering; do not use `kubectl apply -k` to bypass GitOps for a normal upgrade.
 
 ```bash
-# If CRDs change, update them first
-kubectl apply -f <new-crds.yaml>
+# Render and review the service change.
+kubectl kustomize applications/base/services/<service> \
+  > /tmp/<service>-upgrade.yaml
 
-# Then upgrade the service
-flux reconcile kustomization <service> --with-source
+# Back up the live CRD and custom resources before a schema change.
+CRD_NAME="<crd-name>"
+RESOURCE_KIND="<resource-kind>"
+kubectl get crd "$CRD_NAME" -o yaml > "/tmp/${CRD_NAME}-before.yaml"
+kubectl get "$RESOURCE_KIND" -A -o yaml > "/tmp/${RESOURCE_KIND}-before.yaml"
+
+# Commit the reviewed service files using full repository paths.
+git add applications/base/services/<service>
+git commit -m "Upgrade <service> CRD and controller"
+git push
+
+# Reconcile the consumer source and its actual install Kustomization.
+flux reconcile source git <source-name> -n flux-system
+flux reconcile kustomization <install-kustomization-name> -n flux-system --with-source
+
+# Confirm the CRD is Established and existing instances remain readable.
+kubectl wait --for=condition=Established "crd/${CRD_NAME}" --timeout=5m
+kubectl get "$RESOURCE_KIND" -A
 ```
+
+For the checked-in cert-manager example, use source `opencenter-cert-manager` and install Kustomization `cert-manager-base -n flux-system`. If the schema is not backward-compatible, pause and follow the operator/chart migration procedure. Do not blindly revert the CRD schema or remove stored versions.
 
 ### Handling Configuration Changes
 
@@ -309,13 +346,13 @@ flux reconcile kustomization <service> --with-source
 ### If Upgrade Fails
 
 ```bash
-# Revert to previous version
+# Revert the application/values change. Do not delete CRDs or custom resources.
 git revert <commit-hash>
 git push
 
 # Force reconciliation
-flux reconcile source git opencenter-gitops-base
-flux reconcile kustomization <service> --with-source
+flux reconcile source git <source-name> -n flux-system
+flux reconcile kustomization <install-kustomization-name> -n flux-system --with-source
 
 # Verify rollback
 kubectl get helmrelease <service> -n <namespace>
@@ -325,14 +362,19 @@ helm list -n <namespace>
 ### Manual Rollback
 
 ```bash
-# If git revert doesn't work, manually restore files
+# If git revert doesn't work, manually restore only the service files.
+# Do not restore or delete CRDs without a compatibility review.
 git checkout <previous-commit> -- applications/base/services/<service>/
 
 # Commit and push
 git add applications/base/services/<service>
 git commit -m "Rollback <service> to v<old-version>"
 git push
+flux reconcile source git <source-name> -n flux-system
+flux reconcile kustomization <install-kustomization-name> -n flux-system --with-source
 ```
+
+For the checked-in cert-manager example, the Flux install Kustomization is `cert-manager-base` in `flux-system`; verify the corresponding name before reconciling another service.
 
 ## Upgrade Checklist
 
@@ -371,15 +413,15 @@ git push
 
 ### Issue: Values File Not Found
 
-**Symptom:** Error: "file not found: helm-values/values-v<version>.yaml"
+**Symptom:** Error: "file not found: applications/base/services/<service>/helm-values/<values-file>.yaml"
 
 **Solution:**
 ```bash
 # Verify file exists
-ls -la helm-values/
+ls -la applications/base/services/<service>/helm-values/
 
 # Check kustomization.yaml references correct filename
-grep "values-v" kustomization.yaml
+grep "values.yaml" applications/base/services/<service>/kustomization.yaml
 ```
 
 ### Issue: HelmRelease Fails to Upgrade
@@ -404,11 +446,13 @@ flux reconcile helmrelease <service> -n <namespace> --with-source
 
 **Solution:**
 ```bash
-# Update CRDs first
-kubectl apply -f <new-crds.yaml>
-
-# Then upgrade service
-flux reconcile kustomization <service> --with-source
+# Do not delete or apply an unreviewed CRD manifest. Commit the reviewed
+# service path, push it, then reconcile the actual install Kustomization.
+git add applications/base/services/<service>
+git commit -m "Upgrade <service> CRD and controller"
+git push
+flux reconcile source git <source-name> -n flux-system
+flux reconcile kustomization <install-kustomization-name> -n flux-system --with-source
 ```
 
 ### Issue: Breaking Configuration Changes
@@ -445,6 +489,10 @@ flux reconcile kustomization <service> --with-source
 SERVICE="$1"
 OLD_VERSION="$2"
 NEW_VERSION="$3"
+
+# This helper assumes the service uses values-v<version>.yaml and
+# version: v<version>. Services with values-<version>.yaml or another
+# filename convention must be upgraded manually after inspecting their files.
 
 if [[ -z "$SERVICE" ]] || [[ -z "$OLD_VERSION" ]] || [[ -z "$NEW_VERSION" ]]; then
     echo "Usage: $0 <service> <old-version> <new-version>"

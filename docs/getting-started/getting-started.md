@@ -14,7 +14,7 @@ tags: [tutorial, fluxcd, cert-manager, onboarding]
 
 This tutorial uses the current **community repo** onboarding pattern. For the broader decision flow and other deployment models, see [Service Deployment Patterns](../operations/service-deployment-patterns.md) and [Helm Service Onboarding](../operations/helm-service-onboarding.md).
 
-The cluster-repo examples below use a common consumer layout where service activation lives under `applications/overlays/<cluster>/services/`. If your cluster repository uses a different root, apply the same resource split under the equivalent paths in that repo.
+The checked-in example uses full paths under `examples/applications/overlays/dev-cluster/services/`. A consuming cluster repository may use a different root, but must preserve the same source, Flux activation, and service overlay split.
 
 ## What You'll Accomplish
 
@@ -95,10 +95,11 @@ spec:
   chart:
     spec:
       chart: cert-manager
-      version: v<chart-version>   # Pinned version
+      version: v1.21.2              # Pinned version in this repository
       sourceRef:
         kind: HelmRepository
         name: jetstack
+        namespace: cert-manager
   valuesFrom:
     - kind: Secret
       name: cert-manager-values-base
@@ -119,19 +120,20 @@ Open `kustomization.yaml`:
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-    - namespace.yaml
-    - source.yaml
-    - helmrelease.yaml
+  - namespace.yaml
+  - source.yaml
+  - helmrelease.yaml
 secretGenerator:
-    - name: cert-manager-values-base
-      namespace: cert-manager
-      files:
-        - values.yaml=helm-values/values-v<version>.yaml
+  - name: cert-manager-values-base
+    namespace: cert-manager
+    type: Opaque
+    files:
+      - values.yaml=helm-values/values-v1.21.2.yaml
 ```
 
 **What this does:**
-- Applies namespace, source, and helmrelease in order
-- Generates a Secret from `helm-values/values-v<version>.yaml`
+- Includes the namespace, chart source, and HelmRelease resources
+- Generates a Secret from `helm-values/values-v1.21.2.yaml`
 - The Secret is named `cert-manager-values-base` (referenced in HelmRelease)
 
 **Key insight:** Helm values are stored as files in Git, then converted to Secrets by Kustomize. This keeps configuration version-controlled.
@@ -140,37 +142,39 @@ secretGenerator:
 
 FluxCD needs to know where to find the openCenter service source you want to consume. Create a GitRepository resource in your cluster repo.
 
-**In your cluster repository** create the source in the directory that holds shared Flux source objects. In the common layout used in these examples, that is `applications/overlays/<cluster>/services/sources/`.
+**In the example repository** create the source at `examples/applications/overlays/dev-cluster/services/sources/opencenter-cert-manager.yaml`.
 
-Create `opencenter-cert-manager-community.yaml`:
+Create `examples/applications/overlays/dev-cluster/services/sources/opencenter-cert-manager.yaml`:
 
 ```yaml
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: GitRepository
 metadata:
-  name: opencenter-cert-manager-community
+  name: opencenter-cert-manager
   namespace: flux-system
 spec:
   interval: 15m
-  url: https://github.com/opencenter-cloud/openCenter-gitops-base
+  url: https://github.com/rackerlabs/openCenter-gitops-base.git
   ref:
-    tag: <release-tag>
+    branch: main
 ```
 
-Register it from the matching source `kustomization.yaml` in your cluster repo. In the common layout used here, that file is `applications/overlays/<cluster>/services/sources/kustomization.yaml`:
+Register it from `examples/applications/overlays/dev-cluster/services/sources/kustomization.yaml`:
 
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - ./opencenter-cert-manager-community.yaml
+  - ./opencenter-cert-manager.yaml
 ```
+
+The checked-in example `examples/applications/overlays/dev-cluster/services/fluxcd/sources.yaml` currently declares the Flux source path `./applications/overlays/dev/services/sources`. Treat that as an environment/overlay wiring value and verify it against the actual consumer repository root before reconciling; the source files shown above live under the full `examples/applications/overlays/dev-cluster/services/sources/` path.
 
 **Commit and push:**
 
 ```bash
-git add applications/overlays/<cluster>/services/sources/opencenter-cert-manager-community.yaml
-git add applications/overlays/<cluster>/services/sources/kustomization.yaml
+git add examples/applications/overlays/dev-cluster/services/sources/opencenter-cert-manager.yaml
+git add examples/applications/overlays/dev-cluster/services/sources/kustomization.yaml
 git commit -m "Add cert-manager GitRepository source"
 git push
 ```
@@ -178,13 +182,13 @@ git push
 **Wait for Flux to reconcile:**
 
 ```bash
-flux reconcile source git opencenter-cert-manager-community -n flux-system
+flux reconcile source git opencenter-cert-manager -n flux-system
 ```
 
 **Verify the source:**
 
 ```bash
-kubectl get gitrepository -n flux-system opencenter-cert-manager-community
+kubectl get gitrepository -n flux-system opencenter-cert-manager
 ```
 
 Expected: `READY` column shows `True`.
@@ -193,7 +197,7 @@ Expected: `READY` column shows `True`.
 
 Now tell FluxCD to deploy cert-manager from the base repository.
 
-**In your cluster overlay** create the install `Kustomization` in the directory that holds service activation objects. In the common layout used here, that file is `applications/overlays/<cluster>/services/fluxcd/cert-manager.yaml`:
+**In the example repository** create the install `Kustomization` at `examples/applications/overlays/dev-cluster/services/fluxcd/cert-manager.yaml`:
 
 ```yaml
 apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -202,13 +206,20 @@ metadata:
   name: cert-manager-base
   namespace: flux-system
 spec:
-  interval: 5m
+  dependsOn:
+    - name: sources
+      namespace: flux-system
+  interval: 15m
+  retryInterval: 1m
+  timeout: 10m
   sourceRef:
     kind: GitRepository
-    name: opencenter-cert-manager-community
-  path: ./applications/base/services/cert-manager
-  prune: true
+    name: opencenter-cert-manager
+    namespace: flux-system
+  path: applications/base/services/cert-manager
   targetNamespace: cert-manager
+  prune: true
+  wait: true
   healthChecks:
     - apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease
@@ -216,7 +227,7 @@ spec:
       namespace: cert-manager
 ```
 
-Register it from the matching `services/fluxcd/kustomization.yaml` in your cluster repo. In the common layout used here, that file is `applications/overlays/<cluster>/services/fluxcd/kustomization.yaml`:
+Register it from `examples/applications/overlays/dev-cluster/services/fluxcd/kustomization.yaml`:
 
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
@@ -225,13 +236,13 @@ resources:
   - ./cert-manager.yaml
 ```
 
-If `services/fluxcd/kustomization.yaml` does not include `cert-manager.yaml`, Flux will not apply the install `Kustomization`.
+If `examples/applications/overlays/dev-cluster/services/fluxcd/kustomization.yaml` does not include `./cert-manager.yaml`, Flux will not apply the install `Kustomization`.
 
 **Commit and push:**
 
 ```bash
-git add applications/overlays/<cluster>/services/fluxcd/cert-manager.yaml
-git add applications/overlays/<cluster>/services/fluxcd/kustomization.yaml
+git add examples/applications/overlays/dev-cluster/services/fluxcd/cert-manager.yaml
+git add examples/applications/overlays/dev-cluster/services/fluxcd/kustomization.yaml
 git commit -m "Deploy cert-manager from base repository"
 git push
 ```
@@ -248,10 +259,10 @@ FluxCD will now deploy cert-manager. Watch the progress:
 
 ```bash
 # Watch the Kustomization
-flux get kustomizations cert-manager-base
+flux get kustomizations cert-manager-base -n flux-system
 
 # Watch the HelmRelease
-flux get helmreleases -n cert-manager
+flux get helmreleases --all-namespaces
 
 # Watch pods being created
 kubectl get pods -n cert-manager -w
@@ -371,7 +382,7 @@ Congratulations! You've deployed cert-manager using the openCenter GitOps patter
 
 Before moving on, verify:
 
-- [ ] GitRepository `opencenter-cert-manager-community` shows READY=True
+- [ ] GitRepository `opencenter-cert-manager` shows READY=True
 - [ ] Kustomization `cert-manager-base` shows READY=True
 - [ ] HelmRelease `cert-manager` shows READY=True
 - [ ] All cert-manager pods are Running
@@ -387,12 +398,12 @@ If something isn't working:
 flux logs --level=error
 
 # Check specific resource status
-flux get sources git
-flux get kustomizations
-flux get helmreleases -A
+flux get sources git --all-namespaces
+flux get kustomizations --all-namespaces
+flux get helmreleases --all-namespaces
 
 # Describe resources for details
-kubectl describe gitrepository -n flux-system opencenter-cert-manager-community
+kubectl describe gitrepository -n flux-system opencenter-cert-manager
 kubectl describe kustomization -n flux-system cert-manager-base
 kubectl describe helmrelease -n cert-manager cert-manager
 ```

@@ -50,6 +50,12 @@ docker push harbor.example.com/platform/myapp:1.0
 - Base values Secret: `harbor-values-base`
 - Override values Secret: `harbor-values-override`
 - Source: Harbor Helm repository
+- Source URL: `https://helm.goharbor.io`
+- Chart version: `1.19.2`
+
+> **Important base-value warning:** The committed values are development defaults, not production credentials or endpoint configuration. Harbor currently uses `expose.type: clusterIP`, disables TLS, and carries the placeholder ingress hostname `core.harbor.domain`. The values also contain the Harbor admin password `Harbor12345`, registry credentials `harbor_registry_user` / `harbor_registry_password`, internal database password `changeit`, and static encryption key `secretKey: "not-a-secure-key"`. Before exposing or using Harbor, a consumer must provide an override Secret with a real hostname, TLS configuration, credentials, and a replacement encryption key (or configure `existingSecretSecretKey`); consumers must not rely on these committed defaults.
+
+The example endpoint is illustrative and must be replaced by a consumer-owned hostname. Persistent storage, ingress, external database/object storage settings, credentials, and project image-pull Secrets remain consumer-owned; use `harbor-values-override` to change the base values.
 
 ## Related Docs
 

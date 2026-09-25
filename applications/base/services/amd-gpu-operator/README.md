@@ -31,3 +31,13 @@ This directory contains the **base manifests** for deploying the [AMD GPU Operat
 | `kmm.watch` | Enable KMM driver watching | `true` |
 | `remediation.enabled` | Auto node remediation | `true` |
 | `deviceConfig.spec.draDriver.enable` | Use DRA instead of device plugin | `false` |
+
+## Repository implementation
+
+- Source path: `applications/base/services/amd-gpu-operator/`.
+- Flux entrypoint: `kustomization.yaml`; the HelmRelease runs in `kube-amd-gpu` and reads `amd-gpu-operator-values-base` plus the optional `amd-gpu-operator-values-override` Secret.
+- Base values: `helm-values/values-v1.5.1.yaml`; chart source metadata is in `catalog.yaml` and `source.yaml`.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/amd-gpu-operator/` to validate the local manifests. The base does not provide AMD hardware, host drivers, node labels, or workload requests. cert-manager and compatible worker-node images/runtime configuration must be supplied by the cluster.

@@ -16,3 +16,13 @@ For service overview, use cases, examples, and upstream references, see the [ser
 - Enables secure Kafka clusters with built-in support for **TLS encryption**, authentication (TLS, SCRAM), and authorization patterns.
 - Allows Kafka operational resources (topics, users, quotas) to be managed declaratively via **KafkaTopic** and **KafkaUser** CRDs.
 - Commonly used to operate **production-grade Kafka on Kubernetes** with consistent configuration and standardized operational practices across environments.
+
+## Repository implementation
+
+- Source path: `applications/base/services/strimzi-kafka-operator/`.
+- Flux entrypoint: `kustomization.yaml`; the HelmRelease runs in `kafka-system` and reads `kafka-api-values-base` plus the optional `kafka-api-values-override` Secret.
+- Base values: `helm-values/values-0.50.0.yaml`; the OCI chart source is declared in `source.yaml` and `catalog.yaml`.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/strimzi-kafka-operator/` to validate the local manifests. This installs the operator but does not create Kafka clusters, topics, users, storage, or broker credentials. Those resources and their security policy belong in a consuming overlay.

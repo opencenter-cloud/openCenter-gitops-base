@@ -24,3 +24,13 @@ This directory contains the **base manifests** for deploying the [Data Science P
 ## Install Mechanism
 
 This service uses OLM Subscription with `installPlanApproval: Manual` to give operators control over upgrades. After OLM creates an InstallPlan, it must be manually approved (or automated via cluster overlay).
+
+## Repository implementation
+
+- Source path: `applications/base/services/data-science-pipelines-operator/`.
+- Kustomize entrypoint: `kustomization.yaml`; it renders the OperatorGroup, Subscription, and related OLM resources in the checked-in manifests. It does not create the `operatorhubio-catalog` CatalogSource.
+- The Subscription's runtime `source` is `operatorhubio-catalog`; `catalog.yaml` is OpenCenter inventory metadata, not a Kubernetes CatalogSource. No Helm values file is used by this service.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/data-science-pipelines-operator/` to validate the local manifests. OLM, the selected catalog, object storage, and pipeline credentials must exist in the target cluster. The base does not create a pipeline instance, artifact bucket, or application-specific database.

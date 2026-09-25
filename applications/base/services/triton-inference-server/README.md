@@ -22,3 +22,13 @@ For service overview, use cases, examples, and upstream references, see the [ser
 - Kubernetes cluster with NVIDIA GPU Operator deployed.
 - Model repository accessible via NFS, S3, GCS, or Azure Storage.
 - Prometheus (optional, for autoscaling based on queue metrics).
+
+## Repository implementation
+
+- Source path: `applications/base/services/triton-inference-server/`.
+- Flux entrypoint: `kustomization.yaml`; the HelmRelease runs in `triton-inference-server` and reads `triton-inference-server-values-base` plus the optional `triton-inference-server-values-override` Secret.
+- Base values: `helm-values/values-v2.72.0.yaml`; chart source metadata is in `source.yaml` and `catalog.yaml`.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/triton-inference-server/` to validate the local manifests. The base does not provide a model repository, model files, GPU capacity, ingress, or autoscaling policy. Configure model storage and serving resources through the cluster/application override.

@@ -16,3 +16,15 @@ For service overview, use cases, examples, and upstream references, see the [ser
 - Operates in `upsert-only` mode by default (creates and updates but does not delete records).
 - Watches configurable Kubernetes resource types (Services, Ingresses, Gateway API resources).
 - Runs as a single-replica Deployment with leader election support for HA configurations.
+
+## Repository implementation
+
+- Source path: `applications/base/services/external-dns/`.
+- Flux entrypoint: `kustomization.yaml`; the HelmRelease runs in `external-dns` and reads `external-dns-values-base` plus the optional `external-dns-values-override` Secret.
+- Base values: `helm-values/values-1.22.0.yaml`; the provider source is declared in `source.yaml` and `catalog.yaml`.
+
+The active base values select the AWS provider (`provider.name: aws`), the TXT ownership registry, and `upsert-only` policy. This is an AWS-oriented default, not a provider-neutral base; change it through the override Secret when targeting another DNS provider.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/external-dns/` to validate the local manifests. The base selects AWS as described above but does not provide a hosted zone, credentials, or ownership domain; configure those in the override Secret. DNS changes require provider permissions and are not verified by a local render.

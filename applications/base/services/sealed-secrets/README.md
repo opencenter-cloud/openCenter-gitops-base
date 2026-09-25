@@ -14,3 +14,13 @@ For service overview, use cases, examples, and upstream references, see the [ser
 - Allows secret rotation and re-encryption without exposing sensitive values in plaintext.  
 - Commonly used to manage credentials, API keys, and tokens securely in GitOps-managed clusters.  
 - Simplifies secret management workflows while maintaining strong encryption and operational security.  
+
+## Repository implementation
+
+- Source path: `applications/base/services/sealed-secrets/`.
+- Flux entrypoint: `kustomization.yaml`; the HelmRelease runs in `sealed-secrets` and reads `sealed-secrets-values-base` plus the optional `sealed-secrets-values-override` Secret.
+- Base values: `helm-values/values-2.20.0.yaml`; the chart source is declared in `source.yaml` and `catalog.yaml`.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/sealed-secrets/` to validate the local manifests. Encryption keys are cluster state and are not supplied by this public base. Back up and protect the controller key before rotating or rebuilding a cluster; rendering manifests does not prove a SealedSecret can be decrypted.

@@ -13,3 +13,13 @@ For service overview, use cases, examples, and upstream references, see the [ser
 - Updates node routes and network configurations in coordination with OpenStack **Neutron**.  
 - Commonly used in private or hybrid cloud environments where Kubernetes clusters run on OpenStack infrastructure.  
 - Improves automation, consistency, and observability of Kubernetes workloads on OpenStack-based platforms.  
+
+## Repository implementation
+
+- Source path: `applications/base/services/openstack-ccm/`.
+- Flux entrypoint: `kustomization.yaml`; the HelmRelease runs in `openstack-ccm` and reads `openstack-ccm-values-base` plus the optional `openstack-ccm-values-override` Secret.
+- Base values: `helm-values/hardened-values-2.36.5.yaml`; the chart source is declared in `source.yaml` and `catalog.yaml`.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/openstack-ccm/` to validate the local manifests. The base does not contain OpenStack credentials, cloud configuration, or an Octavia/network policy. The cluster must provide valid OpenStack connectivity and permissions before the controller can manage nodes or load balancers.

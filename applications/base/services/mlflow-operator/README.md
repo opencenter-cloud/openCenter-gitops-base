@@ -31,3 +31,13 @@ This directory contains the **base manifests** for deploying the [MLflow Operato
 | `storage.size` | PVC size for local storage | `10Gi` |
 | `storage.accessMode` | PVC access mode | `ReadWriteOnce` |
 | `mlflow.corsAllowedOrigins` | CORS allowed origins | auto |
+
+## Repository implementation
+
+- Source path: `applications/base/services/mlflow-operator/`.
+- Flux entrypoint: `kustomization.yaml`; the HelmRelease runs in `opendatahub` and reads `mlflow-operator-values-base` plus the optional `mlflow-operator-values-override` Secret.
+- Base values: `helm-values/values-1.1.0.yaml`; the source is declared in `source.yaml` and `catalog.yaml`.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/mlflow-operator/` to validate the local manifests. The base installs the operator but does not create an MLflow instance, PostgreSQL database, object-storage bucket, credentials, or ingress. Configure those through a consuming overlay.

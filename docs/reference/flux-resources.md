@@ -14,7 +14,7 @@ tags: [fluxcd, gitops, kubernetes, resources]
 
 **Type:** Reference  
 **Audience:** Platform engineers  
-**Last Updated:** 2026-04-01
+**Last Updated:** 2026-09-25
 
 This document is a field-oriented reference for the main FluxCD resources used in the current openCenter delivery model.
 
@@ -42,7 +42,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 15m
-  url: https://github.com/opencenter-cloud/openCenter-gitops-base
+  url: https://github.com/rackerlabs/openCenter-gitops-base.git
   ref:
     tag: <release-tag>
 ```
@@ -125,7 +125,7 @@ spec:
   chart:
     spec:
       chart: cert-manager
-      version: v1.18.2
+      version: v1.21.2
       sourceRef:
         kind: HelmRepository
         name: jetstack
@@ -199,10 +199,10 @@ Applies a selected repository path to the cluster.
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: cert-manager
+  name: cert-manager-base
   namespace: flux-system
 spec:
-  interval: 5m
+  interval: 15m
   retryInterval: 1m
   timeout: 10m
   sourceRef:
@@ -210,6 +210,7 @@ spec:
     name: opencenter-cert-manager
     namespace: flux-system
   path: applications/base/services/cert-manager
+  targetNamespace: cert-manager
   prune: true
   healthChecks:
     - apiVersion: helm.toolkit.fluxcd.io/v2
@@ -238,7 +239,7 @@ Use `dependsOn` to create ordered deployments:
 ```yaml
 spec:
   dependsOn:
-    - name: cert-manager
+    - name: cert-manager-base
       namespace: flux-system
 ```
 
@@ -281,12 +282,12 @@ Force immediate reconciliation:
 
 ```bash
 # Reconcile specific resource
-flux reconcile source git opencenter-cert-manager
+flux reconcile source git opencenter-cert-manager -n flux-system
 flux reconcile helmrelease cert-manager -n cert-manager
-flux reconcile kustomization cert-manager
+flux reconcile kustomization cert-manager-base -n flux-system
 
 # Reconcile with source
-flux reconcile kustomization cert-manager --with-source
+flux reconcile kustomization cert-manager-base -n flux-system --with-source
 ```
 
 ### Get Status
@@ -326,7 +327,7 @@ flux resume helmrelease cert-manager -n cert-manager
 ### Check Resource Status
 
 ```bash
-flux get sources git opencenter-cert-manager
+flux get sources git opencenter-cert-manager -n flux-system
 flux get helmreleases -n cert-manager
 flux get kustomizations
 ```
@@ -336,13 +337,13 @@ flux get kustomizations
 ```bash
 kubectl describe gitrepository opencenter-cert-manager -n flux-system
 kubectl describe helmrelease cert-manager -n cert-manager
-kubectl describe kustomization cert-manager -n flux-system
+kubectl describe kustomization cert-manager-base -n flux-system
 ```
 
 ### Force Reconciliation
 
 ```bash
-flux reconcile source git opencenter-cert-manager
+flux reconcile source git opencenter-cert-manager -n flux-system
 flux reconcile helmrelease cert-manager -n cert-manager --with-source
 ```
 

@@ -1,7 +1,7 @@
 ---
 id: values-layering
 sidebar_label: Values Layering
-description: Explains how base values, cluster overrides, and optional enterprise values are layered across the openCenter repositories.
+description: Evidence-based description of base Helm values and consumer-provided overrides in openCenter-gitops-base.
 doc_type: explanation
 title: "Base, Override, and Enterprise Values"
 audience: "platform engineers"
@@ -10,146 +10,45 @@ tags: [helm, values, overlays, enterprise]
 
 # Base, Override, and Enterprise Values
 
-**Purpose:** For platform engineers, explains how configuration is layered across the base repo, consuming cluster overlays, and the private enterprise repo.
+**Purpose:** Explain which values are present in this repository and which values must be supplied by a consumer.
 
-## Why This Exists
+## Implemented base layer
 
-Kubernetes platform services need a shared baseline, but clusters also need local differences such as hostnames, storage classes, replica counts, and environment-specific integrations.
+Service values are stored beside the service, commonly under:
 
-If every cluster copied a full values file, upgrades would become expensive and error-prone. The base repo would drift from cluster repos, and small fixes would need to be repeated everywhere.
-
-The openCenter model avoids that by separating responsibilities.
-
-## The Current Layering Model
-
-In practice, openCenter uses up to three value layers:
-
-1. **Base values** in `openCenter-gitops-base`
-2. **Override values** in the consuming cluster repository
-3. **Enterprise values** in the private enterprise repository, when used
-
-The important architectural point is that only the first layer lives in this repository by default.
-
-## Base Values
-
-Base values define the shared default behavior for a service:
-
-- hardened defaults
-- monitoring enablement
-- common resource baselines
-- chart settings that should be consistent for all consumers
-
-Example location:
-
-`applications/base/services/<service>/helm-values/values-v<chart-version>.yaml`
-
-These values are usually turned into a Kubernetes Secret by the base service `kustomization.yaml`.
-
-## Override Values
-
-Override values are supplied by the repo that deploys the service into a real cluster.
-
-They are the right place for:
-
-- ingress hosts
-- storage classes
-- node selectors
-- replica counts
-- environment-specific endpoints
-- cluster-specific integrations
-
-The base service `HelmRelease` typically expects an optional Secret such as `cert-manager-values-override`, but the Secret itself is created outside this repo.
-
-## Enterprise Values
-
-Enterprise values are optional and belong to the private enterprise repo, not to `openCenter-gitops-base`.
-
-That private repo may:
-
-- import a base service path from this repo
-- patch upstream chart sources to private repositories
-- rewrite images to private registries
-- add enterprise-only values or manifests
-
-So the third layer exists in the broader platform model, but it is not part of the standard on-disk service layout in this repository.
-
-## How Flux Sees the Layers
-
-Flux merges `valuesFrom` entries in order. Later entries override earlier ones.
-
-A typical base-repo `HelmRelease` looks like this:
-
-```yaml
-spec:
-  valuesFrom:
-    - kind: Secret
-      name: cert-manager-values-base
-      valuesKey: values.yaml
-    - kind: Secret
-      name: cert-manager-values-override
-      valuesKey: override.yaml
-      optional: true
+```text
+applications/base/services/<service>/helm-values/
 ```
 
-An enterprise consumer may add a third source in its own repo, but that is not a requirement for base-only deployments.
+The catalog records the service version and packaging metadata; the Kustomization usually turns one or more of these files into a base Secret. For example, cert-manager generates `cert-manager-values-base` from `values-v1.21.2.yaml`. The observability Prometheus stack generates one base Secret from its chart values plus three override files for Alertmanager, Prometheus, and alerting rules.
 
-## Why This Split Works
+Values filenames are repository data, not a universal naming contract: some services use `values-...`, while others use `hardened-values-...`.
 
-**Base stays reusable.**  
-The base repo can remain public, upstream-backed, and easy to version.
+## Consumer override layer
 
-**Cluster changes stay local.**  
-Each cluster can express only the differences it needs.
+Many base HelmReleases declare an optional Secret with an `*-override` name after the base Secret. The base directory does not create that Secret. A consuming cluster repository is responsible for:
 
-**Enterprise deltas stay private.**  
-Private registries, private charts, and enterprise-only settings do not have to leak into the public base repo layout.
+- creating the expected Secret and key;
+- setting cluster-specific hosts, storage, endpoints, replicas, or other overrides;
+- supplying credentials and custom resources that are not part of the base.
 
-## Trade-offs
+The checked-in dev-cluster example implements this pattern for MetalLB only, through its `metallb-values-override` Secret. Cert-manager's base `HelmRelease` has an optional override reference, but this checkout does not implement a cert-manager override Secret in the dev-cluster example.
 
-**Indirection**  
-To understand the final result, operators may need to inspect multiple repos.
+## Private or enterprise layer
 
-**Naming discipline**  
-The consuming repo must generate the override Secret names expected by the base `HelmRelease`.
+No private enterprise repository is present in this checkout. The catalog contains an `enterprise` blueprint, but that is inventory membership, not an implementation of a private values layer. If a consumer has a private repository, that repository is responsible for its own patches, private chart/image sources, authentication, and additional values. Exact merge behavior and names must be verified against that consumer's manifests.
 
-**Merge behavior awareness**  
-Helm merges maps, but lists are usually replaced. Overrides should be written carefully.
+## What is and is not guaranteed
 
-## When to Put a Change in Each Layer
+**Implemented:** base values files, Kustomize generators, and optional override references where declared by each service.
 
-Use **base values** for:
+**Consumer responsibility:** activation, override Secret creation, secrets, environment-specific values, and private-repository composition.
 
-- defaults that should apply everywhere
-- security posture
-- baseline observability settings
-- broadly correct resource settings
+**Not established here:** a universal three-layer file layout, a universal override name, or the final values rendered in a live cluster.
 
-Use **override values** for:
+## Related
 
-- cluster-specific infrastructure differences
-- environment-specific tuning
-- local hostnames and integration endpoints
-
-Use **enterprise values** for:
-
-- private artifact rewrites
-- enterprise-only behavior
-- private-repo-specific hardening or integrations
-
-## A Better Mental Model Than the Old "Three-Tier in One Repo" View
-
-The older explanation implied that base, override, and enterprise values were all normal parts of the service tree in this repository.
-
-That is not how the repo is used now.
-
-The more accurate model is:
-
-- this repo owns the **base**
-- consuming cluster repos own **overrides**
-- the private enterprise repo owns **enterprise-specific deltas**
-
-## Related References
-
-- [Configure Helm Values](../operations/configure-helm-values.md)
-- [Helm Values Schema](../reference/helm-values-schema.md)
-- [Enterprise Components](enterprise-components.md)
+- [Architecture Explanation](architecture.md)
+- [GitOps Workflow](gitops-workflow.md)
+- [Enterprise Components Pattern](enterprise-components.md)
+- [Catalog Schema](../catalog/schema.md)

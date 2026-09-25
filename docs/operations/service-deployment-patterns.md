@@ -59,8 +59,8 @@ Operationally, platform engineers should make service configuration changes in t
 
 | Scenario | Source repo | Flux path | Typical use |
 | --- | --- | --- | --- |
-| Community deployment | `openCenter-gitops-base` | `./applications/base/services/<service>` | Public upstream-backed service deployment |
-| Enterprise deployment | `opencenter-gitops-enterprise` | `./applications/enterprise/services/<service>/overlays/install` | Private charts, private images, or enterprise-specific deltas |
+| Community deployment | `openCenter-gitops-base` | `applications/base/services/<service>` | Public upstream-backed service deployment |
+| Enterprise deployment | `opencenter-gitops-enterprise` | `applications/enterprise/services/<service>/overlays/install` | Private charts, private images, or enterprise-specific deltas |
 
 ---
 

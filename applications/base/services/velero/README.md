@@ -16,3 +16,13 @@ For service overview, use cases, examples, and upstream references, see the [ser
 - Supports encryption, retention policies, and incremental backups for efficient and secure data protection.  
 - Commonly used to safeguard production workloads and ensure recoverability in hybrid or multi-cluster Kubernetes deployments.  
 - Simplifies cluster recovery workflows and enhances operational resilience.  
+
+## Repository implementation
+
+- Source path: `applications/base/services/velero/`.
+- Flux entrypoint: `kustomization.yaml`; the HelmRelease runs in `velero` and reads `velero-values-base` plus the optional `velero-values-override` Secret.
+- Base values: `helm-values/values-12.2.0.yaml`; the chart source is declared in `source.yaml` and `catalog.yaml`.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/velero/` to validate the local manifests. The base does not configure an object-store credential, `BackupStorageLocation`, schedules, or a volume-snapshot provider. Backups are not available until those cluster-specific resources and permissions are configured.

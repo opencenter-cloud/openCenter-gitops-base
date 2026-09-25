@@ -51,6 +51,9 @@ allowVolumeExpansion: true
 - Flux object: `HelmRelease/vsphere-csi`
 - Base values Secret: `vsphere-csi-values-base`
 - Override values Secret: `vsphere-csi-values-override`
+- Chart version: `3.8.1`
+
+The base path does not include vCenter credentials, a StorageClass, or a vSphere Cloud Provider Interface. Those prerequisites and cluster-specific connection values must be supplied by the consumer.
 
 ## Related Docs
 

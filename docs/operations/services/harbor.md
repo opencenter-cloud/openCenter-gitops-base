@@ -23,6 +23,8 @@ The base service deploys:
 - `HelmRelease/harbor`
 - base chart values from the service `helm-values/` directory
 
+Current base evidence: chart `harbor` version `1.19.2` from `https://helm.goharbor.io`, with base values from `helm-values/values-1.19.2.yaml`.
+
 The `HelmRelease` reads:
 
 - `Secret/harbor-values-base` with key `values.yaml`
@@ -66,15 +68,15 @@ expose:
       secretName: harbor-tls
   ingress:
     hosts:
-      core: harbor.example.com
+      core: <harbor-hostname>
 
 persistence:
   persistentVolumeClaim:
     registry:
-      storageClass: longhorn-general
+      storageClass: <cluster-storage-class>
       size: 200Gi
 
-externalURL: https://harbor.example.com
+externalURL: https://<harbor-hostname>
 ```
 
 ## External Dependencies
@@ -113,6 +115,8 @@ Image pushes fail:
 
 OIDC login fails:
 - verify redirect URIs, client secret, and external URL settings
+
+The hostname, TLS Secret, storage class, external database/Redis settings, object-storage settings, OIDC values, and credentials are consumer/environment-specific. No URL or credential is supplied by this repository.
 
 Scanner issues:
 - check Trivy updater connectivity and storage for vulnerability DB content

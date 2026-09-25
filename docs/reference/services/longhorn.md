@@ -19,8 +19,8 @@ tags: [longhorn, storage, csi]
 - `Namespace/longhorn-system`
 - `HelmRelease/longhorn`
 - additional storage classes:
-  - `longhorn-general`
-  - `longhorn-general-multi-attach`
+  - `general`
+  - `general-encrypted`
 - Base values Secret: `longhorn-values-base`
 - Optional `longhorn-values-override`
 
@@ -46,7 +46,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: longhorn-general
+  storageClassName: general
   resources:
     requests:
       storage: 20Gi
@@ -59,6 +59,9 @@ spec:
 - Flux object: `HelmRelease/longhorn`
 - Base values Secret: `longhorn-values-base`
 - Override values Secret: `longhorn-values-override`
+- Chart version: `1.12.1`
+
+`general-encrypted` also references the committed `longhorn-crypto` Secret, whose placeholder passphrase must be replaced by the consumer before encrypted volumes are used. The base path does not configure a backup target or cluster-specific disk layout.
 
 ## Related Docs
 

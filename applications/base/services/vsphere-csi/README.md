@@ -15,7 +15,7 @@ For service overview, use cases, examples, and upstream references, see the [ser
 
 ## Topology Support
 
-This base configuration includes the `csinodetopologies.cns.vmware.com` CustomResourceDefinition (CRD) required for topology-aware volume provisioning. The CRD enables:
+The repository contains a `csinodetopologies.cns.vmware.com` CRD manifest for topology-aware provisioning, but the active `kustomization.yaml` comments out that manifest. This base therefore does not install the CRD; manage it separately before enabling topology features. The CRD enables:
 
 - **Zone-aware volume placement**: Volumes are created in the same vSphere cluster/zone as the Pod
 - **High availability across failure domains**: StatefulSets can be spread across multiple zones
@@ -40,9 +40,9 @@ To enable topology features, configure the following in your cluster-specific ov
 
 For detailed topology configuration, see the [vSphere CSI Topology Documentation](https://vsphere-csi-driver.sigs.k8s.io/features/topology.html).
 
-## CRDs Included
+## CRD Manifests Present but Excluded
 
-This base configuration includes all required vSphere CSI CustomResourceDefinitions:
+CRD manifests are present under `crds/`, but all three entries are excluded from the active kustomization:
 
 - **csinodetopologies.cns.vmware.com**: Tracks node topology information for zone-aware provisioning
 - **cnsvolumeoperationrequests.cns.vmware.com**: Manages asynchronous volume operations (create, delete, attach, detach, extend)
@@ -53,3 +53,13 @@ This base configuration includes all required vSphere CSI CustomResourceDefiniti
 - vSphere 6.7 U3+ or vSphere 7.0+
 - Kubernetes 1.18+
 - vSphere Cloud Provider (CPI) must be installed and nodes must have ProviderID set
+
+## Repository implementation
+
+- Source path: `applications/base/services/vsphere-csi/`.
+- Flux entrypoint: `kustomization.yaml`; the HelmRelease runs in `vmware-system-csi` and reads `vsphere-csi-values-base` plus the optional `vsphere-csi-values-override` Secret.
+- Base values: `helm-values/values-3.8.1.yaml`; the chart source is declared in `source.yaml` and `catalog.yaml`.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/vsphere-csi/` to validate the local manifests. The base does not install the CRD manifests listed above, and does not contain vCenter credentials, datacenter/datastore topology, or a StorageClass. Manage required CRDs separately; vSphere CPI and valid node ProviderIDs are required before provisioning can work.

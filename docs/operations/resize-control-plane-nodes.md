@@ -255,6 +255,8 @@ module.openstack-nova.module.node_master.openstack_compute_instance_v2.node[0]: 
 
 We need to wait until the node has completed resizing, it goes back into `Ready` state, and all of the pods its running are successfully back online.
 
+The hostnames and generated Pod names in the transcript are captured from one environment. Use the target cluster's current node and workload output; the captured observability Pod name is not a portable Helm release or Service name.
+
 ```bash
 # kubectl get nodes
 NAME                  STATUS   ROLES           AGE   VERSION
@@ -304,6 +306,8 @@ kubectl top nodes
 ### Troubleshooting Notes
 
 **Common Issues:**
+
+The hostnames, Kubernetes versions, interface name, and IP addresses in the diagnostic transcript below are captured environment-specific examples. Replace them with values from the target inventory and network before running commands.
 
 1. **Cluster not responding to kubectl commands**
    

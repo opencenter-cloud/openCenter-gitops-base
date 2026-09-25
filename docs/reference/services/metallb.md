@@ -32,6 +32,8 @@ tags: [metallb, networking, loadbalancer]
 - Gateway API, ingress controllers, and service meshes often depend on MetalLB-provided IPs.
 - IP pools and BGP peers are usually cluster-local manifests, not base values.
 
+The base path does not create an `IPAddressPool`, `L2Advertisement`, or `BGPPeer`. The example pool is a consumer resource; its address range must be valid for the target network.
+
 ## Example
 
 ```yaml
@@ -52,6 +54,8 @@ spec:
 - Flux object: `HelmRelease/metallb`
 - Base values Secret: `metallb-values-base`
 - Override values Secret: `metallb-values-override`
+- Source: MetalLB Helm repository (`https://metallb.github.io/metallb`)
+- Chart version: `0.16.1`
 
 ## Related Docs
 

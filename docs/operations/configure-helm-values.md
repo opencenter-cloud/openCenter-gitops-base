@@ -34,6 +34,8 @@ The base repo owns the baseline. The consuming cluster repo owns cluster-specifi
 
 If a private enterprise repo is used, that repo can add an additional enterprise-specific values source or patch the upstream chart/image source, but that behavior is outside this base repo.
 
+For the current cert-manager service, repository evidence is: chart `v1.21.2`, base file `helm-values/values-v1.21.2.yaml`, base Secret `cert-manager-values-base` with key `values.yaml`, and optional override Secret `cert-manager-values-override` with key `override.yaml`. Other services use their own names and values filename conventions; inspect each service before copying commands.
+
 ---
 
 ## Step 1: Inspect The Base Values
@@ -41,7 +43,7 @@ If a private enterprise repo is used, that repo can add an additional enterprise
 Check the values currently shipped by the base service:
 
 ```bash
-sed -n '1,200p' applications/base/services/<service>/helm-values/values-v<chart-version>.yaml
+sed -n '1,200p' applications/base/services/<service>/helm-values/<values-file>
 ```
 
 Also check how the service consumes them:
@@ -83,7 +85,7 @@ Use **override values** when the setting varies by cluster or environment:
 Edit the versioned base values file:
 
 ```yaml
-# applications/base/services/<service>/helm-values/values-v<chart-version>.yaml
+# applications/base/services/<service>/helm-values/<new-values-file>.yaml
 resources:
   limits:
     cpu: 200m
@@ -112,11 +114,11 @@ In the consuming cluster repo, create an override file such as:
 replicaCount: 3
 
 extraArgs:
-  - --dns01-recursive-nameservers=192.168.1.1:53
+  - --dns01-recursive-nameservers=<dns-server>:53
   - --dns01-recursive-nameservers-only
 
 ingress:
-  host: cert-manager.cluster.example.com
+  host: <cluster-hostname>
 ```
 
 Generate the Secret that the base `HelmRelease` already expects:
@@ -143,13 +145,13 @@ The important point is that the override Secret name must match the `valuesFrom`
 Render the consuming overlay:
 
 ```bash
-kustomize build .
+kustomize build applications/overlays/<cluster>/services/<service>
 ```
 
 Dry-run the apply when appropriate:
 
 ```bash
-kustomize build . | kubectl apply --dry-run=client -f -
+kustomize build applications/overlays/<cluster>/services/<service> | kubectl apply --dry-run=client -f -
 ```
 
 After reconciliation, inspect the `HelmRelease`:
@@ -172,7 +174,7 @@ cert-manager-values-base cert-manager-values-override
 If you need to trigger an immediate reconcile:
 
 ```bash
-flux reconcile kustomization cert-manager -n flux-system
+flux reconcile kustomization cert-manager-base -n flux-system --with-source
 flux reconcile helmrelease cert-manager -n cert-manager --with-source
 ```
 
@@ -197,7 +199,7 @@ Use overrides for cluster storage differences:
 
 ```yaml
 persistence:
-  storageClass: longhorn
+  storageClass: <cluster-storage-class>
 ```
 
 ### Hostnames and Ingress
@@ -208,7 +210,7 @@ Use overrides for cluster-specific DNS:
 ingress:
   enabled: true
   hosts:
-    - app.example.com
+    - <application-hostname>
 ```
 
 ## Enterprise Repo Note

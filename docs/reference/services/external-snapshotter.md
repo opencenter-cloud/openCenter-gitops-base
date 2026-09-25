@@ -17,7 +17,7 @@ tags: [snapshot, csi, storage]
 ## What This Repo Deploys
 
 - `Namespace/external-snapshotter`
-- upstream CRDs from the `external-snapshotter` repository
+- upstream cluster-scoped CRDs from the `external-snapshotter` repository
 - upstream snapshot-controller manifests pinned to `v8.2.1`
 
 ## When to Use It
@@ -43,6 +43,9 @@ spec:
 - Service path: `applications/base/services/external-snapshotter/`
 - Namespace: `external-snapshotter`
 - Deployment method: remote manifests from the upstream project
+- Pinned upstream reference: `v8.2.1`
+
+The snapshot CRDs are cluster-scoped and never receive a namespace. The Kustomization applies `external-snapshotter` only to namespaced resources from the snapshot-controller manifests; the controller's cluster-scoped RBAC resources also remain cluster-scoped. A CSI driver must still provide a compatible `VolumeSnapshotClass`; this path does not create driver-specific snapshot classes or backup policies.
 
 ## Upstream References
 

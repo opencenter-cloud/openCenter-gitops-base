@@ -5,8 +5,8 @@
 | **Source** | [OT-CONTAINER-KIT/redis-operator](https://github.com/OT-CONTAINER-KIT/redis-operator) |
 | **Namespace** | `redis-operator` |
 | **Chart** | `redis-operator` |
-| **Version** | `0.25.0` |
-| **AppVersion** | `0.25.0` |
+| **Version** | `0.26.1` |
+| **AppVersion** | `0.26.1` |
 
 ## Overview
 
@@ -42,5 +42,16 @@ The OT Container Kit Redis Operator manages Redis deployments on Kubernetes acro
 
 | Secret | Purpose |
 |--------|---------|
-| `redis-operator-values-base` | Base values from `helm-values/values-0.25.0.yaml` |
+| `redis-operator-values-base` | Base values from `helm-values/values-0.26.1.yaml` |
 | `redis-operator-values-override` | Cluster-specific overrides (optional) |
+
+## Repository implementation
+
+- Source path: `applications/base/services/redis-operator/`.
+- Flux entrypoint: `kustomization.yaml`; it renders the namespace, HelmRepository, HelmRelease, and `redis-operator-values-base` Secret.
+- Base values: `helm-values/values-0.26.1.yaml`.
+- The optional `redis-operator-values-override` Secret is merged after the base values.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/redis-operator/` to validate the local manifests. This deploys the operator and CRDs but does not create Redis resources, storage, credentials, or backup targets. The chart values file retains the upstream chart-version comment; the reconciled Helm chart version is the `0.26.1` version in `helmrelease.yaml`.

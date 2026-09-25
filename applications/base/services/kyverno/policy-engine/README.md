@@ -18,3 +18,13 @@ For the parent service overview, use cases, examples, and upstream references, s
 - Provides **policy reports** and integrates with tools like **Prometheus** and **Grafana** for monitoring violations.
 - Commonly used to implement governance, security, and multi-tenancy controls in Kubernetes clusters.
 - Simplifies cluster compliance and enhances operational security through policy-driven automation.
+
+## Repository implementation
+
+- Source path: `applications/base/services/kyverno/policy-engine/`.
+- Flux entrypoint: `kustomization.yaml`; the HelmRelease runs in `kyverno` and reads the base values from `helm-values/values-3.9.1.yaml` plus the optional `kyverno-values-override` Secret.
+- The HelmRepository source is declared in `source.yaml`; the release manages the Kyverno controller components.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/kyverno/policy-engine/` to validate the local manifests. This base installs the policy engine but does not define the default ruleset, exemptions, or application policy resources. Admission effects and policy reports must be validated against the selected cluster workload set.

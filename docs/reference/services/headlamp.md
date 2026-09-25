@@ -47,6 +47,10 @@ config:
 - Namespace: `headlamp`
 - Flux object: `HelmRelease/headlamp`
 - Source: Kubernetes SIGs Headlamp Helm repository
+- Source URL: `https://kubernetes-sigs.github.io/headlamp/`
+- Chart version: `0.45.0`
+
+The base values do not configure an OIDC issuer or callback URL. The example is consumer-owned and requires a matching identity provider, redirect URI, and Kubernetes RBAC permissions.
 
 ## Upstream References
 

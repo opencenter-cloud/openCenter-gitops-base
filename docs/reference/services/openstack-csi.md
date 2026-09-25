@@ -42,6 +42,11 @@ spec:
 - Namespace: `openstack-csi`
 - Flux object: `HelmRelease/openstack-cinder-csi`
 - Source: Kubernetes cloud-provider-openstack Helm repository
+- Chart version: `2.36.5`
+
+> **Important base-value warning:** The committed values enable the chart's delete `StorageClass` and mark it as the cluster default (`storageClass.delete.isDefault: true`); the retain class is enabled but is not default. The values also select the host-mounted cloud configuration path (`secret.enabled: false`, `secret.hostMount: true`). A consumer must verify that `/etc/cloud/cloud.conf` is deliberately provided, then use `openstack-csi-values-override` to select the intended default class or disable the generated classes and to provide the appropriate cloud configuration.
+
+The base path therefore does create an enabled default Cinder `StorageClass`; it does not commit cloud credentials. The consumer must provide valid OpenStack cloud configuration and select the storage class appropriate to its deployment. The example `storageClassName: cinder-sc` is illustrative and must match the class selected by the consumer.
 
 ## Upstream References
 

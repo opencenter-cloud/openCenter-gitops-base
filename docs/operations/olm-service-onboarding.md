@@ -73,8 +73,8 @@ In the cluster overlay repo, using the common layout shown in these examples:
 
 Use the correct source path:
 
-- Community: `./applications/base/services/<service>`
-- Enterprise: `./applications/enterprise/services/<service>/overlays/install`
+- Community: `applications/base/services/<service>`
+- Enterprise: `applications/enterprise/services/<service>/overlays/install`
 
 If the enterprise repo is used, the cluster repo must also provide the required Git and registry credentials.
 
@@ -309,10 +309,10 @@ metadata:
 spec:
   instances: 2
   hostname:
-    hostname: auth.example.com
+    hostname: <keycloak-hostname>
     strict: true
   http:
-    tlsSecret: keycloak-tls
+    tlsSecret: <keycloak-tls-secret>
 ```
 
 For service-specific guidance, see [Keycloak Configuration Guide](services/keycloak.md).
@@ -340,8 +340,8 @@ If a shared baseline change is required, raise an issue in the relevant reposito
 Check the Flux resources first:
 
 ```bash
-flux get sources git -n flux-system
-flux get kustomizations -n flux-system
+flux get sources git --all-namespaces
+flux get kustomizations --all-namespaces
 ```
 
 Then verify OLM:

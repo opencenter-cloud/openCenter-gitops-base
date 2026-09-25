@@ -24,7 +24,7 @@ The repository covers two parts of the cluster lifecycle:
 - `iac/` provisions the underlying infrastructure, renders Kubespray inventory and group variables, and initiates cluster bootstrap.
 - `applications/` defines the reusable GitOps base for in-cluster platform services, observability components, and policy resources.
 
-The authoritative service inventory and version table is maintained in the top-level [README](../README.md). For per-service detail, use the [Service Reference Library](reference/services/index.md).
+The top-level [README](../README.md) is the entry-point inventory of the service directories currently present on disk. Catalog metadata is adjacent to most service directories and is aggregated in [`applications/catalog.lock.yaml`](../applications/catalog.lock.yaml). For per-service detail, use the [Service Reference Library](reference/services/index.md) where a reference page exists; that library is selective and is not a substitute for the filesystem inventory.
 
 ## Documentation Layout
 
@@ -36,15 +36,16 @@ Documentation is organized by what the reader is trying to do, not by document g
 | [`operations/`](operations/) | Day-1 and day-2 tasks | Service onboarding, configuration, secrets, troubleshooting |
 | [`reference/`](reference/) | Lookup | Directory layout, Flux resources, values schema, per-service reference |
 | [`concepts/`](concepts/) | Understanding | Architecture, GitOps workflow, values layering, security model |
-| [`catalog/`](catalog/) | Proposal | Service catalog design: schema, current-state baseline, migration plan |
+| [`catalog/`](catalog/) | Service metadata and design | Catalog schema, current-state baseline, migration plan |
 | [`release/`](release/) | Release notes | Per-release notes |
-| [`contributing/`](contributing/) | Authoring | Templates for new service docs |
+| [`contributing/`](contributing/) | Authoring | Contribution conventions and templates for service docs |
 
 ## Start Here
 
 - [Getting Started with openCenter-gitops-base](getting-started/getting-started.md) – Deploy your first service end-to-end with FluxCD.
 - [Architecture](concepts/architecture.md) – How `iac/` and `applications/` fit together and what this repository is not.
 - [GitOps Workflow](concepts/gitops-workflow.md) – How FluxCD reconciles base content into a cluster.
+- [Repository README](../README.md) – Current service-directory inventory and the base-versus-consumer boundary.
 
 ## Operations
 
@@ -85,9 +86,11 @@ Per-service operational guides live under [`operations/services/`](operations/se
 - [Security Model](concepts/security-model.md) – Security controls and known gaps.
 - [OpenTelemetry Architecture](concepts/opentelemetry-architecture.md) – Telemetry pipeline overview.
 
-## Service Catalog (proposed)
+## Service Catalog
 
-A declarative service catalog is proposed to replace the four separate representations of the service inventory that exist today. Not yet implemented.
+The descriptive service catalog is implemented in this repository: service fragments live beside service manifests, `applications/catalog.lock.yaml` is the generated aggregate, and `applications/catalog.schema.json` defines the fragment shape. It describes the repository; it does not generate Flux manifests or replace consumer-owned overlays. A fragment's `renderOwner` value is declared metadata, not verification that an external CLI or consumer can deploy the service.
+
+The aggregate currently contains 47 entries for 47 service directories, including `keda`. The catalog remains descriptive metadata: it records the repository inventory but does not claim that every consumer enables or can deploy every service.
 
 - [Service Catalog](catalog/index.md) – Why the catalog exists and what it consolidates.
 - [Catalog Schema](catalog/schema.md) – Fragment schema, packaging types, composite services, blueprint files.
@@ -100,3 +103,7 @@ A declarative service catalog is proposed to replace the four separate represent
 
 ## Contributing
 Templates for new service documentation live in [`contributing/templates/`](contributing/templates/).
+
+Start with the [contribution guide](contributing/index.md). It explains the distinction between service-local READMEs and curated `docs/` pages, the required documentation frontmatter, the existing maintenance scripts, and where the service templates fit.
+
+The templates themselves live in [`contributing/templates/`](contributing/templates/): [service README](contributing/templates/service-readme-template.md), [configuration guide](contributing/templates/service-config-guide-template.md), and [service standards](contributing/templates/service-standards-template.md).

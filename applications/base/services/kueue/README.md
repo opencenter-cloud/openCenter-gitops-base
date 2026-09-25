@@ -26,3 +26,13 @@ This directory contains the **base manifests** for deploying [Kueue](https://kue
 | `controller.manager.resources.limits.memory` | Memory limit | `512Mi` |
 | `enablePlainPod` | Enable plain Pod integration | `false` |
 | `integrations.frameworks` | Enabled job frameworks | batch/job |
+
+## Repository implementation
+
+- Source path: `applications/base/services/kueue/`.
+- Flux entrypoint: `kustomization.yaml`; the HelmRelease runs in `kueue-system` and reads `kueue-values-base` plus the optional `kueue-values-override` Secret.
+- Base values: `helm-values/values-0.19.5.yaml`; the OCI chart source is declared in `source.yaml` and `catalog.yaml`.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/kueue/` to validate the local manifests. The base installs the queueing controller but does not create `ResourceFlavor`, `ClusterQueue`, `LocalQueue`, or workload resources. Queue topology and quotas must be designed in the consuming cluster overlay.

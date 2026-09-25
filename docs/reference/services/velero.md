@@ -33,6 +33,8 @@ tags: [velero, backup, disaster-recovery]
 - Backup storage location and credentials are always cluster-specific.
 - The Swift/vSphere CSI guide covers one concrete backend pattern used by this platform.
 
+The base path does not create a `BackupStorageLocation`, schedules, cloud credentials, or provider-specific snapshot classes. The example command is an operational example, not a resource committed by this repository.
+
 ## Example
 
 ```bash
@@ -48,6 +50,8 @@ velero backup create platform-daily \
 - Flux object: `HelmRelease/velero`
 - Base values Secret: `velero-values-base`
 - Override values Secret: `velero-values-override`
+- Source: VMware Tanzu Helm repository (`https://vmware-tanzu.github.io/helm-charts`)
+- Chart version: `12.2.0`
 
 ## Related Docs
 

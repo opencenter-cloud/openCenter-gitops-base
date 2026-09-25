@@ -25,3 +25,13 @@ For service overview, use cases, examples, and upstream references, see the [ser
 - Supports snapshots, backups, restores, and volume expansion for stateful applications.
 - Exposes CSI-based storage classes that application workloads can consume through standard PVCs.
 - Works best when node disks, replica placement, and backup targets are planned explicitly per cluster.
+
+## Repository implementation
+
+- Source path: `applications/base/services/longhorn/`.
+- Flux entrypoint: `kustomization.yaml`; the HelmRelease runs in `longhorn-system` and reads `longhorn-values-base` plus the optional `longhorn-values-override` Secret.
+- Base values: `helm-values/values-1.12.1.yaml`; the chart source is declared in `source.yaml` and `catalog.yaml`.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/longhorn/` to validate the local manifests. The base creates storage classes but does not select disks, configure backup credentials/targets, or guarantee replica capacity. Review node, disk, and failure-domain requirements before using it for stateful workloads.

@@ -22,6 +22,8 @@ The base service deploys:
 - base values from the service `helm-values/` directory
 - optional `Secret/opentelemetry-kube-stack-values-override`
 
+Current base evidence: chart `opentelemetry-kube-stack` version `0.23.0`, with base values from `helm-values/values-0.23.0.yaml`. The shipped `daemon` collector is enabled as a DaemonSet, receives OTLP on ports `4317` and `4318`, exports logs to `observability-loki-gateway.observability.svc.cluster.local/otlp`, and exports traces to `observability-tempo-distributor.observability.svc.cluster.local:4317`.
+
 ## Common Cluster-Specific Configuration
 
 Most clusters need to customize:
@@ -37,13 +39,10 @@ Most clusters need to customize:
 Example `override.yaml`:
 
 ```yaml
-clusterName: prod-1
-
-opentelemetry-collector:
-  enabled: true
+clusterName: <cluster-name>
 
 collectors:
-  cluster:
+  daemon:
     mode: daemonset
 ```
 
@@ -62,7 +61,7 @@ Use the chart’s collector values to adjust pipelines rather than creating ad h
 kubectl get helmrelease -n observability opentelemetry-kube-stack
 kubectl get pods -n observability
 kubectl get opentelemetrycollectors -A
-kubectl logs -n observability deploy/opentelemetry-operator
+kubectl logs -n observability -l app.kubernetes.io/name=opentelemetry-operator
 ```
 
 Healthy signs:
@@ -81,6 +80,8 @@ Collectors use too many resources:
 
 Data lacks expected labels:
 - check resource processors and cluster metadata injection
+
+The endpoints above are repository defaults, not externally reachable URLs. The HelmRelease release name is `opentelemetry-kube-stack`; discover the collector Service exposing OTLP before configuring applications. A consumer that changes release names, namespaces, or collector topology must update application exporters and verification commands accordingly.
 
 ## Related Docs
 

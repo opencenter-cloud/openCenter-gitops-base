@@ -237,3 +237,13 @@ up first and then the environment.
 terraform destroy
 rm -f cluster.rkestate kube_config_cluster.yml cluster.yml
 ```
+
+## Repository implementation
+
+- Source path: `iac/cloud/openstack/openstack-ironic/`.
+- Terraform entrypoint: `main.tf`; provider, variables, versions, outputs, and OpenStack networking are in the adjacent `.tf` files.
+- The module combines Nova control-plane capacity with Ironic worker capacity and exposes the inputs needed by the cluster deployment workflow.
+
+## Validation and limitations
+
+Run `terraform fmt -check` and `terraform validate` from this directory after `terraform init`. Applying requires OpenStack/Ironic permissions, images, flavors, quotas, allowed-address-pair policy, CA material, and SSH access. The documented example contains placeholders, and Kubernetes resources may require the documented second apply after kubeconfig exists.

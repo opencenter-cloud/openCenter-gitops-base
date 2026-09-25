@@ -20,6 +20,8 @@ tags: [secrets, gitops, encryption]
 - `HelmRelease/sealed-secrets`
 - Base values Secret: `sealed-secrets-values-base`
 - Optional override Secret: `sealed-secrets-values-override`
+- Source: Bitnami Helm repository (`https://bitnami.github.io/sealed-secrets`)
+- Chart version: `2.20.0`
 
 ## When to Use It
 
@@ -31,6 +33,8 @@ tags: [secrets, gitops, encryption]
 
 - Cluster repos create `SealedSecret` resources.
 - Controller keys are cluster-specific and must be backed up if you rely on disaster recovery.
+
+The base service does not commit `SealedSecret` application resources or controller key material. The example uses the consumer's cluster key and is not rendered by this path.
 
 ## Example
 

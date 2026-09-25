@@ -14,3 +14,13 @@ For service overview, use cases, examples, and upstream references, see the [ser
 - Works seamlessly with ingress controllers and gateways such as **NGINX**, **Envoy Gateway**, or **HAProxy**.  
 - Commonly used in hybrid or on-prem environments to provide reliable, production-grade service exposure.  
 - Simplifies network configuration and improves accessibility for Kubernetes workloads in non-cloud environments.  
+
+## Repository implementation
+
+- Source path: `applications/base/services/metallb/`.
+- Flux entrypoint: `kustomization.yaml`; the HelmRelease runs in `metallb-system` and reads `metallb-values-base` plus the optional `metallb-values-override` Secret.
+- Base values: `helm-values/values-0.16.1.yaml`; the chart source is declared in `source.yaml` and `catalog.yaml`.
+
+## Validation and limitations
+
+Run `kustomize build applications/base/services/metallb/` to validate the local manifests. The base installs MetalLB but does not define an `IPAddressPool` or advertisement. A consuming overlay must supply an address range and matching Layer 2 or BGP network configuration.

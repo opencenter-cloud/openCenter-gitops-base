@@ -10,9 +10,11 @@ tags: [services, reference, catalog, kubernetes]
 
 # Service Reference Library
 
-**Purpose:** For platform engineers, operators, architects, documents Per-service reference pages for all deployable platform services in openCenter-gitops-base.
+**Purpose:** For platform engineers, operators, and architects, documents the committed per-service reference pages for selected deployable platform services in openCenter-gitops-base.
 
-This section provides one reference page per deployable service in `applications/base/services/`. Each page summarizes what the service does, when to use it, how it is laid out in this repository, a small example, and links to upstream documentation.
+This section provides reference pages for the services listed below. The repository catalog is broader than this page set: services without a page here remain catalog entries, not undocumented guarantees of this reference library. Each page summarizes only the repository facts supported by the corresponding manifests, values, catalog entry, or service README.
+
+The pages describe base-repository interfaces. Cluster overlays, private enterprise components, credentials, external backends, and workload resources remain consumer-owned unless a page explicitly says the base path commits them.
 
 ## Core Services
 

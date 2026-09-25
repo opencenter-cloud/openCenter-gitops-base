@@ -19,6 +19,8 @@ tags: [gateway-api, routing, ingress, tls]
 - cert-manager configured for TLS
 - Service deployed and accessible via ClusterIP
 
+The base repository provides the Gateway API/Envoy Gateway deployment pattern; this guide's `GatewayClass` selection, `Gateway`, `Certificate`, and `HTTPRoute` objects are consumer-owned resources. Select an existing, accepted GatewayClass; do not create or patch a GatewayClass from this guide. The DNS names, issuer, address allocation, TLS Secret, and service port must match the target cluster.
+
 ## Steps
 
 The examples below assume a common consumer layout where cluster-local service manifests live under `applications/overlays/<cluster>/services/`. If your cluster repository uses a different root, apply the same resources from the equivalent service overlay path in that repo.
@@ -36,11 +38,17 @@ kubectl get crd | grep gateway.networking.k8s.io
 
 # Check Envoy Gateway
 kubectl get pods -n envoy-gateway-system
+
+# Select an existing GatewayClass. Continue only when it is accepted by a
+# controller; the class name below is an environment-specific example.
+kubectl get gatewayclass
+GATEWAY_CLASS="<existing-gateway-class>"
+kubectl get gatewayclass "$GATEWAY_CLASS" -o yaml
 ```
 
 ### 2. Create Gateway
 
-Create `applications/base/services/gateway-api/gateway.yaml`:
+Create a consumer-owned file such as `applications/overlays/<cluster>/services/gateway-api/gateway.yaml`:
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -48,41 +56,45 @@ kind: Gateway
 metadata:
   name: platform-gateway
   namespace: envoy-gateway-system
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
-  gatewayClassName: envoy
+  gatewayClassName: <existing-gateway-class>
   
   listeners:
-    # HTTP listener (redirects to HTTPS)
+    # HTTP listener. Add an HTTPRoute RequestRedirect rule if HTTP-to-HTTPS
+    # redirection is required.
     - name: http
       protocol: HTTP
       port: 80
-      hostname: "*.example.com"
+      hostname: "*.<environment-domain>"
       allowedRoutes:
         namespaces:
-          from: All
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: my-service
     
     # HTTPS listener with TLS
     - name: https
       protocol: HTTPS
       port: 443
-      hostname: "*.example.com"
+      hostname: "*.<environment-domain>"
       allowedRoutes:
         namespaces:
-          from: All
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: my-service
       tls:
         mode: Terminate
         certificateRefs:
-          - kind: Secret
-            name: platform-gateway-tls
-            namespace: envoy-gateway-system
+           - kind: Secret
+             name: platform-gateway-tls
 ```
 
 Apply:
 
 ```bash
-kubectl apply -f applications/base/services/gateway-api/gateway.yaml
+kubectl apply -f applications/overlays/<cluster>/services/gateway-api/gateway.yaml
 ```
 
 Verify:
@@ -94,7 +106,7 @@ kubectl describe gateway platform-gateway -n envoy-gateway-system
 
 ### 3. Create TLS certificate
 
-Create `applications/base/services/gateway-api/certificate.yaml`:
+Create a consumer-owned file such as `applications/overlays/<cluster>/services/gateway-api/certificate.yaml`:
 
 ```yaml
 apiVersion: cert-manager.io/v1
@@ -105,19 +117,19 @@ metadata:
 spec:
   secretName: platform-gateway-tls
   issuerRef:
-    name: letsencrypt-prod
+    name: <cluster-issuer-name>
     kind: ClusterIssuer
   dnsNames:
-    - "*.example.com"
-    - example.com
-  # For wildcard certificates, use DNS01 challenge
-  # For single domain, use HTTP01 challenge
+    - "*.<environment-domain>"
+    - <environment-domain>
+   # The referenced ClusterIssuer owns the challenge method. Do not also add
+   # a cert-manager annotation to the Gateway for the same Secret.
 ```
 
 Apply:
 
 ```bash
-kubectl apply -f applications/base/services/gateway-api/certificate.yaml
+kubectl apply -f applications/overlays/<cluster>/services/gateway-api/certificate.yaml
 ```
 
 Verify certificate issuance:
@@ -147,7 +159,7 @@ spec:
       sectionName: https
   
   hostnames:
-    - my-service.example.com
+    - <service-hostname>
   
   rules:
     # Default route to service
@@ -167,44 +179,9 @@ Apply:
 kubectl apply -f applications/overlays/<cluster>/services/my-service/httproute.yaml
 ```
 
-### 5. Create ReferenceGrant for cross-namespace access
+### 5. Allow routes from the service namespace
 
-When HTTPRoute in one namespace references Gateway in another, create ReferenceGrant:
-
-Create `applications/base/services/gateway-api/referencegrant.yaml`:
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: ReferenceGrant
-metadata:
-  name: allow-httproutes-to-gateway
-  namespace: envoy-gateway-system
-spec:
-  from:
-    - group: gateway.networking.k8s.io
-      kind: HTTPRoute
-      namespace: my-service
-  to:
-    - group: gateway.networking.k8s.io
-      kind: Gateway
-      name: platform-gateway
-```
-
-For multiple namespaces, use wildcard:
-
-```yaml
-spec:
-  from:
-    - group: gateway.networking.k8s.io
-      kind: HTTPRoute
-      namespace: "*"  # Allow all namespaces
-```
-
-Apply:
-
-```bash
-kubectl apply -f applications/base/services/gateway-api/referencegrant.yaml
-```
+For an `HTTPRoute` in another namespace to attach to this Gateway, configure the Gateway listener's `allowedRoutes.namespaces` with a namespace selector (as shown above). Do not use `from: All` unless the consumer explicitly accepts routes from every namespace. A `ReferenceGrant` is not required for the route's cross-namespace `parentRef`; it is required when a route references a backend object in another namespace. Keep such a grant narrowly scoped to the required backend namespace and object.
 
 ### 6. Verify routing
 
@@ -220,12 +197,13 @@ Test endpoint:
 ```bash
 # Get Gateway external IP
 GATEWAY_IP=$(kubectl get gateway platform-gateway -n envoy-gateway-system -o jsonpath='{.status.addresses[0].value}')
+SERVICE_HOSTNAME="<service-hostname>"
 
-# Test HTTP (should redirect to HTTPS)
-curl -v http://my-service.example.com --resolve my-service.example.com:80:${GATEWAY_IP}
+# Test HTTP (redirects only if an HTTPRoute RequestRedirect rule was configured)
+curl -v "http://${SERVICE_HOSTNAME}" --resolve "${SERVICE_HOSTNAME}:80:${GATEWAY_IP}"
 
 # Test HTTPS
-curl -v https://my-service.example.com --resolve my-service.example.com:443:${GATEWAY_IP}
+curl -v "https://${SERVICE_HOSTNAME}" --resolve "${SERVICE_HOSTNAME}:443:${GATEWAY_IP}"
 ```
 
 ## Advanced Routing Patterns
@@ -246,7 +224,7 @@ spec:
       namespace: envoy-gateway-system
   
   hostnames:
-    - api.example.com
+     - <api-hostname>
   
   rules:
     # Route /v1/* to v1 service
@@ -382,7 +360,7 @@ spec:
       sectionName: http
   
   hostnames:
-    - my-service.example.com
+    - <service-hostname>
   
   rules:
     - filters:
@@ -438,20 +416,21 @@ Check service port matches HTTPRoute:
 kubectl get service my-service -n my-service -o jsonpath='{.spec.ports[0].port}'
 ```
 
-### Cross-namespace reference denied
+### Cross-namespace route attachment denied
 
-Check ReferenceGrant exists:
+Check the Gateway listener allows the HTTPRoute namespace:
 
 ```bash
-kubectl get referencegrant -n envoy-gateway-system
-kubectl describe referencegrant allow-httproutes-to-gateway -n envoy-gateway-system
+kubectl get gateway platform-gateway -n envoy-gateway-system -o yaml
 ```
 
-Verify namespace matches:
+Verify the route's parent namespace and listener:
 
 ```bash
 kubectl get httproute my-service -n my-service -o jsonpath='{.spec.parentRefs[0].namespace}'
 ```
+
+If the route's `backendRef` points to a Service in another namespace, inspect the corresponding narrowly scoped `ReferenceGrant` in the backend namespace.
 
 ### TLS certificate not ready
 
@@ -506,7 +485,7 @@ kubectl get httproute my-service -n my-service -o jsonpath='{.status.parents[0].
 # Expected: True
 
 # 4. Service is accessible
-curl -k https://my-service.example.com/health
+curl -k "https://${SERVICE_HOSTNAME}/health"
 # Expected: 200 OK
 ```
 

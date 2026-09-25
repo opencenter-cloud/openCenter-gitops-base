@@ -23,6 +23,8 @@ The base service is intentionally split into stages:
 - `20-keycloak/` creates the `Keycloak` custom resource
 - `30-oidc-rbac/` adds optional default OIDC RBAC definitions
 
+Repository evidence for the current operator stage: the `Subscription` uses channel `fast`, manual InstallPlan approval, and starting CSV `keycloak-operator.v26.4.2`. Confirm these values before planning an operator upgrade.
+
 Most cluster-specific customization happens by patching the Keycloak custom resource or by layering additional realm, client, and ingress resources in the cluster repo.
 
 ---
@@ -116,10 +118,10 @@ metadata:
 spec:
   instances: 2
   hostname:
-    hostname: auth.example.com
+    hostname: <keycloak-hostname>
     strict: true
   http:
-    tlsSecret: keycloak-tls
+    tlsSecret: <keycloak-tls-secret>
 ```
 
 Apply patches from the cluster repo against `20-keycloak/keycloak-cr.yaml` rather than editing the base.
