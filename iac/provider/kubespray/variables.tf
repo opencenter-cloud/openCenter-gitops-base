@@ -283,3 +283,14 @@ variable "use_octavia" {
   type    = bool
   default = true
 }
+
+variable "external_cloud_provider" {
+  type        = string
+  default     = ""
+  description = "External cloud provider for kubespray. When set (e.g. \"openstack\"), kubespray runs kubelet with --cloud-provider=external and applies the node.cloudprovider.kubernetes.io/uninitialized taint so an external cloud controller manager (CCM) can set spec.providerID. Leave empty to run without a cloud provider (e.g. kind or bare-metal)."
+
+  validation {
+    condition     = contains(["", "openstack", "external"], var.external_cloud_provider)
+    error_message = "external_cloud_provider must be one of \"\", \"openstack\", or \"external\"."
+  }
+}
