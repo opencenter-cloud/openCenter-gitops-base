@@ -31,7 +31,14 @@ image:
   # -- Grafana Mimir container image repository
   repository: grafana/mimir
   # -- Grafana Mimir container image tag
-  tag: 3.0.0
+  # Pinned to match this chart's declared appVersion (mimir-distributed 6.2.0
+  # -> appVersion 3.2.0). The stock values shipped tag 3.0.0, which predates
+  # the ingest-storage flags this chart renders for zone-aware ingesters
+  # (e.g. -ingest-storage.kafka.client-rack, added in Mimir 3.1+). Running the
+  # 3.0.0 binary against the 6.2.0 templates crashloops the ingesters with
+  # "flag provided but not defined: -ingest-storage.kafka.client-rack" whenever
+  # the ingest-storage (Kafka) architecture is enabled.
+  tag: 3.2.0
   # -- Container pull policy
   pullPolicy: IfNotPresent
   # -- Optionally specify an array of imagePullSecrets
