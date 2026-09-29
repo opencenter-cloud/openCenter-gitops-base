@@ -1,0 +1,12 @@
+persistence:
+  imageChartStorage:
+    type: s3
+    s3:
+      region: us-east-1
+      bucket: octr796-harbor
+      existingSecret: harbor-objectstore
+
+registry:
+  credentials:
+    username: octr796-user
+    password: OCTR796-HARBOR-PASSWORD

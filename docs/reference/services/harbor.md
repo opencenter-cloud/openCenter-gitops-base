@@ -21,6 +21,7 @@ tags: [harbor, registry, images]
 - `HelmRelease/harbor`
 - Base values from the service `helm-values/` directory
 - An optional override Secret named `harbor-values-override`
+- An optional final values Secret named `opencenter-harbor-secret`
 
 ## When to Use It
 
@@ -49,6 +50,7 @@ docker push harbor.example.com/platform/myapp:1.0
 - Flux object: `HelmRelease/harbor`
 - Base values Secret: `harbor-values-base`
 - Override values Secret: `harbor-values-override`
+- Final values Secret: `opencenter-harbor-secret` (key `values.yaml`)
 - Source: Harbor Helm repository
 - Source URL: `https://helm.goharbor.io`
 - Chart version: `1.19.2`

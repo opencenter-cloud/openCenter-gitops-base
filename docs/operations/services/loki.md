@@ -21,8 +21,24 @@ The base service deploys:
 - `HelmRelease/loki`
 - base chart values from the service `helm-values/` directory
 - optional `Secret/loki-values-override`
+- optional final `Secret/opencenter-loki-secret` with key `values.yaml`
 
 Current base evidence: chart `loki` version `7.3.0`, with values from `helm-values/values-7.3.0.yaml`. The base uses `SimpleScalable` mode, Swift as the schema object store, a 30-day retention period, replication factor 3, and a ClusterIP gateway enabled by default.
+
+The Loki values store generated configuration as a Secret (`loki.configStorageType: Secret`), rather than a ConfigMap.
+
+The `HelmRelease` applies values in order: chart defaults, `loki-values-base`,
+`loki-values-override`, and finally `opencenter-loki-secret`. Later values
+override earlier values. Both consumer Secrets are optional, so an absent
+Secret is ignored. If `opencenter-loki-secret` is supplied, it must contain
+the `values.yaml` data key. Add the label
+`reconcile.fluxcd.io/watch: Enabled` to that Secret so Flux watches changes and
+reconciles the HelmRelease.
+
+The final Secret is supplied by the consumer or its CLI workflow; this base
+does not create it. Updating or rolling back the HelmRelease does not remove a
+stale final Secret, so an old `opencenter-loki-secret` can continue to
+override rolled-back values until it is updated or deleted.
 
 The base HelmRelease is named `loki`. Consumer overlays may render a namespace-prefixed release/service such as `observability-loki-gateway`; discover the actual Service in namespace `observability` before wiring clients. The repository OpenTelemetry default uses `observability-loki-gateway` as its internal endpoint.
 

@@ -19,6 +19,7 @@ tags: [loki, logs, observability]
 - `HelmRelease/loki`
 - Base values from the service `helm-values/` directory
 - Optional `loki-values-override`
+- Optional final values Secret named `opencenter-loki-secret`
 
 ## When to Use It
 
@@ -45,6 +46,7 @@ tags: [loki, logs, observability]
 - Flux object: `HelmRelease/loki`
 - Base values Secret: `loki-values-base`
 - Override values Secret: `loki-values-override`
+- Final values Secret: `opencenter-loki-secret` (key `values.yaml`)
 - Source: Grafana Helm repository
 - Source URL: `https://grafana.github.io/helm-charts`
 - Chart version: `7.3.0`

@@ -1,0 +1,23 @@
+loki:
+  storage:
+    type: swift
+    bucketNames:
+      chunks: octr796-chunks
+      ruler: octr796-ruler
+      admin: octr796-admin
+    swift:
+      auth_url: https://swift.example.invalid/v3
+      username: OCTR796-USER
+      password: OCTR796-PASS
+      project_name: octr796
+      region_name: RegionOne
+      container_name: octr796
+  schemaConfig:
+    configs:
+      - from: "2025-01-01"
+        store: tsdb
+        object_store: swift
+        schema: v13
+        index:
+          prefix: index_
+          period: 24h

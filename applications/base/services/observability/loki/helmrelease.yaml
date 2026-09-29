@@ -34,3 +34,7 @@ spec:
       name: loki-values-override
       valuesKey: override.yaml
       optional: true
+    - kind: Secret
+      name: opencenter-loki-secret
+      valuesKey: values.yaml
+      optional: true
