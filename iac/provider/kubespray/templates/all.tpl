@@ -1,4 +1,11 @@
 ---
+%{ if external_cloud_provider != "" ~}
+# Run kubelet with --cloud-provider=external so an external cloud controller
+# manager (CCM) initializes each node (sets spec.providerID and clears the
+# node.cloudprovider.kubernetes.io/uninitialized taint). Required for OpenStack
+# CCM LoadBalancer/Octavia provisioning. See OCTR-750.
+external_cloud_provider: ${external_cloud_provider}
+%{ endif ~}
 %{ if sysctl_file_path != "" ~}
 sysctl_file_path: "${sysctl_file_path}"
 %{ endif ~}
