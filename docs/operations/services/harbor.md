@@ -29,6 +29,21 @@ The `HelmRelease` reads:
 
 - `Secret/harbor-values-base` with key `values.yaml`
 - optional `Secret/harbor-values-override` with key `override.yaml`
+- optional final `Secret/opencenter-harbor-secret` with key `values.yaml`
+
+Flux merges chart defaults and the `valuesFrom` entries in order. For Harbor the
+precedence is therefore chart defaults, `harbor-values-base`,
+`harbor-values-override`, and finally `opencenter-harbor-secret`; later values
+override earlier values. Both consumer Secrets are optional, so an absent
+Secret is ignored. If `opencenter-harbor-secret` is supplied, it must contain
+the `values.yaml` data key. Add the label
+`reconcile.fluxcd.io/watch: Enabled` to that Secret so Flux watches changes and
+reconciles the HelmRelease.
+
+The final Secret is supplied by the consumer or its CLI workflow; this base
+does not create it. Updating or rolling back the HelmRelease does not remove a
+stale final Secret, so an old `opencenter-harbor-secret` can continue to
+override rolled-back values until it is updated or deleted.
 
 ## Common Cluster-Specific Configuration
 
