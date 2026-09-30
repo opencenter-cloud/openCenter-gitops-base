@@ -177,7 +177,6 @@ The starting point is to copy the init directory into the new clusters directory
 ```
 # cd /etc/openCenter
 # cp -r infrastructure/init infrastructure/clusters/demo-cluster
-# mkdir -p applications/overlays/demo-cluster/services/calico/helm-values
 # cd infrastructure/clusters/demo-cluster
 ```
 
@@ -305,6 +304,11 @@ An ansible inventory file is created in the path `CLUSTER_DIR/inventory/inventor
 ### Deploy a CNI
 
 We deploy kubespray without a CNI to allow for the option of deploying any of the supported CNIs.
+The Calico Terraform module exposes `calico_values` and
+`calico_autodetection` outputs; it does not write the GitOps overlay. The
+openCenter CLI GitOps generation step in the cluster repository must materialize
+`applications/overlays/<cluster>/services/calico/helm-values/override_values.yaml`
+from the output before Flux or Helm reconciles it.
 
 ```
 # helm repo add projectcalico https://docs.tigera.io/calico/charts
