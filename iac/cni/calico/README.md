@@ -1,7 +1,9 @@
 Calico
 
-The Calico IaC module takes inputs to generate the Calico Operator Helm values file.
-The module writes `applications/overlays/<cluster_name>/services/calico/helm-values/override_values.yaml` relative to the consuming Terraform root (`path.root`); it does not produce a file named `cni-values.yaml` in this module directory.
+The Calico IaC module takes inputs and exposes the rendered Calico Operator Helm
+values to the consuming Terraform root. Terraform does not write an overlay or
+any other path under `applications/`; the openCenter CLI GitOps generator owns
+that file.
 
 
 | Key | Type | Default | Description |
@@ -22,7 +24,14 @@ The module writes `applications/overlays/<cluster_name>/services/calico/helm-val
 | subnet_services | string | "10.43.0.0/16" | CIDR to use for Kubernetes services. |
 | subnet_pods | string | "10.42.0.0/16" | CIDR to use for Kubernetes pods. |
 
-The configuration options are unsed in the values file:
+## Outputs
+
+| Name | Description |
+| --- | --- |
+| `calico_values` | Rendered Calico Helm values YAML. The openCenter CLI GitOps generator can use this output to create the cluster overlay. |
+| `calico_autodetection` | Stable object containing the selected autodetection `mode`, `interface`, `cidr`, and `first_found` values. |
+
+The configuration options are used in the values file:
 
 ```
 # imagePullSecrets is a special helm field which, when specified, creates a secret
@@ -147,9 +156,30 @@ kubernetesServiceEndpoint:
 ## Repository implementation
 
 - Source path: `iac/cni/calico/`.
-- `main.tf` renders `calico-values.tpl` from `variables.tf` and writes the generated overlay file at the path described above; the values are consumed by the Calico operator Helm deployment in a cluster root.
+- `main.tf` renders `calico-values.tpl` from `variables.tf` and exposes the result as `calico_values`; it does not create files. The openCenter CLI GitOps generator writes the result to the cluster overlay consumed by the Calico operator Helm deployment.
 - The module configures interface or CIDR autodetection, pod/service CIDRs, encapsulation, NAT, Windows dataplane selection, and the Kubernetes API endpoint. It does not create the cluster or the HelmRepository.
+
+## Migrating existing state
+
+Older versions managed `local_file.calico_values`. Remove that resource from
+state before running any plan or apply with this version so Terraform/OpenTofu
+leaves the existing generated overlay file in place. The state removal is
+deliberately separate from the openCenter CLI GitOps generation step:
+
+```sh
+tofu state list | grep 'calico_values'
+tofu state rm 'module.calico.local_file.calico_values'
+```
+
+For Terraform, use `terraform state rm` instead of `tofu state rm`. For a
+directly-instantiated module, use `tofu state rm 'local_file.calico_values'`
+instead. If the module has a
+count or `for_each`, use the exact address returned by `tofu state list`.
+`tofu state rm` updates state only; it does not delete the existing file. Back
+up state and use the backend lock before running the command. Terraform 1.6-era
+roots in this repository cannot use the newer `removed` block, so the explicit
+state removal is intentional.
 
 ## Validation and limitations
 
-From this directory, run `terraform fmt -check` and `terraform validate` after `terraform init`. The module only renders a local file and does not require a reachable Kubernetes API or make Kubernetes API calls. Validate the rendered overlay in the consuming deployment before applying; the later Calico deployment must still reach the configured API endpoint and does not verify that the selected interface, CIDRs, image registry, or Windows dataplane exist on target nodes.
+From this directory, run `terraform fmt -check` and `terraform validate` after `terraform init`. The module only renders an output value and does not require a reachable Kubernetes API or make Kubernetes API calls. Validate the GitOps-generated overlay before applying; the later Calico deployment must still reach the configured API endpoint and does not verify that the selected interface, CIDRs, image registry, or Windows dataplane exist on target nodes.

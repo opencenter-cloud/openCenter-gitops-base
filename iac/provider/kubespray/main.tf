@@ -1,6 +1,5 @@
 locals {
-  ssh_key_path          = var.ssh_key_path == "" ? "${path.cwd}/id_rsa" : var.ssh_key_path
-  os_hardening_resource = var.os_hardening_enabled == true ? null_resource.os_hardening : null
+  ssh_key_path = var.ssh_key_path == "" ? "${path.cwd}/id_rsa" : var.ssh_key_path
 }
 
 
@@ -264,6 +263,7 @@ resource "null_resource" "setup_kubespray_venv" {
 
 
 resource "null_resource" "wait_cloudinit" {
+  count      = var.deploy_cluster ? 1 : 0
   depends_on = [local_file.ansible_inventory, null_resource.setup_kubespray_venv]
 
   provisioner "local-exec" {
@@ -277,15 +277,90 @@ resource "null_resource" "wait_cloudinit" {
       #!/bin/bash
       MAX_RETRIES=60
       SLEEP_INTERVAL=10
+      CLOUDINIT_DEADLINE=$((SECONDS + ${var.cloudinit_wait_timeout_seconds}))
 
       source venv/bin/activate
 
+      run_ansible_until_deadline() {
+        remaining=$((CLOUDINIT_DEADLINE - SECONDS))
+        if (( remaining <= 0 )); then
+          return 124
+        fi
+
+        ansible "$@" &
+        ansible_pid=$!
+        (
+          sleep "$remaining"
+          kill "$ansible_pid" >/dev/null 2>&1 || true
+        ) &
+        timer_pid=$!
+
+        wait "$ansible_pid"
+        ansible_rc=$?
+        kill "$timer_pid" >/dev/null 2>&1 || true
+        wait "$timer_pid" >/dev/null 2>&1 || true
+        return "$ansible_rc"
+      }
+
+      diagnose_cloudinit() {
+        echo "Collecting per-host cloud-init diagnostics (the original failure will be preserved)."
+        ansible k8s_cluster -T 10 -m ping -o || true
+        ansible k8s_cluster -T 10 -b -m shell -a '
+          echo "hostname: $(hostname)"
+          echo "cloud-init status --long:"
+          cloud-init status --long || true
+          echo "cloud-init analyze blame:"
+          cloud-init analyze blame || true
+          echo "cloud-init journals:"
+          for unit in cloud-init-local cloud-init cloud-config cloud-final; do
+            echo "--- journalctl -u $unit ---"
+            journalctl -u "$unit" --no-pager -n 200 || true
+          done
+        ' || true
+      }
+
       if [[ "${var.baremetal_deployment}" == "false" ]]; then
       for i in $(seq 1 $MAX_RETRIES); do
+          if (( SECONDS >= CLOUDINIT_DEADLINE )); then
+              echo "Timed out waiting for cloud-init after ${var.cloudinit_wait_timeout_seconds} seconds."
+              failure_rc=124
+              diagnose_cloudinit
+              exit "$failure_rc"
+          fi
+
           echo "[$(date)] Checking cloud-init status on all nodes (attempt $i)..."
 
-          ansible k8s_cluster -m shell -a '
-            cloud-init status --wait
+          run_ansible_until_deadline k8s_cluster -m shell -a '
+            run_cloud_init_wait() {
+              if command -v timeout >/dev/null 2>&1; then
+                timeout "${var.cloudinit_wait_timeout_seconds}" cloud-init status --wait
+                return $?
+              fi
+
+              # CoreOS/minimal images may not provide timeout. Keep the remote
+              # command bounded without relying on a local Ansible timeout.
+              cloud-init status --wait &
+              cloudinit_pid=$!
+              cloudinit_timeout_marker="/tmp/cloud-init-timeout-$$"
+              rm -f "$cloudinit_timeout_marker"
+              (
+                sleep "${var.cloudinit_wait_timeout_seconds}"
+                touch "$cloudinit_timeout_marker"
+                kill "$cloudinit_pid" >/dev/null 2>&1 || true
+              ) &
+              cloudinit_timer_pid=$!
+              wait "$cloudinit_pid"
+              cloudinit_rc=$?
+              kill "$cloudinit_timer_pid" >/dev/null 2>&1 || true
+              wait "$cloudinit_timer_pid" >/dev/null 2>&1 || true
+              if [ -f "$cloudinit_timeout_marker" ]; then
+                rm -f "$cloudinit_timeout_marker"
+                return 124
+              fi
+              return "$cloudinit_rc"
+            }
+
+            run_cloud_init_wait
             cloudinit_rc=$?
 
             case "$cloudinit_rc" in
@@ -309,17 +384,29 @@ resource "null_resource" "wait_cloudinit" {
               exit 0
           fi
 
-          if [ "$ansible_rc" -ne 4 ]; then
-              echo "Cloud-init failed critically on one or more nodes (Ansible exit code $ansible_rc)."
-              exit "$ansible_rc"
-          fi
+           if [ "$ansible_rc" -ne 4 ]; then
+               echo "Cloud-init failed critically on one or more nodes (Ansible exit code $ansible_rc)."
+               failure_rc=$ansible_rc
+               diagnose_cloudinit
+               exit "$failure_rc"
+           fi
 
-          echo "Some nodes are unreachable. Retrying in $SLEEP_INTERVALs..."
-          sleep "$SLEEP_INTERVAL"
+           echo "Some nodes are unreachable. Retrying in $SLEEP_INTERVALs..."
+           remaining=$((CLOUDINIT_DEADLINE - SECONDS))
+           if (( remaining <= 0 )); then
+               continue
+           fi
+           sleep_for=$SLEEP_INTERVAL
+           if (( sleep_for > remaining )); then
+               sleep_for=$remaining
+           fi
+           sleep "$sleep_for"
       done
 
-      echo " Timed out waiting for cloud-init to complete on all nodes after $MAX_RETRIES attempts."
-      exit 1
+      echo "Timed out waiting for cloud-init to complete on all nodes after $MAX_RETRIES attempts."
+      failure_rc=1
+      diagnose_cloudinit
+      exit "$failure_rc"
       fi
 
     EOT
@@ -331,7 +418,7 @@ resource "null_resource" "wait_cloudinit" {
 }
 
 resource "local_file" "os_hardening_playbook" {
-  count = var.os_hardening_enabled == true ? 1 : 0
+  count = var.deploy_cluster && var.os_hardening_enabled ? 1 : 0
   content = templatefile("${path.module}/templates/os_hardening_playbook.tpl",
   {})
 
@@ -340,7 +427,7 @@ resource "local_file" "os_hardening_playbook" {
 }
 
 resource "null_resource" "clone_ansible_hardening" {
-  count = var.os_hardening_enabled == true ? 1 : 0
+  count = var.deploy_cluster && var.os_hardening_enabled ? 1 : 0
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
@@ -358,7 +445,7 @@ resource "null_resource" "clone_ansible_hardening" {
 }
 
 resource "null_resource" "os_hardening" {
-  count      = var.os_hardening_enabled == true ? 1 : 0
+  count      = var.deploy_cluster && var.os_hardening_enabled ? 1 : 0
   depends_on = [null_resource.wait_cloudinit, local_file.os_hardening_playbook, null_resource.setup_kubespray_venv]
 
   provisioner "local-exec" {
@@ -381,7 +468,7 @@ resource "null_resource" "os_hardening" {
 
 resource "null_resource" "run_kubespray" {
   count      = var.deploy_cluster ? 1 : 0
-  depends_on = [null_resource.wait_cloudinit, local.os_hardening_resource, null_resource.clone_kubespray, null_resource.setup_kubespray_venv]
+  depends_on = [null_resource.wait_cloudinit, null_resource.os_hardening, null_resource.clone_kubespray, null_resource.setup_kubespray_venv]
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
@@ -419,7 +506,8 @@ resource "null_resource" "run_kubespray" {
 }
 
 resource "null_resource" "copy_and_update_kubeconfig" {
-  depends_on = [null_resource.wait_cloudinit, null_resource.run_kubespray[0]]
+  count      = var.deploy_cluster ? 1 : 0
+  depends_on = [null_resource.wait_cloudinit, null_resource.run_kubespray]
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
@@ -433,16 +521,16 @@ resource "null_resource" "copy_and_update_kubeconfig" {
       source venv/bin/activate
       echo "=== Step 1: Copy /etc/kubernetes/admin.conf from remote server ==="
       ansible kube_control_plane[0] \
-        -b \
-        -m fetch \
-        -a "src=/etc/kubernetes/admin.conf dest=./kubeconfig.yaml flat=true"
+          -b \
+          -m fetch \
+          -a "src=/etc/kubernetes/admin.conf dest=${var.kubeconfig_path} flat=true"
 
       echo ""
       echo "=== Step 2: Update server endpoint in kubeconfig ==="
-      ansible localhost \
-        -c local \
-        -m replace \
-        -a "path=./kubeconfig.yaml regexp='server: https://.*:[0-9]*' replace='server: https://${var.k8s_api_ip}:${var.k8s_api_port}' backup=true"
+        ansible localhost \
+          -c local \
+          -m replace \
+          -a "path=${var.kubeconfig_path} regexp='server: https://.*:[0-9]*' replace='server: https://${var.k8s_api_ip}:${var.k8s_api_port}' backup=true"
     EOT
   }
 

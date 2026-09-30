@@ -242,6 +242,9 @@ module "kubespray-cluster" {
 module "calico" {
   source = "github.com/opencenter-cloud/openCenter-gitops-base.git//iac/cni/calico?ref=2026.01"
 
+  # The module exposes values as Terraform outputs. The openCenter CLI
+  # GitOps generation step, not Terraform, writes the cluster overlay.
+  # cluster_name remains accepted for input compatibility; it is not a path.
   calico_interface_autodetect      = local.calico_interface_autodetect
   calico_encapsulation_type        = local.calico_encapsulation_type
   calico_nat_outgoing              = local.calico_nat_outgoing

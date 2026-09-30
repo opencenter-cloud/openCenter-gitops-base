@@ -41,8 +41,20 @@ variable "kube_vip_interface" {
 }
 
 variable "deploy_cluster" {
-  type    = bool
-  default = false
+  type        = bool
+  default     = false
+  description = "Run the remote Kubespray deployment. When false, only local inventory and variable files are rendered."
+}
+
+variable "cloudinit_wait_timeout_seconds" {
+  type        = number
+  default     = 600
+  description = "Maximum number of seconds to wait for cloud-init on a host during deployment."
+
+  validation {
+    condition     = var.cloudinit_wait_timeout_seconds > 0 && var.cloudinit_wait_timeout_seconds == floor(var.cloudinit_wait_timeout_seconds)
+    error_message = "cloudinit_wait_timeout_seconds must be a positive whole number of seconds."
+  }
 }
 
 variable "dns_zone_name" {
@@ -272,7 +284,7 @@ variable "kubernetes_version" {
 
 variable "kubeconfig_path" {
   type    = string
-  default = "./kubeconfig"
+  default = "./kubeconfig.yaml"
 }
 
 variable "kube_oidc_auth_enabled" {
