@@ -11,11 +11,27 @@ variable "calico_nat_outgoing" {
 variable "calico_interface_autodetect" {
   type    = string
   default = "first-found"
+
+  validation {
+    condition = contains(
+      ["first-found", "interface", "cidr"],
+      lower(trimspace(var.calico_interface_autodetect)),
+    )
+    error_message = "calico_interface_autodetect must be one of first-found, interface, or cidr."
+  }
 }
 
 variable "calico_interface_autodetect_cidr" {
   type    = string
   default = ""
+
+  validation {
+    condition = trimspace(var.calico_interface_autodetect_cidr) == "" || (
+      can(regex("^[0-9]{1,3}(\\.[0-9]{1,3}){3}/[0-9]{1,2}$", trimspace(var.calico_interface_autodetect_cidr))) &&
+      can(cidrhost(trimspace(var.calico_interface_autodetect_cidr), 0))
+    )
+    error_message = "calico_interface_autodetect_cidr must be blank or a valid IPv4 CIDR."
+  }
 }
 
 variable "calico_encapsulation_type" {

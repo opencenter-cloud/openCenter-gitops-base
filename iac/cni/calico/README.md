@@ -8,9 +8,9 @@ that file.
 
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
-| cni_iface | string | ""  | Interface detection based on interfaces that match the given string. When calico_interface_autodetect="interface" |
-| calico_interface_autodetect | string | "first-found" | Provides configuration options for auto-detecting node addresses. "first-found", "cidr", "interface" |
-| calico_interface_autodetect_cidr | string | ""  | CIDRS enables IP auto-detection based on which addresses on the nodes are within one of the provided CIDRs. When calico_interface_autodetect="cidr" |
+| cni_iface | string | ""  | Interface detection based on interfaces that match the given string. Required when `calico_interface_autodetect="interface"`. |
+| calico_interface_autodetect | string | "first-found" | Provides configuration options for auto-detecting node addresses: `first-found`, `cidr`, or `interface`. |
+| calico_interface_autodetect_cidr | string | ""  | Enables IP auto-detection based on node addresses within this CIDR. Validated when supplied, required when `calico_interface_autodetect="cidr"`, and rendered only for CIDR mode. |
 | calico_encapsulation_type | string | "VXLAN" | Calico encapsulation type (IPIP, VXLAN, None) |
 | calico_nat_outgoing | bool | true | NAT Outgoing specifies if NAT will be enabled or disabled for outgoing traffic. |
 | calico_version | string | ""  | Version of Calico to deploy. Currently not used as the chart version is specified in the Helm install command. |
@@ -30,6 +30,12 @@ that file.
 | --- | --- |
 | `calico_values` | Rendered Calico Helm values YAML. The openCenter CLI GitOps generator can use this output to create the cluster overlay. |
 | `calico_autodetection` | Stable object containing the selected autodetection `mode`, `interface`, `cidr`, and `first_found` values. |
+
+Autodetection defaults to `first-found` when the mode is omitted, and the
+rendered `nodeAddressAutodetectionV4` contains only the selected method. The
+interface and CIDR inputs may therefore remain omitted unless their
+corresponding mode is selected. An interface selection requires a nonblank
+`cni_iface`; a CIDR selection requires a nonblank, valid IPv4 CIDR.
 
 The configuration options are used in the values file:
 
