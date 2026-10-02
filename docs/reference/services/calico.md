@@ -50,7 +50,7 @@ The CRD and operator releases are intentionally pinned to different upstream ver
 
 ## Related Docs
 
-- [IaC CNI Calico module](../../../iac/cni/calico/README.md)
+- [IaC CNI Calico module](https://github.com/opencenter-cloud/openCenter-gitops-base/blob/main/iac/cni/calico/README.md)
 
 ## Upstream References
 
