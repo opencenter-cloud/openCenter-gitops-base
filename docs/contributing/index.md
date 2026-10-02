@@ -18,7 +18,7 @@ tags: [contributing, documentation, services, templates]
 - **Cluster consumer repositories:** cluster-specific activation, values, secrets, ingress, storage choices, and operator-managed custom resources. Use the [service deployment patterns](../operations/service-deployment-patterns.md) and the relevant onboarding guide before adding a base change.
 - **Private enterprise repository:** private chart or image sources, enterprise values, and enterprise-component rewrites. The base README documents this relationship; do not add private material to a public service directory.
 
-The presence of a service directory means that a base manifest set exists here. It does not by itself mean that every consumer can render or enable it. The root [service inventory](../../README.md#service-inventory) and the catalog metadata record the current boundary.
+The presence of a service directory means that a base manifest set exists here. It does not by itself mean that every consumer can render or enable it. The root [service inventory](https://github.com/opencenter-cloud/openCenter-gitops-base/blob/main/README.md#service-inventory) and the catalog metadata record the current boundary.
 
 ## Adding or changing a service
 
@@ -48,7 +48,7 @@ For changes to an existing service, keep shared, upstream-backed defaults in thi
 
 ## Writing service-local documentation
 
-Use the [service README template](templates/service-readme-template.md) when creating or substantially rewriting `applications/base/services/<service>/README.md`. Replace every placeholder with evidence from the manifests and upstream references. Keep the README focused on:
+Use the [service README template](https://github.com/opencenter-cloud/openCenter-gitops-base/blob/main/docs/contributing/templates/service-readme-template.md) when creating or substantially rewriting `applications/base/services/<service>/README.md`. Replace every placeholder with evidence from the manifests and upstream references. Keep the README focused on:
 
 - what the base directory contains;
 - base components, custom resources, storage, and dependencies;
@@ -58,7 +58,7 @@ Use the [service README template](templates/service-readme-template.md) when cre
 
 Service-local READMEs are part of the service directory and are distinct from curated pages under `docs/`. Do not claim that a service is enabled, supported by a particular consumer, or production-ready unless the repository evidence supports that claim.
 
-Use the [service configuration guide template](templates/service-config-guide-template.md) for a `docs/operations/services/<service>.md` page that explains configuration choices, pitfalls, secrets, verification, and usage examples. Use the [service standards template](templates/service-standards-template.md) only when a service needs a lifecycle, risk, architecture, production-requirements, or validation checklist.
+Use the [service configuration guide template](https://github.com/opencenter-cloud/openCenter-gitops-base/blob/main/docs/contributing/templates/service-config-guide-template.md) for a `docs/operations/services/<service>.md` page that explains configuration choices, pitfalls, secrets, verification, and usage examples. Use the [service standards template](https://github.com/opencenter-cloud/openCenter-gitops-base/blob/main/docs/contributing/templates/service-standards-template.md) only when a service needs a lifecycle, risk, architecture, production-requirements, or validation checklist.
 
 ## Writing curated `docs/` pages
 
@@ -102,7 +102,7 @@ At this revision, all 47 service directories have catalog fragments, the generat
 - `refresh_docs.py` repairs known migration path patterns and reports links that still do not resolve. Use its normal mode only when you intend to apply those deterministic repairs.
 - `add_purpose_line.py` derives a `**Purpose:**` line from frontmatter; review its dry-run output before applying it.
 
-The script details and the normal invocation list are in [`hack/scripts/README.md`](../../hack/scripts/README.md). Existing templates provide structure; they do not replace checking claims against the repository.
+The script details and the normal invocation list are in [`hack/scripts/README.md`](https://github.com/opencenter-cloud/openCenter-gitops-base/blob/main/hack/scripts/README.md). Existing templates provide structure; they do not replace checking claims against the repository.
 
 ## Before opening a change
 
