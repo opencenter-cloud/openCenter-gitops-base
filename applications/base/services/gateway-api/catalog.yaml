@@ -4,7 +4,7 @@ kind: ServiceEntry
 name: gateway-api
 path: applications/base/services/gateway-api
 packaging: ociHelm
-version: v0.0.0-latest
+version: v1.9.2
 namespace: envoy-gateway-system
 source:
   name: envoyproxy
@@ -18,5 +18,5 @@ blueprints:
   - name: networking
     tier: recommended
 renderOwner: renderCatalog
-versionWaiver: Chart tracks the floating 'v0.0.0-latest' Envoy Gateway tag; the pinned base values file
-  is values-v0.0.0.yaml.
+versionWaiver: Chart tracks the floating 'v1.9.2' Envoy Gateway tag; the pinned base values file
+  is values-v1.9.2.yaml.
