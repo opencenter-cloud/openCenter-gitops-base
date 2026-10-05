@@ -26,6 +26,14 @@ locals {
   }
 }
 
+resource "local_file" "calico_values" {
+  content = local.calico_values
+
+  filename        = "${path.root}/../../../applications/overlays/${var.cluster_name}/services/calico/helm-values/override_values.yaml"
+  file_permission = "0644"
+
+}
+
 output "calico_values" {
   description = "Rendered Calico Helm values for the GitOps generator."
   value       = local.calico_values
