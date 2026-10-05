@@ -14,12 +14,13 @@ For service overview, use cases, examples, and upstream references, see the [ser
 - `00-postgres/`: PostgreSQL backing database resources.
 - `10-operator/`: OLM operator group and subscription resources.
 - `20-keycloak/`: Keycloak custom resource.
+- `25-theme/`: OpenCenter login theme (ConfigMaps mounted into the Keycloak pods via the CR `podTemplate`) and a minimal realm import that sets `loginTheme: opencenter`.
 - `30-oidc-rbac/`: Optional default OIDC RBAC resources.
 
 ## Repository implementation
 
 - Source path: `applications/base/services/keycloak/`.
-- Kustomize stages: `00-postgres/`, `10-operator/`, `20-keycloak/`, and optional `30-oidc-rbac/`; apply them in numeric order from the cluster overlay.
+- Kustomize stages: `00-postgres/`, `10-operator/`, `20-keycloak/`, `25-theme/`, and optional `30-oidc-rbac/`; apply them in numeric order from the cluster overlay.
 - The operator is installed through OLM resources in `10-operator/`; the Keycloak custom resource and database resources are maintained in the adjacent stage directories.
 
 ## Validation and limitations

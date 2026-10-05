@@ -153,6 +153,33 @@ spec:
 
 ---
 
+## Login Theme
+
+The base ships an optional OpenCenter-branded login theme in the `25-theme/` stage.
+
+Because the `Keycloak` custom resource runs with `startOptimized: false`, Keycloak
+reads login themes from the filesystem at boot — so the theme is delivered as
+Kubernetes `ConfigMap` resources mounted into the pods rather than baked into a
+custom image. The stage contains:
+
+- `configmap-login.yaml` — `theme.properties` (`parent=base`), `template.ftl`, `login.ftl`
+- `configmap-css.yaml` — `resources/css/login.css`
+- `configmap-img.yaml` — the logo PNGs as `binaryData`
+- `keycloak-cr-theme-patch.yaml` — a strategic-merge patch adding the mounts via
+  `spec.unsupported.podTemplate`
+- `realm-login-theme.yaml` — a minimal `KeycloakRealmImport` setting
+  `loginTheme: opencenter`
+
+The volumes mount under the `/opt/keycloak/themes/opencenter/` **subdirectory**,
+never at the `/opt/keycloak/themes` root — mounting over the root would hide the
+built-in `base` theme that `theme.properties` extends.
+
+A cluster repo that bootstraps the `opencenter` realm itself should set
+`loginTheme: opencenter` in its own realm import rather than relying on the minimal
+import in this stage.
+
+---
+
 ## Dependencies
 
 Keycloak in this repo depends on:

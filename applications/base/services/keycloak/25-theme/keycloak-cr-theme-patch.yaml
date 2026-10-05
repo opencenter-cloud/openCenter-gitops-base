@@ -1,0 +1,42 @@
+# Strategic-merge patch against the base Keycloak custom resource (20-keycloak/keycloak-cr.yaml).
+#
+# Mounts the OpenCenter login theme (shipped as the three ConfigMaps in this stage)
+# into the Keycloak pods via the operator's `spec.unsupported.podTemplate` escape
+# hatch. The CR runs `startOptimized: false`, so Keycloak reads themes from the
+# filesystem at boot — a mounted theme loads without a custom image.
+#
+# IMPORTANT: each volume mounts at a subdirectory under /opt/keycloak/themes/opencenter/
+# — NEVER at /opt/keycloak/themes itself. theme.properties declares `parent=base`,
+# and mounting over the themes root would hide the built-in base theme and break the
+# inheritance (and the `passkeys.ftl` import in login.ftl).
+apiVersion: k8s.keycloak.org/v2alpha1
+kind: Keycloak
+metadata:
+  name: keycloak
+  namespace: keycloak
+spec:
+  unsupported:
+    podTemplate:
+      spec:
+        containers:
+          - name: keycloak
+            volumeMounts:
+              - name: theme-opencenter-login
+                mountPath: /opt/keycloak/themes/opencenter/login
+                readOnly: true
+              - name: theme-opencenter-css
+                mountPath: /opt/keycloak/themes/opencenter/login/resources/css
+                readOnly: true
+              - name: theme-opencenter-img
+                mountPath: /opt/keycloak/themes/opencenter/login/resources/img
+                readOnly: true
+        volumes:
+          - name: theme-opencenter-login
+            configMap:
+              name: keycloak-theme-opencenter-login
+          - name: theme-opencenter-css
+            configMap:
+              name: keycloak-theme-opencenter-css
+          - name: theme-opencenter-img
+            configMap:
+              name: keycloak-theme-opencenter-img

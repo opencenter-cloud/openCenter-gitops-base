@@ -37,6 +37,15 @@ subcomponents:
     requires:
       - 10-operator
     description: Keycloak custom resource
+  - name: 25-theme
+    path: 25-theme
+    role: component
+    deployable: true
+    packaging: customResources
+    namespace: keycloak
+    requires:
+      - 20-keycloak
+    description: OpenCenter login theme (ConfigMap + CR podTemplate mount) and realm loginTheme activation
   - name: 30-oidc-rbac
     path: 30-oidc-rbac
     role: component
