@@ -33,6 +33,7 @@ resource "local_file" "all_group_vars" {
   content = templatefile("${path.module}/templates/all.tpl",
     {
       additional_sysctl          = var.additional_sysctl
+      kubelet_cloud_provider     = var.kubelet_cloud_provider
       external_cloud_provider    = var.external_cloud_provider
       sysctl_file_path           = var.sysctl_file_path
       sysctl_ignore_unknown_keys = var.sysctl_ignore_unknown_keys
