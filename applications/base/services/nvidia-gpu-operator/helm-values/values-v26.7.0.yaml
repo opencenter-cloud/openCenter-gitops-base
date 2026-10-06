@@ -26,7 +26,7 @@ dcgmExporter:
 devicePlugin: {}
 
 # MIG: Multi-Instance GPU support (A100, A30, H100, H200).
-# For MIG-enabled clusters, use values-v26.3.2-mig.yaml instead.
+# MIG settings must be supplied through the customer overlay when required.
 # mig:
 #   strategy: mixed  # or "single"
 # migManager:

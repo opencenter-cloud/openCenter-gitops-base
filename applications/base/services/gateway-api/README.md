@@ -22,7 +22,7 @@ For service overview, use cases, examples, and upstream references, see the [ser
 
 - Source path: `applications/base/services/gateway-api/`.
 - Flux entrypoint: `kustomization.yaml`; the HelmRelease runs in `envoy-gateway-system` and reads `envoy-gateway-api-values-base` plus the optional `envoy-gateway-api-values-override` Secret.
-- Base values: `helm-values/values-v0.0.0.yaml`; the OCI chart source is declared in `source.yaml` and `catalog.yaml`.
+- Base values: `helm-values/values-v1.9.2.yaml`; the OCI chart source is declared in `source.yaml` and `catalog.yaml`.
 
 ## Validation and limitations
 

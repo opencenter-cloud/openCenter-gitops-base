@@ -56,4 +56,4 @@ MIG Manager auto-generates profiles per node. For custom profiles, provide a Con
 
 ## Validation and limitations
 
-Run `kustomize build applications/base/services/nvidia-gpu-operator/` to validate the local manifests. GPU nodes, compatible drivers/runtime, privileged pod security, and any MIG profile remain cluster prerequisites. The base does not label nodes, provide GPU hardware, or guarantee that a selected driver is compatible with every node image. The checked-in values file still contains an upstream comment referring to a missing `values-v26.3.2-mig.yaml`; do not treat that comment as an available repository file.
+Run `kustomize build applications/base/services/nvidia-gpu-operator/` to validate the local manifests. GPU nodes, compatible drivers/runtime, privileged pod security, and any MIG profile remain cluster prerequisites. The base does not label nodes, provide GPU hardware, or guarantee that a selected driver is compatible with every node image. MIG settings must be supplied through the customer overlay when required.
