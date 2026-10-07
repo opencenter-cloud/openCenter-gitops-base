@@ -186,7 +186,7 @@ services:
     name: gateway-api
     path: applications/base/services/gateway-api
     packaging: ociHelm
-    version: v0.0.0-latest
+    version: v1.9.2
     namespace: envoy-gateway-system
     source:
       name: envoyproxy
@@ -202,8 +202,8 @@ services:
       - name: networking
         tier: recommended
     renderOwner: renderCatalog
-    versionWaiver: Chart tracks the floating 'v0.0.0-latest' Envoy Gateway tag; the pinned base values
-      file is values-v0.0.0.yaml.
+    versionWaiver: Chart tracks the floating 'v1.9.2' Envoy Gateway tag; the pinned base values file is
+      values-v1.9.2.yaml.
   - apiVersion: catalog.opencenter.dev/v1alpha1
     kind: ServiceEntry
     name: harbor
@@ -370,6 +370,15 @@ services:
         requires:
           - 10-operator
         description: Keycloak custom resource
+      - name: 25-theme
+        path: 25-theme
+        role: component
+        deployable: true
+        packaging: customResources
+        namespace: keycloak
+        requires:
+          - 20-keycloak
+        description: OpenCenter login theme (ConfigMap + CR podTemplate mount) and realm loginTheme activation
       - name: 30-oidc-rbac
         path: 30-oidc-rbac
         role: component

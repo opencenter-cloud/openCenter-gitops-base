@@ -56,7 +56,7 @@ spec:
 - Source: `oci://docker.io/envoyproxy`
 - Chart version: `v0.0.0-latest` (the repository intentionally tracks this floating tag)
 
-The committed path installs the Envoy Gateway chart and does not create a `Gateway`, `GatewayClass`, `HTTPRoute`, or external address. Those resources and the load-balancer integration are consumer-owned. The base values file is `helm-values/values-v0.0.0.yaml`.
+The committed path installs the Envoy Gateway chart and does not create a `Gateway`, `GatewayClass`, `HTTPRoute`, or external address. Those resources and the load-balancer integration are consumer-owned. The base values file is `helm-values/values-v1.9.2.yaml`.
 
 ## Upstream References
 
