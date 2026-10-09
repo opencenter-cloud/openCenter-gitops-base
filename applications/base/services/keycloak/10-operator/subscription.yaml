@@ -9,4 +9,4 @@ spec:
   sourceNamespace: olm
   channel: fast
   installPlanApproval: Manual
-  startingCSV: keycloak-operator.v26.4.2
+  startingCSV: keycloak-operator.v26.7.5
