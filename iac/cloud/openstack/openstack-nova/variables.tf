@@ -114,7 +114,7 @@ variable "create_container" {
 
 variable "cp_server_group_affinity" {
   type        = list(string)
-  default     = ["anti-affinity"]
+  default     = ["soft-anti-affinity"]
   description = "Set the Affinity Policy for the control plane server group"
 }
 
