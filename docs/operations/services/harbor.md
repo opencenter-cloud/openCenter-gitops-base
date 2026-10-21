@@ -136,6 +136,9 @@ The hostname, TLS Secret, storage class, external database/Redis settings, objec
 Scanner issues:
 - check Trivy updater connectivity and storage for vulnerability DB content
 
+Core, exporter, jobservice, registry or Trivy in `CrashLoopBackOff` with `fatal error: lfstack.push` on an ARM node:
+- the `goharbor/*` v2.13.2 images are amd64 only, so ARM nodes need Rosetta emulation for amd64 containers (for example Kind on Apple Silicon with Docker Desktop or Colima)
+
 ## Related Docs
 
 - [Harbor Service Reference](../../reference/services/harbor.md)
