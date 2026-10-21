@@ -4,8 +4,8 @@ output "inventory_path" {
 }
 
 output "lifecycle_contract_version" {
-  description = "Version of the lifecycle handoff contract exposed by this module."
-  value       = 1
+  description = "Version of the lifecycle handoff contract exposed by this module. Version 2 adds inventory_output_dir: callers can render the inventory subtree outside the working directory, so the CLI state zone holds the only copy."
+  value       = 2
 }
 
 output "deployment_enabled" {

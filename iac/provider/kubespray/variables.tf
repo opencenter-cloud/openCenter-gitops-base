@@ -46,6 +46,12 @@ variable "deploy_cluster" {
   description = "Run the remote Kubespray deployment. When false, only local inventory and variable files are rendered."
 }
 
+variable "inventory_output_dir" {
+  type        = string
+  default     = ""
+  description = "Directory the inventory subtree (inventory.yaml, group_vars, hardening files) is rendered into. Empty keeps the historical default of ./inventory relative to the working directory. Callers that execute Ansible outside the working directory pass an absolute state-zone directory."
+}
+
 variable "cloudinit_wait_timeout_seconds" {
   type        = number
   default     = 600

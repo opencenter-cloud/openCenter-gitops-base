@@ -1,5 +1,12 @@
 locals {
   ssh_key_path = var.ssh_key_path == "" ? "${path.cwd}/id_rsa" : var.ssh_key_path
+
+  # inventory_dir is where all inventory local_file resources render. Empty
+  # inventory_output_dir keeps the historical behavior: the inventory subtree
+  # next to the root module working directory. Callers that keep deploy
+  # artifacts outside the working directory (openCenter CLI lifecycle mode)
+  # pass an explicit absolute directory.
+  inventory_dir = var.inventory_output_dir == "" ? "${path.cwd}/inventory" : abspath(var.inventory_output_dir)
 }
 
 
@@ -21,7 +28,7 @@ resource "local_file" "ansible_inventory" {
       windows_nodes      = var.windows_nodes
   })
 
-  filename        = "./inventory/inventory.yaml"
+  filename        = "${local.inventory_dir}/inventory.yaml"
   file_permission = "0644"
   depends_on      = [var.master_nodes, var.worker_nodes]
   #   lifecycle {
@@ -39,7 +46,7 @@ resource "local_file" "all_group_vars" {
       sysctl_ignore_unknown_keys = var.sysctl_ignore_unknown_keys
   })
 
-  filename        = "./inventory/group_vars/all/all.yml"
+  filename        = "${local.inventory_dir}/group_vars/all/all.yml"
   file_permission = "0644"
   depends_on      = [local_file.ansible_inventory]
 }
@@ -54,7 +61,7 @@ resource "local_file" "kube_control_plane_eviction" {
       merge_default_eviction_settings = var.kube_control_plane_merge_default_eviction_settings
   })
 
-  filename        = "./inventory/group_vars/kube_control_plane/kubelet.yml"
+  filename        = "${local.inventory_dir}/group_vars/kube_control_plane/kubelet.yml"
   file_permission = "0644"
   depends_on      = [local_file.ansible_inventory]
 
@@ -76,7 +83,7 @@ resource "local_file" "kube_node_eviction" {
       merge_default_eviction_settings = var.kube_node_merge_default_eviction_settings
   })
 
-  filename        = "./inventory/group_vars/kube_node/kubelet.yml"
+  filename        = "${local.inventory_dir}/group_vars/kube_node/kubelet.yml"
   file_permission = "0644"
   depends_on      = [local_file.ansible_inventory]
 
@@ -121,7 +128,7 @@ resource "local_file" "k8s_cluster" {
       kube_proxy_remove                   = var.kube_proxy_remove
   })
 
-  filename        = "./inventory/group_vars/k8s_cluster/k8s-cluster.yml"
+  filename        = "${local.inventory_dir}/group_vars/k8s_cluster/k8s-cluster.yml"
   file_permission = "0644"
   depends_on      = [local_file.ansible_inventory]
 
@@ -152,7 +159,7 @@ resource "local_file" "addons" {
       vrrp_ip                       = var.vrrp_ip
   })
 
-  filename        = "./inventory/group_vars/k8s_cluster/addons.yml"
+  filename        = "${local.inventory_dir}/group_vars/k8s_cluster/addons.yml"
   file_permission = "0644"
   depends_on      = [local_file.ansible_inventory]
 }
@@ -175,7 +182,7 @@ resource "local_file" "k8s_hardening" {
       kubelet_rotate_server_certificates      = var.kubelet_rotate_server_certificates
   })
 
-  filename        = "./inventory/k8s_hardening.yml"
+  filename        = "${local.inventory_dir}/k8s_hardening.yml"
   file_permission = "0644"
   depends_on      = [local_file.ansible_inventory]
 }
@@ -189,7 +196,7 @@ resource "local_file" "kube_node_kubelet" {
       kubelet_config_extra_args       = var.kubelet_config_extra_args
   })
 
-  filename        = "./inventory/group_vars/kube_node/kubelet.yaml"
+  filename        = "${local.inventory_dir}/group_vars/kube_node/kubelet.yaml"
   file_permission = "0644"
   depends_on      = [local_file.ansible_inventory]
 }
@@ -269,7 +276,7 @@ resource "null_resource" "wait_cloudinit" {
 
   provisioner "local-exec" {
     environment = {
-      ANSIBLE_INVENTORY         = "${path.cwd}/inventory/inventory.yaml"
+      ANSIBLE_INVENTORY         = "${local.inventory_dir}/inventory.yaml"
       ANSIBLE_HOST_KEY_CHECKING = "False"
 
     }
@@ -424,7 +431,7 @@ resource "local_file" "os_hardening_playbook" {
   {})
 
   file_permission = "0644"
-  filename        = "./inventory/os_hardening_playbook.yml"
+  filename        = "${local.inventory_dir}/os_hardening_playbook.yml"
 }
 
 resource "null_resource" "clone_ansible_hardening" {
@@ -436,11 +443,11 @@ resource "null_resource" "clone_ansible_hardening" {
     command = <<-EOT
       #!/bin/bash
 
-      if [ ! -d "./inventory/roles/ansible-hardening" ]; then
-      git clone https://opendev.org/openstack/ansible-hardening ./inventory/roles/ansible-hardening
+      if [ ! -d "${local.inventory_dir}/roles/ansible-hardening" ]; then
+      git clone https://opendev.org/openstack/ansible-hardening "${local.inventory_dir}/roles/ansible-hardening"
       echo "Running OS hardening playbook"
       fi
-      cd ./inventory/roles/ansible-hardening && git checkout ${var.ansible_hardening_version}
+      cd "${local.inventory_dir}/roles/ansible-hardening" && git checkout ${var.ansible_hardening_version}
     EOT
   }
 }
@@ -452,9 +459,9 @@ resource "null_resource" "os_hardening" {
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     environment = {
-      ANSIBLE_INVENTORY         = "${path.cwd}/inventory/inventory.yaml"
+      ANSIBLE_INVENTORY         = "${local.inventory_dir}/inventory.yaml"
       ANSIBLE_HOST_KEY_CHECKING = "False"
-      ANSIBLE_ROLES_PATH        = "${path.cwd}/inventory/roles"
+      ANSIBLE_ROLES_PATH        = "${local.inventory_dir}/roles"
     }
 
     command = <<-EOT
@@ -462,7 +469,7 @@ resource "null_resource" "os_hardening" {
 
       source venv/bin/activate
       echo "Running OS hardening playbook with inventory: $ANSIBLE_INVENTORY"
-      ansible-playbook ./inventory/os_hardening_playbook.yml -f 10 -b --become-user=root
+      ansible-playbook "${local.inventory_dir}/os_hardening_playbook.yml" -f 10 -b --become-user=root
     EOT
   }
 }
@@ -474,7 +481,7 @@ resource "null_resource" "run_kubespray" {
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     environment = {
-      ANSIBLE_INVENTORY         = "${path.cwd}/inventory/inventory.yaml"
+      ANSIBLE_INVENTORY         = "${local.inventory_dir}/inventory.yaml"
       ANSIBLE_HOST_KEY_CHECKING = "False"
       ANSIBLE_ROLES_PATH        = "${path.cwd}/kubespray/roles"
     }
@@ -494,7 +501,7 @@ resource "null_resource" "run_kubespray" {
       ansible -m shell -a "grep 127.0.0.1 /etc/hosts | grep -q {{ inventory_hostname }} || sed -i 's/^127.0.0.1.*/127.0.0.1 {{ inventory_hostname }} localhost.localdomain localhost/' /etc/hosts" --become all
 
       if [[ "${var.k8s_hardening_enabled}" == "true" ]]; then
-        ansible-playbook -i $ANSIBLE_INVENTORY cluster.yml -f 10 -b --become-user=root -e "@../inventory/k8s_hardening.yml"
+        ansible-playbook -i $ANSIBLE_INVENTORY cluster.yml -f 10 -b --become-user=root -e "@${local.inventory_dir}/k8s_hardening.yml"
       else
         ansible-playbook -i $ANSIBLE_INVENTORY cluster.yml -f 10 -b --become-user=root
       fi
@@ -513,7 +520,7 @@ resource "null_resource" "copy_and_update_kubeconfig" {
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     environment = {
-      ANSIBLE_INVENTORY         = "${path.cwd}/inventory/inventory.yaml"
+      ANSIBLE_INVENTORY         = "${local.inventory_dir}/inventory.yaml"
       ANSIBLE_HOST_KEY_CHECKING = "False"
     }
 
@@ -574,7 +581,7 @@ resource "local_file" "containerd" {
     }
   )
 
-  filename        = "./inventory/group_vars/all/containerd.yml"
+  filename        = "${local.inventory_dir}/group_vars/all/containerd.yml"
   file_permission = "0644"
   depends_on      = [local_file.ansible_inventory]
 }
