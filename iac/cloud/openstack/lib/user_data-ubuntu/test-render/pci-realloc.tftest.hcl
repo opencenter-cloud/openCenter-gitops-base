@@ -26,6 +26,62 @@ run "disabled_by_default" {
   }
 }
 
+# The drop-in is re-run on every instance rebuild and re-sourced by every
+# update-grub, so a naive "append the options" rewrite stacks duplicates and
+# eventually produces an unusable command line. It must rebuild the value from
+# scratch, which means it cannot assume the value is double-quoted: an
+# implementation that only strips double quotes silently absorbs the key text of
+# a single-quoted or unquoted value as a kernel option.
+run "grub_dropin_is_idempotent_and_quote_agnostic" {
+  command = plan
+
+  variables {
+    enable_pci_realloc = true
+  }
+
+  # Matched as literal substrings: these are exact code fragments, and a regex
+  # would need backslash escapes that fight the HCL and YAML layers.
+  assert {
+    condition     = startswith(one([for f in yamldecode(output.cloud_config).write_files : f.content if f.path == "/etc/grub.d/00_pci_realloc"]), "#!/bin/sh")
+    error_message = "The grub drop-in must be a shell script."
+  }
+
+  assert {
+    condition     = strcontains(output.cloud_config, "<<'AWK'")
+    error_message = "The awk program must be delivered via a quoted heredoc; an inline single-quoted awk program cannot survive the YAML literal block."
+  }
+
+  assert {
+    condition     = strcontains(output.cloud_config, "-f ")
+    error_message = "awk must read the program from a file so the snippet needs no nested shell quoting."
+  }
+
+  # Both quote styles are handled, so a single-quoted or unquoted value cannot
+  # have its own key text absorbed as a kernel option.
+  assert {
+    condition     = strcontains(output.cloud_config, "047")
+    error_message = "The drop-in must strip a single-quoted GRUB_CMDLINE_LINUX value as well as a double-quoted one."
+  }
+
+  # Rebuilding means stale tokens are filtered out, not appended over.
+  assert {
+    condition     = strcontains(output.cloud_config, "^pci=")
+    error_message = "The drop-in must drop any existing pci= token before appending, otherwise re-runs stack duplicates."
+  }
+
+  assert {
+    condition     = strcontains(output.cloud_config, "nocrs")
+    error_message = "The drop-in must drop a stale nocrs token before appending."
+  }
+
+  # No early "already applied" short-circuit: it only recognises one exact line
+  # shape and lets every other shape through to duplicate the options.
+  assert {
+    condition     = !strcontains(output.cloud_config, "grep -qxF")
+    error_message = "The drop-in must not short-circuit on an exact-match grep; that check only recognises one quoting shape."
+  }
+}
+
 run "enabled_installs_grub_dropin" {
   command = plan
 

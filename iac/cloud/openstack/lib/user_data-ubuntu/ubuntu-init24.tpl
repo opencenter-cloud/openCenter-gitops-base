@@ -364,35 +364,63 @@ write_files:
   - content: |
       #!/bin/sh
       # Managed by cloud-init. Appends the NVIDIA BAR allocation options to
-      # GRUB_CMDLINE_LINUX. Idempotent: any pre-existing pci=/assign-busses/nocrs
-      # token is dropped before the canonical set is appended, and every other
-      # key in /etc/default/grub is left untouched.
+      # GRUB_CMDLINE_LINUX.
+      #
+      # Idempotency: the option set is rebuilt from scratch on every run -- any
+      # existing pci=/assign-busses/nocrs token is dropped before the canonical
+      # set is appended -- so re-running it (cloud-init re-runs runcmd on every
+      # instance rebuild, and update-grub re-sources this snippet) can never
+      # stack duplicates. Unrelated options and keys are preserved.
       grub_file=/etc/default/grub
       options="pci=realloc,assign-busses,nocrs"
 
       [ -f "$grub_file" ] || exit 0
       grep -q '^GRUB_CMDLINE_LINUX=' "$grub_file" || exit 0
-      grep -qxF "GRUB_CMDLINE_LINUX=\"$options\"" "$grub_file" && exit 0
 
-      awk -v opts="$options" '
-      /^GRUB_CMDLINE_LINUX=/ {
-        if (!done) {
-          line = $0
-          sub(/^GRUB_CMDLINE_LINUX="/, "", line)
-          sub(/"$/, "", line)
-          n = split(line, a, /[ \t]+/)
-          out = ""
-          for (i = 1; i <= n; i++) {
-            if (a[i] ~ /^pci=/ || a[i] == "assign-busses" || a[i] == "nocrs") continue
-            out = out (out == "" ? "" : " ") a[i]
-          }
-          printf "GRUB_CMDLINE_LINUX=\"%s %s\"\n", out, opts
-          done = 1
-          next
+      # The awk program is written to a file instead of passed inline: this
+      # snippet is delivered through a YAML literal block, and an inline
+      # single-quoted awk program cannot survive that nesting.
+      awk_script=$(mktemp) || exit 1
+      cat > "$awk_script" <<'AWK'
+      /^GRUB_CMDLINE_LINUX=/ && !done {
+        value = $0
+        sub(/^[^=]*=[ \t]*/, "", value)
+
+        # A trailing comment outside the quoting is re-emitted untouched rather
+        # than being swallowed as a kernel option.
+        comment = ""
+        if (match(value, /[ \t]+#[^"']*/)) {
+          comment = substr(value, RSTART)
+          value   = substr(value, 1, RSTART - 1)
         }
+
+        # Strip the surrounding quote, then any comment inside it. Without this
+        # a single-quoted or unquoted value had its own key text absorbed as a
+        # kernel option.
+        first = substr(value, 1, 1)
+        if (first == "\"" || first == "\047") value = substr(value, 2)
+        sub(/[ \t]*#.*$/, "", value)
+        sub(/["']$/, "", value)
+        sub(/[ \t]+$/, "", value)
+
+        n = split(value, a, /[ \t]+/)
+        out = ""
+        for (i = 1; i <= n; i++) {
+          if (a[i] == "" || a[i] ~ /^pci=/ || a[i] == "assign-busses" || a[i] == "nocrs") continue
+          out = out ((out == "") ? "" : " ") a[i]
+        }
+        out = (out == "") ? options : out " " options
+        printf "GRUB_CMDLINE_LINUX=\"%s\"%s\n", out, comment
+        done = 1
+        next
       }
       { print }
-      ' "$grub_file" > "$grub_file.tmp" && mv "$grub_file.tmp" "$grub_file"
+      AWK
+
+      awk -v options="$options" -f "$awk_script" "$grub_file" > "$grub_file.tmp" && mv "$grub_file.tmp" "$grub_file"
+      rc=$?
+      rm -f "$awk_script"
+      exit $rc
     path: /etc/grub.d/00_pci_realloc
     permissions: '0755'
     owner: root:root
