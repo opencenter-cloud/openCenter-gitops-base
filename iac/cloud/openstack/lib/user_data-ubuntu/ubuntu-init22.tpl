@@ -31,6 +31,37 @@ runcmd:
   - sysctl -w kernel.panic=10
   - sysctl -w kernel.panic_on_oops=1
   - sysctl -w fs.inotify.max_user_watches=65536
+  - sudo /bin/systemctl reload ssh.service
+%{if enable_pci_realloc~}
+  # Apply the kernel command line before the node joins the cluster. The probe
+  # is the safety net: a pool flagged by mistake leaves the node untouched.
+  - |
+    set -eu
+    if [ ! -d /sys/bus/pci/devices ]; then
+      echo "pci-realloc: no sysfs PCI enumeration; refusing to change the kernel command line" >&2
+      exit 1
+    fi
+    nvidia_devices=$(grep -lx 0x10de /sys/bus/pci/devices/*/vendor 2>/dev/null || true)
+    if [ -z "$nvidia_devices" ]; then
+      echo "pci-realloc: enabled for this pool but no NVIDIA (0x10de) PCI device found; leaving the kernel command line unchanged"
+      exit 0
+    fi
+    /etc/grub.d/00_pci_realloc
+    if command -v update-grub >/dev/null 2>&1; then
+      update-grub
+    elif command -v update-grub2 >/dev/null 2>&1; then
+      update-grub2
+    else
+      echo "pci-realloc: no update-grub available; cannot regenerate grub.cfg" >&2
+      exit 1
+    fi
+    if command -v update-initramfs >/dev/null 2>&1; then
+      update-initramfs -u
+    fi
+    # kured picks this up for any later reboot; the boot that cloud-init itself
+    # performs is handled by power_state below.
+    touch /var/run/reboot-required
+%{endif~}
 %{if pf9_onboard == true~}
   - curl "${pf9ctl_setup_download_url}/pf9ctl_setup" -o /home/${ssh_user}/pf9ctl_setup
   - sudo chmod u+x /home/${ssh_user}/pf9ctl_setup
@@ -325,3 +356,44 @@ write_files:
     path: /etc/cron.d/check-for-restart
     content: |
       0 2 * * * root /root/create-restart-flag.sh
+%{if enable_pci_realloc~}
+  # GPU nodes need the PCI bridge windows re-balanced at boot so that large
+  # NVIDIA BARs get allocated. The script is installed as a grub.d snippet so
+  # that it is re-applied by every `update-grub`, including the ones triggered
+  # by a kernel or grub package upgrade that resets /etc/default/grub.
+  - content: |
+      #!/bin/sh
+      # Managed by cloud-init. Appends the NVIDIA BAR allocation options to
+      # GRUB_CMDLINE_LINUX. Idempotent: any pre-existing pci=/assign-busses/nocrs
+      # token is dropped before the canonical set is appended, and every other
+      # key in /etc/default/grub is left untouched.
+      grub_file=/etc/default/grub
+      options="pci=realloc,assign-busses,nocrs"
+
+      [ -f "$grub_file" ] || exit 0
+      grep -q '^GRUB_CMDLINE_LINUX=' "$grub_file" || exit 0
+      grep -qxF "GRUB_CMDLINE_LINUX=\"$options\"" "$grub_file" && exit 0
+
+      awk -v opts="$options" '
+      /^GRUB_CMDLINE_LINUX=/ {
+        if (!done) {
+          line = $0
+          sub(/^GRUB_CMDLINE_LINUX="/, "", line)
+          sub(/"$/, "", line)
+          n = split(line, a, /[ \t]+/)
+          out = ""
+          for (i = 1; i <= n; i++) {
+            if (a[i] ~ /^pci=/ || a[i] == "assign-busses" || a[i] == "nocrs") continue
+            out = out (out == "" ? "" : " ") a[i]
+          }
+          printf "GRUB_CMDLINE_LINUX=\"%s %s\"\n", out, opts
+          done = 1
+          next
+        }
+      }
+      { print }
+      ' "$grub_file" > "$grub_file.tmp" && mv "$grub_file.tmp" "$grub_file"
+    path: /etc/grub.d/00_pci_realloc
+    permissions: '0755'
+    owner: root:root
+%{endif~}

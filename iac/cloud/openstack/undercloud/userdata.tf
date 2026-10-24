@@ -1,8 +1,20 @@
 locals {
+  # The cloud-config is rendered per instance here, so only the instances of a
+  # GPU pool carry the grub block. The render is enabled when the master/default
+  # worker flag is set or when any additional pool opts in; each node still
+  # probes for an NVIDIA device before touching its kernel command line.
+  gpu_pci_realloc_pools = [
+    for pool in var.additional_server_pools_worker :
+    pool.name if pool.enable_pci_realloc
+  ]
+
+  enable_pci_realloc_render = var.enable_pci_realloc || length(local.gpu_pci_realloc_pools) > 0
+
   undercloud_cloudinit_common = {
     ssh_authorized_keys = var.ssh_authorized_keys
     ntp_servers         = var.ntp_servers
     ca_certificates     = join("\n", compact([var.openstack_ca, (var.services_ca_enabled ? module.ca[0].certificate : ""), var.ca_certificates]))
+    enable_pci_realloc  = local.enable_pci_realloc_render
   }
 
   undercloud_netplan_common = {
@@ -108,6 +120,9 @@ locals {
     for instance_key, netplan in local.additional_worker_netplan : instance_key => merge(local.undercloud_cloudinit_common, {
       undercloud_netplan = templatefile("${path.module}/templates/50-undercloud.yaml.tpl", netplan)
       metallb_netplan    = length(netplan.metallb_networks) > 0 ? templatefile("${path.module}/templates/60-metallb-public-pools.yaml.tpl", netplan) : ""
+
+      # Only this pool's instances carry the grub block; other pools' renders stay clean.
+      enable_pci_realloc = local.additional_pool_instances_map[instance_key].enable_pci_realloc
     })
   }
 }

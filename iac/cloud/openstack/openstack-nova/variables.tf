@@ -616,6 +616,12 @@ variable "reboot" {
   description = "Reboot the node on cloud-init run?"
 }
 
+variable "enable_pci_realloc" {
+  type        = bool
+  default     = false
+  description = "Append pci=realloc,assign-busses,nocrs to GRUB_CMDLINE_LINUX on the master and default worker (size_worker) pools. Only meaningful for pools whose flavor exposes an NVIDIA (PCI vendor 0x10de) device; the in-guest probe leaves other nodes untouched. Applies to newly created nodes only, which reboot during cloud-init when 'reboot' is true. Prefer the per-pool 'enable_pci_realloc' field of additional_server_pools_worker for dedicated GPU pools."
+}
+
 variable "vrrp_enabled" {
   type        = bool
   default     = true
@@ -686,6 +692,12 @@ variable "additional_server_pools_worker" {
     })), [])
     pf9_onboard = optional(bool, false)
     subnet_id   = optional(string, "")
+
+    # GPU pools: append pci=realloc,assign-busses,nocrs to GRUB_CMDLINE_LINUX so
+    # that the kernel re-balances PCI bridge windows and allocates the large
+    # NVIDIA BARs. Combined with the shared enable_pci_realloc flag; the in-guest
+    # probe keeps nodes without an NVIDIA device untouched.
+    enable_pci_realloc = optional(bool, false)
   }))
   default = []
 }
