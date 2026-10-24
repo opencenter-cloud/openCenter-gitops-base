@@ -256,6 +256,11 @@ coredns_external_zones:
 %{ endfor ~}
 %{ endif ~}
 %{ endif ~}
+%{ if coredns_rewrite_block != "" ~}
+# Custom CoreDNS rewrite block
+coredns_rewrite_block: |
+  ${indent(2, coredns_rewrite_block)}
+%{ endif ~}
 # Enable k8s_external plugin for CoreDNS
 enable_coredns_k8s_external: false
 coredns_k8s_external_zone: k8s_external.local

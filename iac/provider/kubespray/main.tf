@@ -114,6 +114,7 @@ resource "local_file" "k8s_cluster" {
       nodelocaldns_external_zones         = var.nodelocaldns_external_zones
       nodelocaldns_additional_configs     = var.nodelocaldns_additional_configs
       coredns_external_zones              = var.coredns_external_zones
+      coredns_rewrite_block               = var.coredns_rewrite_block
       vrrp_ip                             = var.vrrp_ip
       vrrp_enabled                        = var.vrrp_enabled
       use_octavia                         = var.use_octavia

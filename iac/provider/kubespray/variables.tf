@@ -96,6 +96,12 @@ variable "coredns_external_zones" {
   }
 }
 
+variable "coredns_rewrite_block" {
+  type        = string
+  default     = ""
+  description = "Custom CoreDNS rewrite block injected into Corefile (e.g. for internal OIDC auth hostname routing)"
+}
+
 variable "enable_nodelocaldns_secondary" {
   type        = bool
   default     = false
