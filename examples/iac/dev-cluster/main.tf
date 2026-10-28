@@ -121,6 +121,26 @@ locals {
   # windows_admin_password                  = ""
   # worker_node_bfv_size_windows            = 0
   # worker_node_bfv_type_windows            = "local"
+
+  # ## NVIDIA GPU worker pool
+  # Large NVIDIA BARs only get allocated when the kernel re-balances the PCI
+  # bridge windows, so a GPU pool needs pci=realloc,assign-busses,nocrs on its
+  # kernel command line. Nodes apply it during cloud-init and reboot before they
+  # join the cluster. The Ubuntu cloud-config is rendered once per cluster, so
+  # the grub snippet is installed on every Ubuntu pool but only takes effect on
+  # nodes that actually expose an NVIDIA device. user_data is in ignore_changes,
+  # so existing nodes are never updated in place: the option lands on nodes
+  # created or replaced after the flag is set.
+  # additional_server_pools_worker = [
+  #   {
+  #     name               = "gpu"
+  #     worker_count       = 2
+  #     flavor_worker      = "gp.0.8.32.gpu"
+  #     node_worker        = "gn"
+  #     image_id           = local.image_id
+  #     enable_pci_realloc = true
+  #   }
+  # ]
 }
 
 module "openstack-nova" {

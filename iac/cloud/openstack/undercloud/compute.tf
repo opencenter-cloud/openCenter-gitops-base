@@ -145,6 +145,7 @@ locals {
         bfv_volume_type           = pool.worker_node_bfv_volume_type
         bfv_delete_on_termination = pool.worker_node_bfv_delete_on_termination
         additional_block_devices  = pool.additional_block_devices_worker
+        enable_pci_realloc        = pool.enable_pci_realloc
       }
     ]
   ])

@@ -78,3 +78,9 @@ variable "ub_version" {
   type    = string
   default = ""
 }
+
+variable "enable_pci_realloc" {
+  type        = bool
+  default     = false
+  description = "Append pci=realloc,assign-busses,nocrs to GRUB_CMDLINE_LINUX on nodes that expose an NVIDIA (PCI vendor 0x10de) device. Intended for GPU worker pools; the in-guest PCI probe makes the change a no-op on nodes without an NVIDIA device. Applying it requires a reboot, which cloud-init performs when 'reboot' is true."
+}
