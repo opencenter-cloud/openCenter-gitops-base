@@ -1,5 +1,18 @@
 locals {
   windows_enabled = var.size_worker_windows.count > 0 || length(var.additional_server_pools_worker_windows) > 0
+
+  # The Ubuntu cloud-config is rendered once per cluster and shared by the
+  # master, default worker and additional worker pools, so a GPU pool cannot
+  # carry its own grub block. The render therefore enables the block when any
+  # Ubuntu pool asks for it, and each node only applies it if it actually sees
+  # an NVIDIA device. A pool that opts out while another pool opts in still gets
+  # the script installed, but its nodes skip it at boot.
+  gpu_pci_realloc_pools = [
+    for pool in var.additional_server_pools_worker :
+    pool.name if pool.enable_pci_realloc
+  ]
+
+  enable_pci_realloc_render = var.enable_pci_realloc || length(local.gpu_pci_realloc_pools) > 0
 }
 
 
@@ -204,6 +217,7 @@ module "user_data_ubuntu" {
   pf9_region          = var.pf9_region
   ub_version          = var.ub_version
   reboot              = var.reboot
+  enable_pci_realloc  = local.enable_pci_realloc_render
 }
 
 module "user_data_bastion" {

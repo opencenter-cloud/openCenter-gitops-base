@@ -18,6 +18,7 @@ data "cloudinit_config" "config" {
       pf9_tenant : var.pf9_tenant
       pf9ctl_setup_download_url : var.pf9ctl_setup_download_url
       reboot : var.reboot
+      enable_pci_realloc : var.enable_pci_realloc
     })
   }
 }

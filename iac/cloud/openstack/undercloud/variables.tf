@@ -114,6 +114,13 @@ variable "size_worker" {
   })
 }
 
+variable "enable_pci_realloc" {
+  type        = bool
+  default     = false
+  description = "Append pci=realloc,assign-busses,nocrs to GRUB_CMDLINE_LINUX on the master and default worker (size_worker) pools, and reboot the node during cloud-init so the option takes effect before it joins the cluster. Only meaningful for pools whose flavor exposes an NVIDIA (PCI vendor 0x10de) device; the in-guest probe leaves other nodes untouched. Prefer the per-pool 'enable_pci_realloc' field of additional_server_pools_worker for dedicated GPU pools."
+}
+
+
 ###############################################################################
 # Kubernetes Networking
 ###############################################################################
@@ -449,6 +456,11 @@ variable "additional_server_pools_worker" {
       filesystem            = optional(string, "")
       label                 = optional(string, "")
     })), [])
+
+    # GPU pools: append pci=realloc,assign-busses,nocrs to GRUB_CMDLINE_LINUX so
+    # that the kernel re-balances PCI bridge windows and allocates the large
+    # NVIDIA BARs. The node reboots during cloud-init to pick it up.
+    enable_pci_realloc = optional(bool, false)
   }))
   default = []
 }
